@@ -1,0 +1,14 @@
+name: BumpVersion
+on:
+  push:
+    branches:
+    - main
+jobs:
+  bump-version:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@master
+    - name: tag
+      uses: anothrNick/github-tag-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
