@@ -28,7 +28,7 @@ for os in $os_all; do
         mkdir ${meepo_path}
         mv ${meepo_bin} ${meepo_path}/meepo
         cd ${meepo_path}
-        sha256sum meepo > ../../${meepo_dir_name}.sha256.txt
+        sha256sum meepo > ../${meepo_dir_name}.sha256.txt
         cd -
 
         cd packages
