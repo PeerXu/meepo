@@ -151,7 +151,10 @@ type RedisEngine struct {
 }
 
 func (e *RedisEngine) getLogger() logrus.FieldLogger {
-	return e.logger.WithField("id", e.ID())
+	return e.logger.WithFields(logrus.Fields{
+		"#instance": "RedisEngine",
+		"id":        e.ID(),
+	})
 }
 
 func (e *RedisEngine) launch() {
@@ -362,7 +365,7 @@ func (e *RedisEngine) waitWiredEvent(session int32) (*Event, error) {
 	select {
 	case evt, ok := <-ch:
 		if !ok {
-			return nil, ErrSessionChannelClosed(session)
+			return nil, SessionChannelClosedError(session)
 		}
 
 		if evt.Error != "" {
@@ -371,7 +374,7 @@ func (e *RedisEngine) waitWiredEvent(session int32) (*Event, error) {
 
 		return evt, nil
 	case <-time.After(cast.ToDuration(e.opt.Get("waitWiredEventTimeout").Inter())):
-		return nil, ErrWaitWiredEventTimeout
+		return nil, WaitWiredEventTimeoutError
 	}
 }
 
@@ -380,7 +383,7 @@ func (e *RedisEngine) registerSessionChannel(session int32) error {
 
 	if _, loaded := e.sessionChannels.LoadOrStore(session, ch); loaded {
 		defer close(ch)
-		return ErrReregisterSessionChannel(session)
+		return SessionChannelExistError(session)
 	}
 
 	return nil
@@ -401,7 +404,7 @@ func (e *RedisEngine) unregisterSessionChannel(session int32) error {
 func (e *RedisEngine) getSessionChannel(session int32) (chan *Event, error) {
 	ch, ok := e.sessionChannels.Load(session)
 	if !ok {
-		return nil, ErrUnregisteredSessionChannel(session)
+		return nil, SessionChannelNotExistError(session)
 	}
 
 	return ch.(chan *Event), nil
@@ -459,7 +462,7 @@ func (e *RedisEngine) sendEvent(id string, evt *Event) error {
 		if len(errs) > 0 {
 			return errs[0]
 		} else {
-			return ErrNotAvailableRedisClient
+			return NotAvailableRedisClientError
 		}
 	}
 

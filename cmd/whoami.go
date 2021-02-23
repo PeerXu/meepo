@@ -1,15 +1,9 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"net/url"
 
-	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cobra"
-
-	http_api "github.com/PeerXu/meepo/pkg/api/http"
 )
 
 var (
@@ -23,29 +17,17 @@ var (
 func meepoWhoami(cmd *cobra.Command, args []string) error {
 	var err error
 
-	fs := cmd.Flags()
-	host, _ := fs.GetString("host")
-
-	targetUrl, err := url.Parse(host)
+	sdk, err := NewHTTPSDK(cmd)
 	if err != nil {
 		return err
 	}
 
-	targetUrl.Path = "/v1/actions/whoami"
-
-	client := resty.New()
-	res, err := client.R().
-		Post(targetUrl.String())
+	id, err := sdk.Whoami()
 	if err != nil {
 		return err
 	}
 
-	var wr http_api.WhoamiResponse
-	if err = json.NewDecoder(bytes.NewReader(res.Body())).Decode(&wr); err != nil {
-		return err
-	}
-
-	fmt.Println(wr.ID)
+	fmt.Println(id)
 
 	return nil
 }

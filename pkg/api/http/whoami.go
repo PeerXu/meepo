@@ -12,7 +12,7 @@ type WhoamiResponse struct {
 
 func (s *HttpServer) Whaomi(c *gin.Context) {
 	res := &WhoamiResponse{
-		ID: s.meepo.ID(),
+		ID: s.meepo.GetID(),
 	}
 
 	c.JSON(http.StatusOK, res)

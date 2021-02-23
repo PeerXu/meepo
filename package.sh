@@ -27,11 +27,12 @@ for os in $os_all; do
 
         mkdir ${meepo_path}
         mv ${meepo_bin} ${meepo_path}/meepo
-        cp ../LICENSE ${meepo_path}
+        cd ${meepo_path}
+        sha256sum meepo > ../${meepo_dir_name}.sha256.txt
+        cd ..
 
         cd packages
         tar -zcf ${meepo_dir_name}.tar.gz ${meepo_dir_name}
-        sha1sum ${meepo_dir_name}.tar.gz > ${meepo_dir_name}.tar.gz.sha1.txt
         cd ..
         rm -rf ${meepo_path}
     done

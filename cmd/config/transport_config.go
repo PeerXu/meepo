@@ -4,56 +4,37 @@ type TransportConfig struct {
 	Name string `yaml:"name"`
 }
 
-type ORTCTransportConfig struct {
-	Name       string           `yaml:"name"`
-	ICEServers []string         `yaml:"iceServers"`
-	Signaling  *SignalingConfig `yaml:"signaling"`
-	SignalingI interface{}      `yaml:"-"`
+type WebrtcTransportConfig struct {
+	Name       string   `yaml:"name"`
+	ICEServers []string `yaml:"iceServers"`
 }
 
-func (otc *ORTCTransportConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (wtc *WebrtcTransportConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var err error
 
-	var fotc struct {
-		Name       string           `yaml:"name"`
-		ICEServers []string         `yaml:"iceServers"`
-		Signaling  *SignalingConfig `yaml:"signaling"`
+	var fwtc struct {
+		Name       string   `yaml:"name"`
+		ICEServers []string `yaml:"iceServers"`
 	}
 
-	if err = unmarshal(&fotc); err != nil {
+	if err = unmarshal(&fwtc); err != nil {
 		return err
 	}
 
-	switch fotc.Signaling.Name {
-	case "redis":
-		var frsc struct {
-			Signaling RedisSignalingConfig `yaml:"signaling"`
-		}
-		if err = unmarshal(&frsc); err != nil {
-			return err
-		}
-		otc.SignalingI = &frsc.Signaling
-	default:
-		return UnsupportedSignalingNameError(fotc.Signaling.Name)
-	}
-
-	otc.Name = fotc.Name
-	otc.ICEServers = fotc.ICEServers
-	otc.Signaling = fotc.Signaling
+	wtc.Name = fwtc.Name
+	wtc.ICEServers = fwtc.ICEServers
 
 	return nil
 }
 
-func (otc *ORTCTransportConfig) MarshalYAML() (interface{}, error) {
-	_otc := struct {
-		Name       string      `yaml:"name"`
-		ICEServers []string    `yaml:"iceServers"`
-		Signaling  interface{} `yaml:"signaling"`
+func (wtc *WebrtcTransportConfig) MarshalYAML() (interface{}, error) {
+	_wtc := struct {
+		Name       string   `yaml:"name"`
+		ICEServers []string `yaml:"iceServers"`
 	}{
-		Name:       otc.Name,
-		ICEServers: otc.ICEServers,
-		Signaling:  otc.SignalingI,
+		Name:       wtc.Name,
+		ICEServers: wtc.ICEServers,
 	}
 
-	return &_otc, nil
+	return &_wtc, nil
 }

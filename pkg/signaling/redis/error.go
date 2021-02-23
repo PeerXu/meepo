@@ -2,20 +2,20 @@ package redis_signaling
 
 import "fmt"
 
-func ErrReregisterSessionChannel(session int32) error {
-	return fmt.Errorf("reregister session channel: %d", session)
+func SessionChannelExistError(session int32) error {
+	return fmt.Errorf("SessionChannel: %d exist", session)
 }
 
-func ErrUnregisteredSessionChannel(session int32) error {
-	return fmt.Errorf("unregistered session channel: %d", session)
+func SessionChannelNotExistError(session int32) error {
+	return fmt.Errorf("SessionChannel: %d not exist", session)
 }
 
-func ErrSessionChannelClosed(session int32) error {
+func SessionChannelClosedError(session int32) error {
 
 	return fmt.Errorf("session channel(%d) closed", session)
 }
 
 var (
-	ErrWaitWiredEventTimeout   = fmt.Errorf("wait wired event timeout")
-	ErrNotAvailableRedisClient = fmt.Errorf("not available redis client")
+	WaitWiredEventTimeoutError   = fmt.Errorf("wait wired event timeout")
+	NotAvailableRedisClientError = fmt.Errorf("not available redis client")
 )

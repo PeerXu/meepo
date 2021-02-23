@@ -1,17 +1,13 @@
 package cmd
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"net"
-	"net/url"
 	"strings"
 
-	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cobra"
 
-	http_api "github.com/PeerXu/meepo/pkg/api/http"
+	msdk "github.com/PeerXu/meepo/pkg/sdk"
 )
 
 var (
@@ -40,10 +36,13 @@ func splitUsernameHost(s string) (string, string, error) {
 func meepoSsh(cmd *cobra.Command, args []string) error {
 	var err error
 
-	fs := cmd.Flags()
+	sdk, err := NewHTTPSDK(cmd)
+	if err != nil {
+		return err
+	}
 
+	fs := cmd.Flags()
 	binary, _ := fs.GetString("binary")
-	host, _ := fs.GetString("host")
 	id, _ := fs.GetString("id")
 	username, _ := fs.GetString("username")
 	la, _ := fs.GetString("laddr")
@@ -72,33 +71,19 @@ func meepoSsh(cmd *cobra.Command, args []string) error {
 	}
 	ra = net.JoinHostPort(rh, rp)
 
-	targetUrl, err := url.Parse(host)
+	remote := MustResolveTCPAddr("", ra)
+	tpOpt := &msdk.TeleportOption{
+		Name: fmt.Sprintf("ssh:%s:%s", id, rp),
+	}
+	if la != "" {
+		tpOpt.Local = MustResolveTCPAddr("", la)
+	}
+	local, err := sdk.Teleport(id, remote, tpOpt)
 	if err != nil {
 		return err
 	}
 
-	targetUrl.Path = "/v1/actions/teleport"
-
-	client := resty.New()
-	res, err := client.R().
-		SetBody(map[string]interface{}{
-			"id":            id,
-			"remoteNetwork": "tcp",
-			"remoteAddress": ra,
-			"localNetwork":  "tcp",
-			"localAddress":  la,
-		}).
-		Post(targetUrl.String())
-	if err != nil {
-		return err
-	}
-
-	var tr http_api.TeleportResponse
-	if err = json.NewDecoder(bytes.NewReader(res.Body())).Decode(&tr); err != nil {
-		return err
-	}
-
-	lh, lp, _ := net.SplitHostPort(tr.LocalAddress)
+	lh, lp, _ := net.SplitHostPort(local.String())
 	if username != "" {
 		username += "@"
 	}
@@ -111,8 +96,9 @@ func meepoSsh(cmd *cobra.Command, args []string) error {
 		buf = append(buf, args[:len(args)-2]...)
 	}
 	buf = append(buf, fmt.Sprintf("%s%s", username, lh))
+	sshStr := strings.Join(buf, " ")
 
-	fmt.Println(strings.Join(buf, " "))
+	fmt.Printf("%s\n", sshStr)
 
 	return nil
 }

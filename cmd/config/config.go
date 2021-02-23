@@ -20,10 +20,10 @@ func (c *Config) Get(key string) (string, error) {
 		return c.Meepo.ID, nil
 	case "log.level":
 		return c.Meepo.Log.Level, nil
-	case "transport.signaling.url":
-		return c.Meepo.TransportI.(*ORTCTransportConfig).SignalingI.(*RedisSignalingConfig).URL, nil
+	case "signaling.url":
+		return c.Meepo.SignalingI.(*RedisSignalingConfig).URL, nil
 	case "transport.iceServers":
-		return strings.Join(c.Meepo.TransportI.(*ORTCTransportConfig).ICEServers, ","), nil
+		return strings.Join(c.Meepo.TransportI.(*WebrtcTransportConfig).ICEServers, ","), nil
 	default:
 		return "", UnsupportedGetConfigKeyError(key)
 	}
@@ -36,7 +36,7 @@ func (c *Config) Set(key, val string) error {
 	case "log.level":
 		c.Meepo.Log.Level = val
 	case "transport.signaling.url":
-		c.Meepo.TransportI.(*ORTCTransportConfig).SignalingI.(*RedisSignalingConfig).URL = val
+		c.Meepo.SignalingI.(*RedisSignalingConfig).URL = val
 	default:
 		return UnsupportedSetConfigKeyError(key)
 	}
@@ -98,10 +98,10 @@ func NewDefaultConfig() *Config {
 				Level: "error",
 			},
 			Transport: &TransportConfig{
-				Name: "ortc",
+				Name: "webrtc",
 			},
-			TransportI: &ORTCTransportConfig{
-				Name: "ortc",
+			TransportI: &WebrtcTransportConfig{
+				Name: "webrtc",
 				ICEServers: []string{
 					"stun:stun.xten.com:3478",
 					"stun:stun.voipbuster.com:3478",
@@ -120,13 +120,13 @@ func NewDefaultConfig() *Config {
 					"stun:stun.internetcalls.com:3478",
 					"stun:numb.viagenie.ca:3478",
 				},
-				Signaling: &SignalingConfig{
-					Name: "redis",
-				},
-				SignalingI: &RedisSignalingConfig{
-					Name: "redis",
-					URL:  "redis://meepo.redis.signaling.peerstud.io:6379/1",
-				},
+			},
+			Signaling: &SignalingConfig{
+				Name: "redis",
+			},
+			SignalingI: &RedisSignalingConfig{
+				Name: "redis",
+				URL:  "redis://meepo.redis.signaling.peerstud.io:6379/1",
 			},
 			Api: &ApiConfig{
 				Name: "http",

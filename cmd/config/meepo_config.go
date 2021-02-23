@@ -6,6 +6,8 @@ type MeepoConfig struct {
 	Log        *LogConfig       `yaml:"log"`
 	Transport  *TransportConfig `yaml:"transport"`
 	TransportI interface{}      `yaml:"-"`
+	Signaling  *SignalingConfig `yaml:"signaling"`
+	SignalingI interface{}      `yaml:"-"`
 	Api        *ApiConfig       `yaml:"api"`
 	ApiI       interface{}      `yaml:"-"`
 }
@@ -18,6 +20,7 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Daemon    bool             `yaml:"daemon"`
 		Log       *LogConfig       `yaml:"log"`
 		Transport *TransportConfig `yaml:"transport"`
+		Signaling *SignalingConfig `yaml:"signaling"`
 		Api       *ApiConfig       `yaml:"api"`
 	}
 
@@ -25,19 +28,33 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
+	mc.Transport = fmc.Transport
 	switch fmc.Transport.Name {
-	case "ortc":
-		var fortc struct {
-			Transport ORTCTransportConfig `yaml:"transport"`
+	case "webrtc":
+		var fwrtc struct {
+			Transport WebrtcTransportConfig `yaml:"transport"`
 		}
-		if err = unmarshal(&fortc); err != nil {
+		if err = unmarshal(&fwrtc); err != nil {
 			return err
 		}
-		mc.TransportI = &fortc.Transport
+		mc.TransportI = &fwrtc.Transport
 	default:
 		return UnsupportedTransportNameError(fmc.Transport.Name)
 	}
 
+	mc.Signaling = fmc.Signaling
+	switch fmc.Signaling.Name {
+	case "redis":
+		var frsc struct {
+			Signaling RedisSignalingConfig `yaml:"signaling"`
+		}
+		if err = unmarshal(&frsc); err != nil {
+			return err
+		}
+		mc.SignalingI = &frsc.Signaling
+	}
+
+	mc.Api = fmc.Api
 	switch fmc.Api.Name {
 	case "http":
 		var fhac struct {
@@ -54,7 +71,6 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	mc.ID = fmc.ID
 	mc.Daemon = fmc.Daemon
 	mc.Log = fmc.Log
-	mc.Transport = fmc.Transport
 
 	return nil
 }
@@ -65,12 +81,14 @@ func (mc *MeepoConfig) MarshalYAML() (interface{}, error) {
 		Daemon    bool        `yaml:"daemon"`
 		Log       *LogConfig  `yaml:"log"`
 		Transport interface{} `yaml:"transport"`
+		Signaling interface{} `yaml:"signaling"`
 		Api       interface{} `yaml:"api"`
 	}{
 		ID:        mc.ID,
 		Daemon:    mc.Daemon,
 		Log:       mc.Log,
 		Transport: mc.TransportI,
+		Signaling: mc.SignalingI,
 		Api:       mc.ApiI,
 	}
 

@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"runtime"
 
 	"github.com/spf13/cobra"
 
+	"github.com/PeerXu/meepo/pkg/sdk"
 	"github.com/PeerXu/meepo/pkg/util/version"
 )
 
@@ -17,12 +17,38 @@ var (
 	}
 )
 
+func printClientVersion(v *version.V) {
+	fmt.Printf("Meepo Client:\n")
+	fmt.Printf("  Version:\t\t%v\n", v.Version)
+	fmt.Printf("  GoVersion:\t\t%v\n", v.GoVersion)
+	fmt.Printf("  GitHash:\t\t%v\n", v.GitHash)
+	fmt.Printf("  Bulit:\t\t%v\n", v.Built)
+	fmt.Printf("  Platform:\t\t%v\n", v.Platform)
+}
+
+func printServerVersion(v *sdk.Version) {
+	fmt.Printf("Meepo Server:\n")
+	fmt.Printf("  Version:\t\t%v\n", v.Version)
+	fmt.Printf("  GoVersion:\t\t%v\n", v.GoVersion)
+	fmt.Printf("  GitHash:\t\t%v\n", v.GitHash)
+	fmt.Printf("  Bulit:\t\t%v\n", v.Built)
+	fmt.Printf("  Platform:\t\t%v\n", v.Platform)
+}
+
 func meepoVersion(cmd *cobra.Command, args []string) error {
-	fmt.Printf("Version: %v\n", version.Version)
-	fmt.Printf("GoVersion: %v\n", version.GoVersion)
-	fmt.Printf("GitHash: %v\n", version.GitHash)
-	fmt.Printf("Bulit: %v\n", version.Built)
-	fmt.Printf("Platform: %v/%v\n", runtime.GOOS, runtime.GOARCH)
+	printClientVersion(version.Get())
+	fmt.Println()
+
+	sdk, err := NewHTTPSDK(cmd)
+	if err != nil {
+		return err
+	}
+
+	sv, err := sdk.Version()
+	if err != nil {
+		return err
+	}
+	printServerVersion(sv)
 
 	return nil
 }

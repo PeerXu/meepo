@@ -31,52 +31,63 @@ func newNewMeepoOption() objx.Map {
 			"stun:stun.internetcalls.com:3478",
 			"stun:numb.viagenie.ca:3478",
 		},
-		"gatherTimeout": 31 * time.Second,
+		"gatherTimeout":       31 * time.Second,
+		"waitResponseTimeout": 17 * time.Second,
 	})
 }
 
-type NewMeepoOption func(objx.Map)
+type OFN = func(objx.Map)
 
-func WithSignalingEngine(se signaling.Engine) NewMeepoOption {
+type NewMeepoOption = OFN
+
+func WithSignalingEngine(se signaling.Engine) OFN {
 	return func(o objx.Map) {
 		o["signalingEngine"] = se
 	}
 }
 
-func WithWebrtcAPI(webrtcAPI *webrtc.API) NewMeepoOption {
+func WithWebrtcAPI(webrtcAPI *webrtc.API) OFN {
 	return func(o objx.Map) {
 		o["webrtcAPI"] = webrtcAPI
 	}
 }
 
-func WithICEServers(iceServers []string) NewMeepoOption {
+func WithICEServers(iceServers []string) OFN {
 	return func(o objx.Map) {
 		o["iceServers"] = iceServers
 	}
 }
 
-func WithLogger(logger logrus.FieldLogger) NewMeepoOption {
+func WithLogger(logger logrus.FieldLogger) OFN {
 	return func(o objx.Map) {
 		o["logger"] = logger
 	}
 }
 
-func WithID(id string) NewMeepoOption {
+func WithID(id string) OFN {
 	return func(o objx.Map) {
 		o["id"] = id
 	}
 }
 
-func WithGatherTimeout(d time.Duration) NewMeepoOption {
+func WithGatherTimeout(d time.Duration) OFN {
 	return func(o objx.Map) {
 		o["gatherTimeout"] = d
 	}
 }
 
-type TeleportOption func(objx.Map)
+type TeleportOption = OFN
 
-func WithLocalAddress(local net.Addr) TeleportOption {
+func WithLocalAddress(local net.Addr) OFN {
 	return func(o objx.Map) {
 		o["local"] = local
+	}
+}
+
+type NewTeleportationOption = OFN
+
+func WithName(name string) OFN {
+	return func(o objx.Map) {
+		o["name"] = name
 	}
 }

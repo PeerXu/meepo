@@ -74,18 +74,16 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 		signaling.WithLogger(logger),
 	}
 
-	tpCfg := cfg.Meepo.TransportI.(*config.ORTCTransportConfig)
-
-	switch tpCfg.Signaling.Name {
+	switch cfg.Meepo.Signaling.Name {
 	case "redis":
-		rsCfg := tpCfg.SignalingI.(*config.RedisSignalingConfig)
+		rsCfg := cfg.Meepo.SignalingI.(*config.RedisSignalingConfig)
 		engineOptions = append(
 			engineOptions,
 			redis_signaling.WithURL(rsCfg.URL),
 		)
 	}
 
-	signalingEngine, err := signaling.NewEngine(tpCfg.Signaling.Name, engineOptions...)
+	signalingEngine, err := signaling.NewEngine(cfg.Meepo.Signaling.Name, engineOptions...)
 	if err != nil {
 		return err
 	}
@@ -94,7 +92,7 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 		meepo.WithSignalingEngine(signalingEngine),
 		meepo.WithLogger(logger),
 		meepo.WithID(id),
-		meepo.WithICEServers(tpCfg.ICEServers),
+		meepo.WithICEServers(cfg.Meepo.TransportI.(*config.WebrtcTransportConfig).ICEServers),
 	}
 	meepo, err := meepo.NewMeepo(newMeepoOptions...)
 	if err != nil {
