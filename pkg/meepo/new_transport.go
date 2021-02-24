@@ -70,7 +70,7 @@ func (mp *Meepo) NewTransport(peerID string) (transport.Transport, error) {
 	tp.OnDataChannelCreate("sys", mp.onTransportSysDataChannelCreate)
 	logger.Tracef("register on data channel create handler")
 
-	tp.OnTransportState(transport.TransportStateFailed, func(int64) {
+	tp.OnTransportState(transport.TransportStateFailed, func(transport.HandleID) {
 		mp.removeTransport(peerID)
 		logger.Tracef("remove transport")
 		mp.removeTeleportationsByPeerID(peerID)
@@ -132,7 +132,7 @@ func (mp *Meepo) onNewTransport(src *signaling.Descriptor) (*signaling.Descripto
 	tp.OnDataChannelCreate("sys", mp.onTransportSysDataChannelCreate)
 	logger.Tracef("register on data channel create handler")
 
-	tp.OnTransportState(transport.TransportStateFailed, func(int64) {
+	tp.OnTransportState(transport.TransportStateFailed, func(transport.HandleID) {
 		mp.removeTransport(peerID)
 		logger.Tracef("remove transport")
 		mp.removeTeleportationsByPeerID(peerID)

@@ -39,7 +39,7 @@ func (mp *Meepo) Teleport(peerID string, remote net.Addr, opts ...TeleportOption
 			return nil, err
 		}
 		wg.Add(1)
-		tp.OnTransportState(transport.TransportStateConnected, func(hid int64) {
+		tp.OnTransportState(transport.TransportStateConnected, func(hid transport.HandleID) {
 			wg.Done()
 			tp.UnsetOnTransportState(transport.TransportStateConnected, hid)
 		})

@@ -28,15 +28,16 @@ func (t TransportState) String() string {
 	return transportStateStr[t]
 }
 
-type OnTransportStateHandler func(int64)
+type HandleID = uint32
+type OnTransportStateHandler func(HandleID)
 
 type Transport interface {
 	PeerID() string
 	Err() error
 	Close() error
 	OnTransportStateChange(func(TransportState))
-	OnTransportState(TransportState, func(hid int64)) int64
-	UnsetOnTransportState(s TransportState, hid int64)
+	OnTransportState(TransportState, func(hid HandleID)) HandleID
+	UnsetOnTransportState(s TransportState, hid HandleID)
 	TransportState() TransportState
 
 	DataChannels() ([]DataChannel, error)

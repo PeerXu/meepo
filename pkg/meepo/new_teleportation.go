@@ -166,7 +166,7 @@ func (mp *Meepo) NewTeleportation(id string, remote net.Addr, opts ...NewTelepor
 		logger.WithError(err).Errorf("failed to new teleportation source")
 		return nil, err
 	}
-	tp.OnTransportState(transport.TransportStateFailed, func(hid int64) {
+	tp.OnTransportState(transport.TransportStateFailed, func(hid transport.HandleID) {
 		ts.Close()
 		tp.UnsetOnTransportState(transport.TransportStateFailed, hid)
 	})
@@ -232,7 +232,7 @@ func (mp *Meepo) onNewTeleportation(dc transport.DataChannel, in interface{}) {
 		mp.sendMessage(dc, mp.invertMessageWithError(req, err))
 		return
 	}
-	tp.OnTransportState(transport.TransportStateFailed, func(hid int64) {
+	tp.OnTransportState(transport.TransportStateFailed, func(hid transport.HandleID) {
 		ts.Close()
 		ts.Transport().UnsetOnTransportState(transport.TransportStateFailed, hid)
 	})

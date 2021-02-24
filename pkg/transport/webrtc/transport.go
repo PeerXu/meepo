@@ -31,7 +31,7 @@ type WebrtcTransport struct {
 	opt       objx.Map
 	logger    logrus.FieldLogger
 	peerID    string
-	handleIdx int64
+	handleIdx transport.HandleID
 
 	pc *webrtc.PeerConnection
 
@@ -40,7 +40,7 @@ type WebrtcTransport struct {
 	onTransportStateChangeHandler func(transport.TransportState)
 	onDataChannelCreateHandlers   map[string]transport.OnDataChannelCreateHandler
 
-	onTransportStateHandlers map[transport.TransportState]map[int64]transport.OnTransportStateHandler
+	onTransportStateHandlers map[transport.TransportState]map[transport.HandleID]transport.OnTransportStateHandler
 
 	channelsMtx                      sync.Mutex
 	onTransportStateChangeHandlerMtx sync.Mutex
@@ -94,13 +94,13 @@ func (wt *WebrtcTransport) OnTransportStateChange(f func(transport.TransportStat
 	wt.onTransportStateChangeHandlerMtx.Unlock()
 }
 
-func (wt *WebrtcTransport) OnTransportState(s transport.TransportState, f func(int64)) int64 {
-	hid := atomic.AddInt64(&wt.handleIdx, 1)
+func (wt *WebrtcTransport) OnTransportState(s transport.TransportState, f func(transport.HandleID)) transport.HandleID {
+	hid := atomic.AddUint32(&wt.handleIdx, 1)
 
 	wt.onTransportStateHandlersMtx.Lock()
 	hm, ok := wt.onTransportStateHandlers[s]
 	if !ok {
-		hm = make(map[int64]transport.OnTransportStateHandler)
+		hm = make(map[transport.HandleID]transport.OnTransportStateHandler)
 		wt.onTransportStateHandlers[s] = hm
 	}
 	hm[hid] = f
@@ -113,7 +113,7 @@ func (wt *WebrtcTransport) OnTransportState(s transport.TransportState, f func(i
 	return hid
 }
 
-func (wt *WebrtcTransport) UnsetOnTransportState(s transport.TransportState, hid int64) {
+func (wt *WebrtcTransport) UnsetOnTransportState(s transport.TransportState, hid transport.HandleID) {
 	wt.onTransportStateHandlersMtx.Lock()
 	if hm, ok := wt.onTransportStateHandlers[s]; ok {
 		delete(hm, hid)
@@ -132,7 +132,7 @@ func (wt *WebrtcTransport) onTransportState(s transport.TransportState) {
 	hm, ok := wt.onTransportStateHandlers[s]
 	if ok {
 		for hid, f := range hm {
-			go func(hid int64, f func(int64)) {
+			go func(hid transport.HandleID, f func(transport.HandleID)) {
 				f(hid)
 				logger.WithField("handleID", hid).Tracef("handle on transport state")
 			}(hid, f)
@@ -510,7 +510,7 @@ func NewWebrtcTransport(opts ...transport.NewTransportOption) (transport.Transpo
 		channels: make(map[string]transport.DataChannel),
 
 		onDataChannelCreateHandlers: make(map[string]transport.OnDataChannelCreateHandler),
-		onTransportStateHandlers:    make(map[transport.TransportState]map[int64]transport.OnTransportStateHandler),
+		onTransportStateHandlers:    make(map[transport.TransportState]map[transport.HandleID]transport.OnTransportStateHandler),
 	}
 
 	switch role {
