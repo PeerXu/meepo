@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"fmt"
+	"os"
 
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -28,10 +29,20 @@ func meepoTransportList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("Peer\t\tState\n")
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{
+		"Peer",
+		"State",
+	})
+
 	for _, tp := range tps {
-		fmt.Printf("%s\t\t%s\n", tp.PeerID, tp.State)
+		table.Append([]string{
+			tp.PeerID,
+			tp.State,
+		})
 	}
+
+	table.Render()
 
 	return nil
 }

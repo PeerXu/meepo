@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 )
 
@@ -28,17 +30,28 @@ func meepoTeleportationList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("Name\tTransport\tPortal\tSource\tSink\tChannels\n")
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{
+		"Name",
+		"Transport",
+		"Portal",
+		"Source",
+		"Sink",
+		"Channels",
+	})
+
 	for _, tp := range tps {
-		fmt.Printf("%s\t%s\t%s\t%s\t%s\t%d\n",
+		table.Append([]string{
 			tp.Name,
 			tp.Transport.PeerID,
 			tp.Portal,
 			fmt.Sprintf("%s:%s", tp.Source.Network, tp.Source.Address),
 			fmt.Sprintf("%s:%s", tp.Sink.Network, tp.Sink.Address),
-			len(tp.DataChannels),
-		)
+			fmt.Sprintf("%d", len(tp.DataChannels)),
+		})
 	}
+
+	table.Render()
 
 	return nil
 }

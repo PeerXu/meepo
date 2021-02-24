@@ -10,6 +10,7 @@ require (
 	github.com/go-resty/resty/v2 v2.4.0
 	github.com/hashicorp/golang-lru v0.5.1
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pion/datachannel v1.4.21
 	github.com/pion/webrtc/v3 v3.0.5
 	github.com/sirupsen/logrus v1.7.0
