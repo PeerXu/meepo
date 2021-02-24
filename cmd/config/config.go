@@ -35,7 +35,7 @@ func (c *Config) Set(key, val string) error {
 		c.Meepo.ID = val
 	case "log.level":
 		c.Meepo.Log.Level = val
-	case "transport.signaling.url":
+	case "signaling.url":
 		c.Meepo.SignalingI.(*RedisSignalingConfig).URL = val
 	default:
 		return UnsupportedSetConfigKeyError(key)
