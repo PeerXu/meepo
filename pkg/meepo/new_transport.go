@@ -34,7 +34,7 @@ func (mp *Meepo) NewTransport(peerID string) (transport.Transport, error) {
 		"peerID":  peerID,
 	})
 
-	if _, err = mp.GetTransport(peerID); err == nil {
+	if _, err = mp.getTransport(peerID); err == nil {
 		err = TransportExistError
 		logger.WithError(err).Errorf("transport already exists")
 		return nil, err
@@ -71,10 +71,18 @@ func (mp *Meepo) NewTransport(peerID string) (transport.Transport, error) {
 	logger.Tracef("register on data channel create handler")
 
 	tp.OnTransportState(transport.TransportStateFailed, func(transport.HandleID) {
-		mp.removeTransport(peerID)
-		logger.Tracef("remove transport")
 		mp.removeTeleportationsByPeerID(peerID)
 		logger.Tracef("remove teleportations")
+
+		mp.removeTransport(peerID)
+		logger.Tracef("remove transport")
+	})
+	tp.OnTransportState(transport.TransportStateClosed, func(transport.HandleID) {
+		mp.removeTeleportationsByPeerID(peerID)
+		logger.Tracef("remove teleportations")
+
+		mp.removeTransport(peerID)
+		logger.Tracef("remove transport")
 	})
 	logger.Tracef("register on transport state change handler")
 
@@ -90,13 +98,12 @@ func (mp *Meepo) onNewTransport(src *signaling.Descriptor) (*signaling.Descripto
 	var err error
 
 	peerID := src.ID
-
 	logger := mp.getLogger().WithFields(logrus.Fields{
 		"#method": "onNewTransport",
 		"peerID":  peerID,
 	})
 
-	if _, err = mp.GetTransport(peerID); err == nil {
+	if _, err = mp.getTransport(peerID); err == nil {
 		err = TransportExistError
 		logger.WithError(err).Errorf("transport already exists")
 		return nil, err
@@ -122,6 +129,7 @@ func (mp *Meepo) onNewTransport(src *signaling.Descriptor) (*signaling.Descripto
 				return
 			}
 
+			dst.ID = mp.GetID()
 			dst.SessionDescription = answer
 		}),
 	)
@@ -133,10 +141,18 @@ func (mp *Meepo) onNewTransport(src *signaling.Descriptor) (*signaling.Descripto
 	logger.Tracef("register on data channel create handler")
 
 	tp.OnTransportState(transport.TransportStateFailed, func(transport.HandleID) {
-		mp.removeTransport(peerID)
-		logger.Tracef("remove transport")
 		mp.removeTeleportationsByPeerID(peerID)
 		logger.Tracef("remove teleportations")
+
+		mp.removeTransport(peerID)
+		logger.Tracef("remove transport")
+	})
+	tp.OnTransportState(transport.TransportStateClosed, func(transport.HandleID) {
+		mp.removeTeleportationsByPeerID(peerID)
+		logger.Tracef("remove teleportations")
+
+		mp.removeTransport(peerID)
+		logger.Tracef("remove transport")
 	})
 	logger.Tracef("register on transport state change handler")
 

@@ -1,27 +1,29 @@
 package config
 
 type MeepoConfig struct {
-	ID         string           `yaml:"id"`
-	Daemon     bool             `yaml:"daemon"`
-	Log        *LogConfig       `yaml:"log"`
-	Transport  *TransportConfig `yaml:"transport"`
-	TransportI interface{}      `yaml:"-"`
-	Signaling  *SignalingConfig `yaml:"signaling"`
-	SignalingI interface{}      `yaml:"-"`
-	Api        *ApiConfig       `yaml:"api"`
-	ApiI       interface{}      `yaml:"-"`
+	ID          string           `yaml:"id"`
+	Daemon      bool             `yaml:"daemon"`
+	AsSignaling bool             `yaml:"asSignaling"`
+	Log         *LogConfig       `yaml:"log"`
+	Transport   *TransportConfig `yaml:"transport"`
+	TransportI  interface{}      `yaml:"-"`
+	Signaling   *SignalingConfig `yaml:"signaling"`
+	SignalingI  interface{}      `yaml:"-"`
+	Api         *ApiConfig       `yaml:"api"`
+	ApiI        interface{}      `yaml:"-"`
 }
 
 func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var err error
 
 	var fmc struct {
-		ID        string           `yaml:"id"`
-		Daemon    bool             `yaml:"daemon"`
-		Log       *LogConfig       `yaml:"log"`
-		Transport *TransportConfig `yaml:"transport"`
-		Signaling *SignalingConfig `yaml:"signaling"`
-		Api       *ApiConfig       `yaml:"api"`
+		ID          string           `yaml:"id"`
+		Daemon      bool             `yaml:"daemon"`
+		AsSignaling bool             `yaml:"asSignaling"`
+		Log         *LogConfig       `yaml:"log"`
+		Transport   *TransportConfig `yaml:"transport"`
+		Signaling   *SignalingConfig `yaml:"signaling"`
+		Api         *ApiConfig       `yaml:"api"`
 	}
 
 	if err = unmarshal(&fmc); err != nil {
@@ -70,6 +72,7 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	mc.ID = fmc.ID
 	mc.Daemon = fmc.Daemon
+	mc.AsSignaling = fmc.AsSignaling
 	mc.Log = fmc.Log
 
 	return nil
@@ -77,19 +80,21 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func (mc *MeepoConfig) MarshalYAML() (interface{}, error) {
 	_mc := struct {
-		ID        string      `yaml:"id"`
-		Daemon    bool        `yaml:"daemon"`
-		Log       *LogConfig  `yaml:"log"`
-		Transport interface{} `yaml:"transport"`
-		Signaling interface{} `yaml:"signaling"`
-		Api       interface{} `yaml:"api"`
+		ID          string      `yaml:"id"`
+		Daemon      bool        `yaml:"daemon"`
+		AsSignaling bool        `yaml:"asSignaling"`
+		Log         *LogConfig  `yaml:"log"`
+		Transport   interface{} `yaml:"transport"`
+		Signaling   interface{} `yaml:"signaling"`
+		Api         interface{} `yaml:"api"`
 	}{
-		ID:        mc.ID,
-		Daemon:    mc.Daemon,
-		Log:       mc.Log,
-		Transport: mc.TransportI,
-		Signaling: mc.SignalingI,
-		Api:       mc.ApiI,
+		ID:          mc.ID,
+		Daemon:      mc.Daemon,
+		AsSignaling: mc.AsSignaling,
+		Log:         mc.Log,
+		Transport:   mc.TransportI,
+		Signaling:   mc.SignalingI,
+		Api:         mc.ApiI,
 	}
 
 	return &_mc, nil

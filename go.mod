@@ -9,6 +9,7 @@ require (
 	github.com/go-redis/redis/v8 v8.5.0
 	github.com/go-resty/resty/v2 v2.4.0
 	github.com/hashicorp/golang-lru v0.5.1
+	github.com/jinzhu/copier v0.2.5
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pion/datachannel v1.4.21

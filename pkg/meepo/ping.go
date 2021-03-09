@@ -3,12 +3,13 @@ package meepo
 import (
 	"fmt"
 
-	"github.com/PeerXu/meepo/pkg/transport"
 	"github.com/sirupsen/logrus"
+
+	"github.com/PeerXu/meepo/pkg/transport"
 )
 
 type PingRequest struct {
-	Message
+	*Message
 
 	Payload string `json:"payload"`
 }
@@ -22,12 +23,7 @@ func (mp *Meepo) Ping(id string, payload string) error {
 	})
 
 	req := &PingRequest{
-		Message: Message{
-			PeerID:  mp.GetID(),
-			Type:    "request",
-			Session: random.Int31(),
-			Method:  "ping",
-		},
+		Message: mp.createRequest("ping"),
 		Payload: payload,
 	}
 
@@ -68,6 +64,6 @@ func (mp *Meepo) onPing(dc transport.DataChannel, in interface{}) {
 }
 
 func init() {
-	registerDecodeMessageHelper("request", "ping", func() interface{} { return &PingRequest{} })
-	registerDecodeMessageHelper("response", "ping", func() interface{} { return &PongResponse{} })
+	registerDecodeMessageHelper(MESSAGE_TYPE_REQUEST, "ping", func() interface{} { return &PingRequest{} })
+	registerDecodeMessageHelper(MESSAGE_TYPE_RESPONSE, "ping", func() interface{} { return &PongResponse{} })
 }

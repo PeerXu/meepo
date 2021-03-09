@@ -6,14 +6,17 @@ import (
 	"sync"
 	"time"
 
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/pion/webrtc/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
 	"github.com/stretchr/objx"
 
 	"github.com/PeerXu/meepo/pkg/signaling"
+	chain_signaling "github.com/PeerXu/meepo/pkg/signaling/chain"
 	"github.com/PeerXu/meepo/pkg/teleportation"
 	"github.com/PeerXu/meepo/pkg/transport"
+	msync "github.com/PeerXu/meepo/pkg/util/sync"
 )
 
 var (
@@ -24,12 +27,15 @@ type Meepo struct {
 	rtc *webrtc.API
 	se  signaling.Engine
 
-	transports           map[string]transport.Transport
+	transports    map[string]transport.Transport
+	transportsMtx sync.Mutex
+
 	teleportationSources map[string]*teleportation.TeleportationSource
 	teleportationSinks   map[string]*teleportation.TeleportationSink
+	teleportationsMtx    sync.Mutex
 
-	transportsMtx     sync.Mutex
-	teleportationsMtx sync.Mutex
+	wireHandler    signaling.WireHandler
+	wireHandlerMtx sync.Mutex
 
 	opt    objx.Map
 	logger logrus.FieldLogger
@@ -38,7 +44,15 @@ type Meepo struct {
 	id         string
 	iceServers []string
 
-	sessionChannels sync.Map
+	channelLocker msync.ChannelLocker
+
+	broadcastCache *lru.ARCCache
+
+	requestHandlers    map[string]RequestHandler
+	requestHandlersMtx sync.Mutex
+
+	broadcastRequestHandlers    map[string]BroadcastRequestHandler
+	broadcastRequestHandlersMtx sync.Mutex
 }
 
 func (mp *Meepo) getRawLogger() logrus.FieldLogger {
@@ -50,6 +64,10 @@ func (mp *Meepo) getLogger() logrus.FieldLogger {
 		"#instance": "meepo",
 		"id":        mp.GetID(),
 	})
+}
+
+func (m *Message) GetMessage() *Message {
+	return m
 }
 
 func (mp *Meepo) GetID() string {
@@ -78,14 +96,97 @@ func (mp *Meepo) getWebrtcConfiguration() webrtc.Configuration {
 	}
 }
 
-func (mp *Meepo) invertMessage(m MessageGetter) Message {
+func (mp *Meepo) invertMessage(m MessageGetter) *Message {
 	return InvertMessage(m.GetMessage(), mp.GetID())
 }
 
-func (mp *Meepo) invertMessageWithError(x MessageGetter, err error) Message {
+func (mp *Meepo) invertMessageWithError(x MessageGetter, err error) *Message {
 	y := InvertMessage(x.GetMessage(), mp.GetID())
 	y.Error = err.Error()
 	return y
+}
+
+func (mp *Meepo) invertBroadcast(b BroadcastGetter) *Broadcast {
+	return InvertBroadcast(b.GetBroadcast(), mp.GetID())
+}
+
+type createRequestOption struct {
+	Type string
+}
+
+func (mp *Meepo) createRequest(meth string, opts ...*createRequestOption) *Message {
+	var opt *createRequestOption
+	if len(opts) > 0 {
+		opt = opts[0]
+	} else {
+		opt = &createRequestOption{
+			Type: MESSAGE_TYPE_REQUEST,
+		}
+	}
+
+	return &Message{
+		PeerID:  mp.GetID(),
+		Type:    opt.Type,
+		Session: generateSession(),
+		Method:  meth,
+	}
+}
+
+type createBroadcastOption struct {
+	DetectNextHop bool
+}
+
+func (mp *Meepo) createBroadcast(destinationID string, opts ...*createBroadcastOption) *Broadcast {
+	var opt *createBroadcastOption
+	if len(opts) > 0 {
+		opt = opts[0]
+	} else {
+		opt = &createBroadcastOption{
+			DetectNextHop: true,
+		}
+	}
+
+	return &Broadcast{
+		SourceID:         mp.GetID(),
+		DestinationID:    destinationID,
+		BroadcastSession: generateSession(),
+		Hop:              MAX_HOP_LIMITED,
+		DetectNextHop:    opt.DetectNextHop,
+	}
+}
+
+func (mp *Meepo) createNextHopBroadcastRequest(x BroadcastRequest) BroadcastRequest {
+	y := x.Copy().(BroadcastRequest)
+
+	m := y.GetMessage()
+	m.PeerID = mp.GetID()
+	m.Session = generateSession()
+
+	b := y.GetBroadcast()
+	if b.Hop > MAX_HOP_LIMITED {
+		b.Hop = MAX_HOP_LIMITED
+	}
+	b.Hop -= 1
+
+	return y
+}
+
+func (mp *Meepo) createBroadcastResponse(out interface{}, x BroadcastRequest) Response {
+	res := out.(Response).Copy().(Response)
+	inverted := mp.invertMessage(x.GetMessage())
+	res.GetMessage().PeerID = inverted.PeerID
+	res.GetMessage().Type = inverted.Type
+	res.GetMessage().Session = inverted.Session
+	res.GetMessage().Method = inverted.Method
+
+	return res
+}
+
+func (mp *Meepo) createBroadcastResponseWithError(err error, x BroadcastRequest) *BroadcastResponse {
+	return &BroadcastResponse{
+		Message:   mp.invertMessageWithError(x.GetMessage(), err),
+		Broadcast: mp.invertBroadcast(x.GetBroadcast()),
+	}
 }
 
 func (mp *Meepo) addTransport(id string, tp transport.Transport) {
@@ -126,11 +227,18 @@ func (mp *Meepo) removeTeleportationsByPeerIDNL(id string) {
 	}
 }
 
+func (mp *Meepo) init() error {
+	mp.initHandlers()
+
+	return nil
+}
+
 func NewMeepo(opts ...NewMeepoOption) (*Meepo, error) {
-	var ok bool
 	var logger logrus.FieldLogger
 	var rtc *webrtc.API
 	var se signaling.Engine
+	var ok bool
+	var err error
 
 	o := newNewMeepoOption()
 
@@ -153,18 +261,43 @@ func NewMeepo(opts ...NewMeepoOption) (*Meepo, error) {
 	}
 
 	mp := &Meepo{
-		rtc:                  rtc,
-		se:                   se,
-		transports:           make(map[string]transport.Transport),
-		teleportationSources: make(map[string]*teleportation.TeleportationSource),
-		teleportationSinks:   make(map[string]*teleportation.TeleportationSink),
-		opt:                  o,
-		logger:               logger,
+		rtc:                      rtc,
+		se:                       se,
+		transports:               make(map[string]transport.Transport),
+		teleportationSources:     make(map[string]*teleportation.TeleportationSource),
+		teleportationSinks:       make(map[string]*teleportation.TeleportationSink),
+		requestHandlers:          make(map[string]RequestHandler),
+		broadcastRequestHandlers: make(map[string]BroadcastRequestHandler),
+		channelLocker:            msync.NewChannelLocker(),
+		opt:                      o,
+		logger:                   logger,
 	}
 
-	se.OnWire(mp.onNewTransport)
+	if o.Get("asSignaling").Bool() {
+		mpse := &SignalingEngineWrapper{mp}
+		chse, err := signaling.NewEngine(
+			"chain",
+			signaling.WithLogger(logger),
+			chain_signaling.WithEngine(mpse, se),
+		)
+		if err != nil {
+			return nil, err
+		}
+		mp.se = chse
+		mp.broadcastCache, _ = lru.NewARC(512)
+	}
+
+	if err = mp.init(); err != nil {
+		return nil, err
+	}
+
+	mp.se.OnWire(mp.onNewTransport)
 
 	return mp, nil
+}
+
+func generateSession() int32 {
+	return random.Int31()
 }
 
 func init() {

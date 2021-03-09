@@ -27,7 +27,7 @@ func (mp *Meepo) Teleport(peerID string, remote net.Addr, opts ...TeleportOption
 		opt(o)
 	}
 
-	tp, err = mp.GetTransport(peerID)
+	tp, err = mp.getTransport(peerID)
 	if err != nil {
 		if !errors.Is(err, TransportNotExistError) {
 			return nil, err

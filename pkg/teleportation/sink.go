@@ -11,7 +11,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/PeerXu/meepo/pkg/transport"
-	ieg "github.com/PeerXu/meepo/pkg/util/errgroup"
+	mgroup "github.com/PeerXu/meepo/pkg/util/group"
 )
 
 type TeleportationSink struct {
@@ -76,7 +76,7 @@ func (ts *TeleportationSink) OnDoTeleport(label string) error {
 
 	tp := ts.Transport()
 	tp.OnDataChannelCreate(label, func(dc transport.DataChannel) {
-		var eg ieg.ImmediatelyErrorGroup
+		rg := mgroup.NewRaceGroupFunc()
 
 		outerDataChannelCloser := dc.Close
 		defer func() {
@@ -91,18 +91,18 @@ func (ts *TeleportationSink) OnDoTeleport(label string) error {
 				"label":   dc.Label(),
 			})
 
-			eg.Go(func() error {
+			rg.Go(func() (interface{}, error) {
 				_, err := io.Copy(dc, conn)
 				innerLogger.WithError(err).Tracef("conn->dc closed")
-				return err
+				return nil, err
 			})
-			eg.Go(func() error {
+			rg.Go(func() (interface{}, error) {
 				_, err := io.Copy(conn, dc)
 				innerLogger.WithError(err).Tracef("conn<-dc closed")
-				return err
+				return nil, err
 			})
 			go func() {
-				innerLogger.WithError(eg.Wait()).Tracef("broken")
+				_, err := rg.Wait()
 				innerLogger.WithError(dc.Close()).Tracef("datachannel closed")
 				innerLogger.WithError(conn.Close()).Tracef("conn closed")
 
@@ -111,7 +111,7 @@ func (ts *TeleportationSink) OnDoTeleport(label string) error {
 				ts.datachannelsMtx.Unlock()
 				innerLogger.Tracef("remove from data channels")
 
-				innerLogger.Tracef("done")
+				innerLogger.WithError(err).Tracef("done")
 			}()
 			logger.Tracef("data channel opened")
 		})

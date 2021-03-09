@@ -12,7 +12,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/PeerXu/meepo/pkg/transport"
-	ieg "github.com/PeerXu/meepo/pkg/util/errgroup"
+	mgroup "github.com/PeerXu/meepo/pkg/util/group"
 )
 
 type TeleportationSource struct {
@@ -114,10 +114,10 @@ func (ts *TeleportationSource) acceptLoop() {
 
 func (ts *TeleportationSource) onAccept(conn net.Conn) {
 	var wg sync.WaitGroup
-	var eg ieg.ImmediatelyErrorGroup
 	var dc transport.DataChannel
 	var err error
 
+	rg := mgroup.NewRaceGroupFunc()
 	logger := ts.getLogger().WithField("#method", "onAccept")
 
 	defer func() {
@@ -138,7 +138,7 @@ func (ts *TeleportationSource) onAccept(conn net.Conn) {
 
 	if err := ts.doTeleportFunc(label); err != nil {
 		logger.WithError(err).Debugf("failed to do teleport func")
-		eg.Go(func() error { return nil })
+		rg.Go(mgroup.DONE)
 		return
 	}
 	logger.Tracef("do teleport func")
@@ -149,7 +149,7 @@ func (ts *TeleportationSource) onAccept(conn net.Conn) {
 	)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to create data channel")
-		eg.Go(func() error { return nil })
+		rg.Go(mgroup.DONE)
 		return
 	}
 	outerDataChannelCloser := dc.Close
@@ -166,18 +166,18 @@ func (ts *TeleportationSource) onAccept(conn net.Conn) {
 			"label":   dc.Label(),
 		})
 
-		eg.Go(func() error {
+		rg.Go(func() (interface{}, error) {
 			_, err := io.Copy(dc, conn)
 			innerLogger.WithError(err).Tracef("conn->dc closed")
-			return err
+			return nil, err
 		})
-		eg.Go(func() error {
+		rg.Go(func() (interface{}, error) {
 			_, err := io.Copy(conn, dc)
 			innerLogger.WithError(err).Tracef("conn<-dc closed")
-			return err
+			return nil, err
 		})
 		go func() {
-			innerLogger.WithError(eg.Wait()).Tracef("broken")
+			_, err := rg.Wait()
 			innerLogger.WithError(conn.Close()).Tracef("conn closed")
 			innerLogger.WithError(dc.Close()).Tracef("datachannel closed")
 
@@ -186,7 +186,7 @@ func (ts *TeleportationSource) onAccept(conn net.Conn) {
 			ts.datachannelsMtx.Unlock()
 			innerLogger.Tracef("remove from data channels")
 
-			innerLogger.Tracef("done")
+			innerLogger.WithError(err).Tracef("done")
 		}()
 
 		logger.Tracef("data channel opened")

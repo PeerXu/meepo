@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
+	"github.com/spf13/cast"
 	"gopkg.in/yaml.v3"
 )
 
@@ -24,6 +25,8 @@ func (c *Config) Get(key string) (string, error) {
 		return c.Meepo.SignalingI.(*RedisSignalingConfig).URL, nil
 	case "transport.iceServers":
 		return strings.Join(c.Meepo.TransportI.(*WebrtcTransportConfig).ICEServers, ","), nil
+	case "asSignaling":
+		return cast.ToString(c.Meepo.AsSignaling), nil
 	default:
 		return "", UnsupportedGetConfigKeyError(key)
 	}
@@ -37,6 +40,8 @@ func (c *Config) Set(key, val string) error {
 		c.Meepo.Log.Level = val
 	case "signaling.url":
 		c.Meepo.SignalingI.(*RedisSignalingConfig).URL = val
+	case "asSignaling":
+		c.Meepo.AsSignaling = cast.ToBool(val)
 	default:
 		return UnsupportedSetConfigKeyError(key)
 	}
@@ -92,8 +97,9 @@ func Load(p string) (config *Config, loaded bool, err error) {
 func NewDefaultConfig() *Config {
 	return &Config{
 		Meepo: &MeepoConfig{
-			ID:     "",
-			Daemon: true,
+			ID:          "",
+			Daemon:      true,
+			AsSignaling: false,
 			Log: &LogConfig{
 				Level: "error",
 			},

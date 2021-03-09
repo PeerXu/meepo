@@ -7,8 +7,14 @@ import (
 	"sync"
 )
 
+const (
+	MESSAGE_TYPE_REQUEST           = "request"
+	MESSAGE_TYPE_BROADCAST_REQUEST = "broadcast_request"
+	MESSAGE_TYPE_RESPONSE          = "response"
+)
+
 type MessageGetter interface {
-	GetMessage() Message
+	GetMessage() *Message
 }
 
 type Message struct {
@@ -19,25 +25,34 @@ type Message struct {
 	Error   string `json:"_error,omitempty"`
 }
 
-func (m Message) GetMessage() Message {
-	return m
+func (m *Message) String() string {
+	return fmt.Sprintf("#<Message: PeerID: %v, Type: %v, Session: %v, Method: %v, Error: %v>",
+		m.PeerID, m.Type, m.Session, m.Method, m.Error)
+}
+
+func (m *Message) Identifier() string {
+	return fmt.Sprintf("%v.%v", m.Method, m.Session)
 }
 
 func IsMessage(m *Message) bool {
 	return m.PeerID != "" &&
-		(m.Type == "request" || m.Type == "response")
+		(m.Type == MESSAGE_TYPE_REQUEST ||
+			m.Type == MESSAGE_TYPE_RESPONSE ||
+			m.Type == MESSAGE_TYPE_BROADCAST_REQUEST)
 }
 
-func InvertMessage(m Message, id string) Message {
+func InvertMessage(m *Message, id string) *Message {
 	var typ string
 	switch m.Type {
-	case "request":
-		typ = "response"
-	case "response":
-		typ = "request"
+	case MESSAGE_TYPE_REQUEST:
+		fallthrough
+	case MESSAGE_TYPE_BROADCAST_REQUEST:
+		typ = MESSAGE_TYPE_RESPONSE
+	case MESSAGE_TYPE_RESPONSE:
+		typ = MESSAGE_TYPE_REQUEST
 	}
 
-	return Message{
+	return &Message{
 		PeerID:  id,
 		Type:    typ,
 		Session: m.Session,
@@ -77,7 +92,7 @@ func registerDecodeMessageHelper(typ, meth string, fn func() interface{}) {
 		}
 
 		m := msgGetter.GetMessage()
-		if !IsMessage(&m) {
+		if !IsMessage(m) {
 			return nil, UnexpectedMessageError
 		}
 

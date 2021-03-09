@@ -2,6 +2,11 @@ package signaling
 
 import "fmt"
 
+var (
+	WireTimeoutError        = fmt.Errorf("Wire timeout")
+	NextHopUnreachableError = fmt.Errorf("Next hop unreachable")
+)
+
 func UnsupportedSignalingEngine(name string) error {
-	return fmt.Errorf("unsupported signaling engine: %s", name)
+	return fmt.Errorf("Unsupported signaling engine: %s", name)
 }

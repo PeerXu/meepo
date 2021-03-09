@@ -8,13 +8,13 @@ import (
 )
 
 type CloseTeleportationRequest struct {
-	Message
+	*Message
 
 	Name string `json:"name"`
 }
 
 type CloseTeleportationResponse struct {
-	Message
+	*Message
 }
 
 func (mp *Meepo) CloseTeleportation(name string) error {
@@ -39,13 +39,8 @@ func (mp *Meepo) closeTeleportationNL(name string) error {
 	}
 
 	req := &CloseTeleportationRequest{
-		Message: Message{
-			PeerID:  mp.GetID(),
-			Type:    "request",
-			Session: random.Int31(),
-			Method:  "closeTeleportation",
-		},
-		Name: name,
+		Message: mp.createRequest("closeTeleportation"),
+		Name:    name,
 	}
 
 	out, err := mp.doRequest(tp.Transport().PeerID(), req)
@@ -109,6 +104,6 @@ func (mp *Meepo) onCloseTeleportation(dc transport.DataChannel, in interface{}) 
 }
 
 func init() {
-	registerDecodeMessageHelper("request", "closeTeleportation", func() interface{} { return &CloseTeleportationRequest{} })
-	registerDecodeMessageHelper("response", "closeTeleportation", func() interface{} { return &CloseTeleportationResponse{} })
+	registerDecodeMessageHelper(MESSAGE_TYPE_REQUEST, "closeTeleportation", func() interface{} { return &CloseTeleportationRequest{} })
+	registerDecodeMessageHelper(MESSAGE_TYPE_RESPONSE, "closeTeleportation", func() interface{} { return &CloseTeleportationResponse{} })
 }

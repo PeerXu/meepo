@@ -21,6 +21,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/PeerXu/meepo/pkg/signaling"
+	msync "github.com/PeerXu/meepo/pkg/util/sync"
 )
 
 var (
@@ -144,10 +145,10 @@ type RedisEngine struct {
 	events          chan *Event
 	eventCache      *lru.ARCCache
 
-	redisClient     *redis.Client
-	redisPubsub     *redis.PubSub
-	wireHandler     signaling.WireHandler
-	sessionChannels sync.Map
+	redisClient   *redis.Client
+	redisPubsub   *redis.PubSub
+	wireHandler   signaling.WireHandler
+	channelLocker msync.ChannelLocker
 }
 
 func (e *RedisEngine) getLogger() logrus.FieldLogger {
@@ -357,57 +358,26 @@ func (e *RedisEngine) mainloop(addr string) {
 }
 
 func (e *RedisEngine) waitWiredEvent(session int32) (*Event, error) {
-	ch, err := e.getSessionChannel(session)
+	ch, err := e.channelLocker.Get(session)
 	if err != nil {
 		return nil, err
 	}
 
 	select {
-	case evt, ok := <-ch:
+	case in, ok := <-ch:
 		if !ok {
-			return nil, SessionChannelClosedError(session)
+			return nil, SessionChannelClosedError
 		}
 
+		evt := in.(*Event)
 		if evt.Error != "" {
 			return nil, fmt.Errorf(evt.Error)
 		}
 
 		return evt, nil
 	case <-time.After(cast.ToDuration(e.opt.Get("waitWiredEventTimeout").Inter())):
-		return nil, WaitWiredEventTimeoutError
+		return nil, signaling.WireTimeoutError
 	}
-}
-
-func (e *RedisEngine) registerSessionChannel(session int32) error {
-	ch := make(chan *Event)
-
-	if _, loaded := e.sessionChannels.LoadOrStore(session, ch); loaded {
-		defer close(ch)
-		return SessionChannelExistError(session)
-	}
-
-	return nil
-}
-
-func (e *RedisEngine) unregisterSessionChannel(session int32) error {
-	ch, err := e.getSessionChannel(session)
-	if err != nil {
-		return err
-	}
-	defer close(ch)
-
-	e.sessionChannels.Delete(session)
-
-	return nil
-}
-
-func (e *RedisEngine) getSessionChannel(session int32) (chan *Event, error) {
-	ch, ok := e.sessionChannels.Load(session)
-	if !ok {
-		return nil, SessionChannelNotExistError(session)
-	}
-
-	return ch.(chan *Event), nil
 }
 
 func (e *RedisEngine) parseChannelName(id string) string {
@@ -473,15 +443,15 @@ func (e *RedisEngine) Wire(dst, src *signaling.Descriptor) (*signaling.Descripto
 	logger := e.getLogger().WithField("#method", "RedisEngine.Wire")
 
 	wireEvt := NewWireEvent(src)
-	if err := e.registerSessionChannel(wireEvt.Session); err != nil {
-		logger.WithError(err).Debugf("failed to register session channel")
+	if err := e.channelLocker.Acquire(wireEvt.Session); err != nil {
+		logger.WithError(err).Debugf("failed to acquire session channel")
 		return nil, err
 	}
 	defer func() {
-		e.unregisterSessionChannel(wireEvt.Session)
-		logger.Tracef("unregister session channel")
+		e.channelLocker.Release(wireEvt.Session)
+		logger.Tracef("release session channel")
 	}()
-	logger.Tracef("register session channel")
+	logger.Tracef("acquire session channel")
 
 	if err := e.sendEvent(dst.ID, wireEvt); err != nil {
 		logger.WithError(err).Debugf("failed to send event")
@@ -530,11 +500,12 @@ func (e *RedisEngine) onWire(in *Event) {
 func (e *RedisEngine) onWired(evt *Event) {
 	logger := e.getLogger().WithField("#method", "RedisEngine.onWired")
 
-	ch, err := e.getSessionChannel(evt.Session)
+	ch, unlock, err := e.channelLocker.GetWithUnlock(evt.Session)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to get session channel")
 		return
 	}
+	defer unlock()
 
 	ch <- evt
 }
@@ -542,11 +513,12 @@ func (e *RedisEngine) onWired(evt *Event) {
 func (e *RedisEngine) onError(evt *Event) {
 	logger := e.getLogger().WithField("#method", "RedisEngine.onError")
 
-	ch, err := e.getSessionChannel(evt.Session)
+	ch, unlock, err := e.channelLocker.GetWithUnlock(evt.Session)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to get session channel")
 		return
 	}
+	defer unlock()
 
 	ch <- evt
 }
@@ -608,11 +580,12 @@ func NewRedisEngine(opts ...signaling.NewEngineOption) (signaling.Engine, error)
 	}
 
 	e := &RedisEngine{
-		opt:         o,
-		redisOption: ro,
-		logger:      logger,
-		events:      make(chan *Event),
-		eventCache:  eventCache,
+		opt:           o,
+		redisOption:   ro,
+		logger:        logger,
+		events:        make(chan *Event),
+		eventCache:    eventCache,
+		channelLocker: msync.NewChannelLocker(),
 	}
 	go e.launch()
 

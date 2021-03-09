@@ -111,24 +111,77 @@ $ meepo teleportation close --name http
 Teleportation closing
 ```
 
+## 原理
+
+TBD
+
+## 特性
+
+### 自组网 (Selfmesh)
+
+自组网是`Meepo`提供一个新特性, 允许`Meepo`服务提供`Signaling Server`(`WebRTC`建立连接需要交换信令, `Signaling Server`提供交换的服务).
+
+举个简单的例子:
+
+比如现在有三个`Meepo`节点, ID分别为`M1`, `M2`和`M3`.
+
+`M1`与`M2`建立了`Transport`.
+
+`M2`与`M3`建立了`Transport`.
+
+当自组网特性未启用时, 如果需要建立`M1`与`M3`的`Transport`时, 使用的是默认的`Signaling Server`.
+
+未启用自组网特性示意图:
+
+```
+M1 --- Default Signaling Server --- M3
+```
+
+但是, 当自组网特性启用后, 会采用`M2`做为`Signaling Server`, 而不需要使用默认的`Signaling Server`.
+
+启用自组网特性示意图:
+
+```
+M1 --- M2(Signaling Server) --- M3
+```
+
+启用自组网特性需要在各个节点上按照以下步骤运行.
+
+1. `Meepo`设置了ID.
+
+如果在初始化时未指定ID,  可以通过以下命令指定.
+
+```bash
+$ meepo config set --key id --value <CustomID>
+```
+
+2. `Meepo`配置`asSignaling`字段为`true`.
+
+```bash
+$ meepo config set --key asSignaling --value true
+```
+
+3. 重启`Meepo`
+
+```bash
+$ meepo shutdown
+# wait a few seconds...
+$ meepo serve
+```
 
 ## 计划
 
 如果有不错的想法, 不妨通过[Telegram](https://t.me/meepoDiscussion)或[issues](https://github.com/PeerXu/meepo/issues)留言.
 
-### 短期计划
-
 - [x] SSH连接端口复用
 - [ ] 缩短gather时间
 - [ ] 工作原理文档的补全
 - [ ] 中英文档的补全
-
-### 长期计划
-
 - [x] 连接变得可管理
 - [ ] 支持socks5 proxy
 - [ ] 支持http proxy
 - [x] 支持port forward
+- [x] 自组网功能
 
 
 ## 为Meepo做贡献

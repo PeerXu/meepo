@@ -13,7 +13,7 @@ import (
 )
 
 type NewTeleportationRequest struct {
-	Message
+	*Message
 
 	Name          string `json:"name"`
 	LocalNetwork  string `json:"localNetwork"`
@@ -23,18 +23,18 @@ type NewTeleportationRequest struct {
 }
 
 type NewTeleportationResponse struct {
-	Message
+	*Message
 }
 
 type DoTeleportRequest struct {
-	Message
+	*Message
 
 	Name  string `json:"name"`
 	Label string `json:"label"`
 }
 
 type DoTeleportResponse struct {
-	Message
+	*Message
 }
 
 func newNewTeleportationOption() objx.Map {
@@ -78,12 +78,7 @@ func (mp *Meepo) NewTeleportation(id string, remote net.Addr, opts ...NewTelepor
 	logger = logger.WithField("name", name)
 
 	req := &NewTeleportationRequest{
-		Message: Message{
-			PeerID:  mp.GetID(),
-			Type:    "request",
-			Session: random.Int31(),
-			Method:  "newTeleportation",
-		},
+		Message:       mp.createRequest("newTeleportation"),
 		Name:          name,
 		LocalNetwork:  local.Network(),
 		LocalAddress:  local.String(),
@@ -104,7 +99,7 @@ func (mp *Meepo) NewTeleportation(id string, remote net.Addr, opts ...NewTelepor
 		return nil, err
 	}
 
-	tp, err := mp.GetTransport(id)
+	tp, err := mp.getTransport(id)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to get transport")
 		return nil, err
@@ -126,14 +121,9 @@ func (mp *Meepo) NewTeleportation(id string, remote net.Addr, opts ...NewTelepor
 			})
 
 			req := &DoTeleportRequest{
-				Message: Message{
-					PeerID:  mp.GetID(),
-					Type:    "request",
-					Session: random.Int31(),
-					Method:  "doTeleport",
-				},
-				Name:  name,
-				Label: label,
+				Message: mp.createRequest("doTeleport"),
+				Name:    name,
+				Label:   label,
 			}
 
 			out, err := mp.doRequest(id, req)
@@ -191,7 +181,7 @@ func (mp *Meepo) onNewTeleportation(dc transport.DataChannel, in interface{}) {
 		"raddr":   req.RemoteAddress,
 	})
 
-	tp, err := mp.GetTransport(req.PeerID)
+	tp, err := mp.getTransport(req.PeerID)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to get transport")
 		mp.sendMessage(dc, mp.invertMessageWithError(req, err))
@@ -284,8 +274,8 @@ func (mp *Meepo) onDoTeleport(dc transport.DataChannel, in interface{}) {
 }
 
 func init() {
-	registerDecodeMessageHelper("request", "newTeleportation", func() interface{} { return &NewTeleportationRequest{} })
-	registerDecodeMessageHelper("response", "newTeleportation", func() interface{} { return &NewTeleportationResponse{} })
-	registerDecodeMessageHelper("request", "doTeleport", func() interface{} { return &DoTeleportRequest{} })
-	registerDecodeMessageHelper("response", "doTeleport", func() interface{} { return &DoTeleportResponse{} })
+	registerDecodeMessageHelper(MESSAGE_TYPE_REQUEST, "newTeleportation", func() interface{} { return &NewTeleportationRequest{} })
+	registerDecodeMessageHelper(MESSAGE_TYPE_RESPONSE, "newTeleportation", func() interface{} { return &NewTeleportationResponse{} })
+	registerDecodeMessageHelper(MESSAGE_TYPE_REQUEST, "doTeleport", func() interface{} { return &DoTeleportRequest{} })
+	registerDecodeMessageHelper(MESSAGE_TYPE_RESPONSE, "doTeleport", func() interface{} { return &DoTeleportResponse{} })
 }

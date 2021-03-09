@@ -76,6 +76,12 @@ func WithGatherTimeout(d time.Duration) OFN {
 	}
 }
 
+func WithAsSignaling(b bool) OFN {
+	return func(o objx.Map) {
+		o["asSignaling"] = b
+	}
+}
+
 type TeleportOption = OFN
 
 func WithLocalAddress(local net.Addr) OFN {

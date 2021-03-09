@@ -52,8 +52,19 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	}
 	logger.SetLevel(logLevel)
 
-	if logLevel < logrus.DebugLevel {
+	switch logLevel {
+	case logrus.PanicLevel:
+		fallthrough
+	case logrus.FatalLevel:
+		fallthrough
+	case logrus.ErrorLevel:
+		fallthrough
+	case logrus.WarnLevel:
+		fallthrough
+	case logrus.InfoLevel:
 		gin.SetMode(gin.ReleaseMode)
+	case logrus.DebugLevel:
+	case logrus.TraceLevel:
 	}
 
 	if cfg.Meepo.Daemon {
@@ -94,6 +105,10 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 		meepo.WithID(id),
 		meepo.WithICEServers(cfg.Meepo.TransportI.(*config.WebrtcTransportConfig).ICEServers),
 	}
+	if cfg.Meepo.AsSignaling {
+		newMeepoOptions = append(newMeepoOptions, meepo.WithAsSignaling(true))
+	}
+
 	meepo, err := meepo.NewMeepo(newMeepoOptions...)
 	if err != nil {
 		return err

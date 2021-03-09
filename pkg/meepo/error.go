@@ -5,13 +5,15 @@ import (
 )
 
 var (
-	GatherTimeoutError         = fmt.Errorf("Gather timeout")
-	TransportNotExistError     = fmt.Errorf("Transport not exists")
-	TransportExistError        = fmt.Errorf("Transport already exists")
-	TeleportationNotExistError = fmt.Errorf("Teleportation not exists")
-	UnexpectedMessageError     = fmt.Errorf("Unexpected message")
-	WaitResponseTimeoutError   = fmt.Errorf("Wait response timeout")
-	NotListenableAddressError  = fmt.Errorf("Not listenable address")
+	UnsupportedRequestHandlerError = fmt.Errorf("Unsupported request method")
+	TransportNotExistError         = fmt.Errorf("Transport not exists")
+	TransportExistError            = fmt.Errorf("Transport already exists")
+	TeleportationNotExistError     = fmt.Errorf("Teleportation not exists")
+	UnexpectedMessageError         = fmt.Errorf("Unexpected message")
+	WaitResponseTimeoutError       = fmt.Errorf("Wait response timeout")
+	NotWirableError                = fmt.Errorf("Not wirable")
+	HopIsZeroError                 = fmt.Errorf("Hop is zero")
+	ReachTransportEdgeError        = fmt.Errorf("Reach transport edge")
 )
 
 func SessionChannelExistError(session int32) error {
@@ -28,10 +30,6 @@ func SessionChannelClosedError(session int32) error {
 
 func UnsupportedMessageDecodeDriverError(messageIdentifier string) error {
 	return fmt.Errorf("Unsupported message decode driver: %s", messageIdentifier)
-}
-
-func UnsupportedRequestHandlerError(method string) error {
-	return fmt.Errorf("Unsupported method: %s", method)
 }
 
 type sendMessageError struct {

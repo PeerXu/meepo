@@ -14,7 +14,7 @@ func (mp *Meepo) closeTransport(peerID string) error {
 		"peerID":  peerID,
 	})
 
-	tp, err := mp.GetTransport(peerID)
+	tp, err := mp.getTransport(peerID)
 	if err != nil {
 		logger.WithError(err).Errorf("transport not found")
 		return err
