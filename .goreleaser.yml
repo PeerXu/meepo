@@ -1,19 +1,69 @@
+env:
+- GO111MODULE=on
+before:
+  hooks:
+  - go mod tidy
 builds:
-  - skip: true
+- env:
+  - CGO_ENABLED=0
+  goos:
+  - linux
+  goarch:
+  - amd64
+  mod_timestamp: '{{ .CommitTimestamp }}'
+  flags:
+  - -trimpath
+  ldflags:
+  - -s -w
+  - -X "github.com/PeerXu/meepo/pkg/util/version.Version={{ .Version }}"
+  - -X "github.com/PeerXu/meepo/pkg/util/version.GoVersion={{ .Env.GOVERSION }}"
+  - -X "github.com/PeerXu/meepo/pkg/util/version.GitHash={{ .Commit }}"
+  - -X "github.com/PeerXu/meepo/pkg/util/version.Built={{ .CommitDate }}"
 checksum:
   name_template: 'checksums.txt'
+archives:
+- name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+  files:
+  - none*
 release:
   # Same as for github
   # Note: it can only be one: either github, gitlab or gitea
   github:
     owner: PeerXu
     name: meepo
-
   draft: false
-
-  # You can add extra pre-existing files to the release.
-  # The filename on the release will be the last part of the path (base). If
-  # another file with the same name exists, the latest one found will be used.
-  # Defaults to empty.
+snapcrafts:
+- name: meepo
+  name_template: '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+  summary: Connect to your service without public IP in p2p channel
+  description: |
+    Meepo help you to build your private network over Internet in easy way.
+  grade: stable
+  confinement: strict
+  publish: true
   extra_files:
-    - glob: ./release/packages/*
+  - source: bin/meepod.wrapper
+    destination: meepod.wrapper
+    mode: 0755
+  layout:
+    /etc/meepo:
+      bind: $SNAP_DATA/etc
+  apps:
+    meepod:
+      daemon: simple
+      command: meepod.wrapper
+      plugs:
+      - network
+      - network-bind
+      - config-meepo
+    meepo:
+      command: meepo
+      plugs:
+      - network
+      - network-bind
+      - config-meepo
+  plugs:
+    config-meepo:
+      interface: system-files
+      write:
+      - /var/snap/meepo/current/etc

@@ -4,12 +4,22 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cast"
 	"gopkg.in/yaml.v3"
 )
+
+func GetDefaultConfigPath() string {
+	switch runtime.GOOS {
+	case "linux":
+		return "/etc/meepo/meepo.yaml"
+	default:
+		return "~/.meepo/config.yaml"
+	}
+}
 
 type Config struct {
 	Meepo *MeepoConfig `yaml:"meepo"`

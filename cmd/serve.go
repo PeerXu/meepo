@@ -151,6 +151,6 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 func init() {
 	rootCmd.AddCommand(serveCmd)
 
-	serveCmd.PersistentFlags().StringP("config", "c", "~/.meepo/config.yaml", "Location of meepo config file")
+	serveCmd.PersistentFlags().StringP("config", "c", config.GetDefaultConfigPath(), "Location of meepo config file")
 	serveCmd.PersistentFlags().BoolP("daemon", "d", true, "Run as daemon")
 }
