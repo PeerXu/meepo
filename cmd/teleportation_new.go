@@ -11,9 +11,10 @@ import (
 
 var (
 	teleportationNewCmd = &cobra.Command{
-		Use:   "new",
+		Use:   "new [-n name] [-l local-address] <id> <remote-address>",
 		Short: "New teleportation",
 		RunE:  meepoTeleportationNew,
+		Args:  cobra.ExactArgs(2),
 	}
 )
 
@@ -21,12 +22,13 @@ func meepoTeleportationNew(cmd *cobra.Command, args []string) error {
 	var err error
 
 	fs := cmd.Flags()
-	id, _ := fs.GetString("id")
 	name, _ := fs.GetString("name")
-	localNetwork, _ := fs.GetString("local-network")
 	localAddress, _ := fs.GetString("local-address")
-	remoteNetwork, _ := fs.GetString("remote-network")
-	remoteAddress, _ := fs.GetString("remote-address")
+
+	id := args[0]
+	remoteAddress := args[1]
+	localNetwork := "tcp"
+	remoteNetwork := "tcp"
 
 	sdk, err := NewHTTPSDK(cmd)
 	if err != nil {
@@ -65,10 +67,6 @@ func meepoTeleportationNew(cmd *cobra.Command, args []string) error {
 func init() {
 	teleportationCmd.AddCommand(teleportationNewCmd)
 
-	teleportationNewCmd.PersistentFlags().String("id", "", "Meepo ID")
-	teleportationNewCmd.PersistentFlags().String("name", "", "Teleportation name")
-	teleportationNewCmd.PersistentFlags().String("local-network", "", "Local listen network")
-	teleportationNewCmd.PersistentFlags().String("local-address", "", "Local listen address, if not set, random port will be listen")
-	teleportationNewCmd.PersistentFlags().String("remote-network", "", "Remote server network")
-	teleportationNewCmd.PersistentFlags().String("remote-address", "", "Remote server address")
+	teleportationNewCmd.PersistentFlags().StringP("name", "n", "", "Teleportation name")
+	teleportationNewCmd.PersistentFlags().StringP("local-address", "l", "", "Local listen address, if not set, random port will be listen")
 }

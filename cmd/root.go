@@ -21,5 +21,5 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().String("log-level", "info", "Logging level")
-	rootCmd.PersistentFlags().String("host", "http://127.0.0.1:12345", "Daemon API base url")
+	rootCmd.PersistentFlags().StringP("host", "H", "http://127.0.0.1:12345", "Daemon API base url")
 }

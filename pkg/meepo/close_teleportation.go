@@ -79,10 +79,9 @@ func (mp *Meepo) onCloseTeleportation(dc transport.DataChannel, in interface{}) 
 			"name":    req.Name,
 		})
 
-	ts, ok := mp.getTeleportationSink(req.Name)
-	if !ok {
-		err = TeleportationNotExistError
-		logger.WithError(err).Errorf("failed to get teleportation sink")
+	ts, err := mp.GetTeleportation(req.Name)
+	if err != nil {
+		logger.WithError(err).Errorf("failed to get teleportation")
 		mp.sendMessage(dc, mp.invertMessageWithError(req, err))
 		return
 	}

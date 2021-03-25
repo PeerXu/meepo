@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net"
 	"sync"
 	"time"
@@ -21,12 +20,12 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/PeerXu/meepo/pkg/signaling"
+	mrand "github.com/PeerXu/meepo/pkg/util/random"
 	msync "github.com/PeerXu/meepo/pkg/util/sync"
 )
 
 var (
 	compress bool
-	random   *rand.Rand
 )
 
 type Event struct {
@@ -121,7 +120,7 @@ func decode(in []byte, obj interface{}) error {
 }
 
 func NewWireEvent(descriptor *signaling.Descriptor) *Event {
-	return NewWireEventWithSession(random.Int31(), descriptor)
+	return NewWireEventWithSession(mrand.Random.Int31(), descriptor)
 }
 
 func NewWireEventWithSession(session int32, descriptor *signaling.Descriptor) *Event {
@@ -594,6 +593,5 @@ func NewRedisEngine(opts ...signaling.NewEngineOption) (signaling.Engine, error)
 
 func init() {
 	compress = true
-	random = rand.New(rand.NewSource(time.Now().UnixNano()))
 	signaling.RegisterNewEngineFunc("redis", NewRedisEngine)
 }

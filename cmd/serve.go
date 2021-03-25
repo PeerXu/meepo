@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/Pallinder/go-randomdata"
 	"github.com/VividCortex/godaemon"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -15,13 +14,15 @@ import (
 	"github.com/PeerXu/meepo/pkg/api"
 	http_api "github.com/PeerXu/meepo/pkg/api/http"
 	"github.com/PeerXu/meepo/pkg/meepo"
+	"github.com/PeerXu/meepo/pkg/meepo/auth"
 	"github.com/PeerXu/meepo/pkg/signaling"
 	redis_signaling "github.com/PeerXu/meepo/pkg/signaling/redis"
+	mrand "github.com/PeerXu/meepo/pkg/util/random"
 )
 
 var (
 	serveCmd = &cobra.Command{
-		Use:     "serve",
+		Use:     "serve [-c config] [-d daemon]",
 		Aliases: []string{"summon"},
 		Short:   "Summon a Meepo",
 		RunE:    meepoSummon,
@@ -77,10 +78,10 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 
 	id := cfg.Meepo.ID
 	if id == "" {
-		id = randomdata.SillyName()
+		id = mrand.SillyName()
 	}
 
-	engineOptions := []signaling.NewEngineOption{
+	signalingEngineOptions := []signaling.NewEngineOption{
 		signaling.WithID(id),
 		signaling.WithLogger(logger),
 	}
@@ -88,19 +89,38 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	switch cfg.Meepo.Signaling.Name {
 	case "redis":
 		rsCfg := cfg.Meepo.SignalingI.(*config.RedisSignalingConfig)
-		engineOptions = append(
-			engineOptions,
+		signalingEngineOptions = append(
+			signalingEngineOptions,
 			redis_signaling.WithURL(rsCfg.URL),
 		)
 	}
 
-	signalingEngine, err := signaling.NewEngine(cfg.Meepo.Signaling.Name, engineOptions...)
+	signalingEngine, err := signaling.NewEngine(cfg.Meepo.Signaling.Name, signalingEngineOptions...)
+	if err != nil {
+		return err
+	}
+
+	var authEngineOptions []auth.NewEngineOption
+	switch cfg.Meepo.Auth.Name {
+	case "dummy":
+	case "secret":
+		sa := cfg.Meepo.AuthI.(*config.SecretAuthConfig)
+		authEngineOptions = append(authEngineOptions, auth.WithSecret(sa.Secret))
+		if sa.HashAlgorithm != "" {
+			authEngineOptions = append(authEngineOptions, auth.WithHashAlgorithm(sa.HashAlgorithm))
+		}
+		if sa.Template != "" {
+			authEngineOptions = append(authEngineOptions, auth.WithTemplate(sa.Template))
+		}
+	}
+	authEngine, err := auth.NewEngine(cfg.Meepo.Auth.Name, authEngineOptions...)
 	if err != nil {
 		return err
 	}
 
 	newMeepoOptions := []meepo.NewMeepoOption{
 		meepo.WithSignalingEngine(signalingEngine),
+		meepo.WithAuthEngine(authEngine),
 		meepo.WithLogger(logger),
 		meepo.WithID(id),
 		meepo.WithICEServers(cfg.Meepo.TransportI.(*config.WebrtcTransportConfig).ICEServers),

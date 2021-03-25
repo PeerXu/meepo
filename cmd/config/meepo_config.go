@@ -5,6 +5,8 @@ type MeepoConfig struct {
 	Daemon      bool             `yaml:"daemon"`
 	AsSignaling bool             `yaml:"asSignaling"`
 	Log         *LogConfig       `yaml:"log"`
+	Auth        *AuthConfig      `yaml:"auth"`
+	AuthI       interface{}      `yaml:"-"`
 	Transport   *TransportConfig `yaml:"transport"`
 	TransportI  interface{}      `yaml:"-"`
 	Signaling   *SignalingConfig `yaml:"signaling"`
@@ -21,6 +23,7 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Daemon      bool             `yaml:"daemon"`
 		AsSignaling bool             `yaml:"asSignaling"`
 		Log         *LogConfig       `yaml:"log"`
+		Auth        *AuthConfig      `yaml:"auth"`
 		Transport   *TransportConfig `yaml:"transport"`
 		Signaling   *SignalingConfig `yaml:"signaling"`
 		Api         *ApiConfig       `yaml:"api"`
@@ -30,44 +33,32 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	mc.Transport = fmc.Transport
-	switch fmc.Transport.Name {
-	case "webrtc":
-		var fwrtc struct {
-			Transport WebrtcTransportConfig `yaml:"transport"`
-		}
-		if err = unmarshal(&fwrtc); err != nil {
+	mc.Auth = fmc.Auth
+	if fmc.Auth != nil {
+		if mc.AuthI, err = unmarshalConfig("meepo.auth", fmc.Auth.Name, unmarshal); err != nil {
 			return err
 		}
-		mc.TransportI = &fwrtc.Transport
-	default:
-		return UnsupportedTransportNameError(fmc.Transport.Name)
+	}
+
+	mc.Transport = fmc.Transport
+	if fmc.Transport != nil {
+		if mc.TransportI, err = unmarshalConfig("meepo.transport", fmc.Transport.Name, unmarshal); err != nil {
+			return err
+		}
 	}
 
 	mc.Signaling = fmc.Signaling
-	switch fmc.Signaling.Name {
-	case "redis":
-		var frsc struct {
-			Signaling RedisSignalingConfig `yaml:"signaling"`
-		}
-		if err = unmarshal(&frsc); err != nil {
+	if fmc.Signaling != nil {
+		if mc.SignalingI, err = unmarshalConfig("meepo.signaling", fmc.Signaling.Name, unmarshal); err != nil {
 			return err
 		}
-		mc.SignalingI = &frsc.Signaling
 	}
 
 	mc.Api = fmc.Api
-	switch fmc.Api.Name {
-	case "http":
-		var fhac struct {
-			Api HttpApiConfig `yaml:"api"`
-		}
-		if err = unmarshal(&fhac); err != nil {
+	if fmc.Api != nil {
+		if mc.ApiI, err = unmarshalConfig("meepo.api", fmc.Api.Name, unmarshal); err != nil {
 			return err
 		}
-		mc.ApiI = &fhac.Api
-	default:
-		return UnsupportedApiNameError(fmc.Api.Name)
 	}
 
 	mc.ID = fmc.ID
@@ -84,6 +75,7 @@ func (mc *MeepoConfig) MarshalYAML() (interface{}, error) {
 		Daemon      bool        `yaml:"daemon"`
 		AsSignaling bool        `yaml:"asSignaling"`
 		Log         *LogConfig  `yaml:"log"`
+		Auth        interface{} `yaml:"auth"`
 		Transport   interface{} `yaml:"transport"`
 		Signaling   interface{} `yaml:"signaling"`
 		Api         interface{} `yaml:"api"`
@@ -92,6 +84,7 @@ func (mc *MeepoConfig) MarshalYAML() (interface{}, error) {
 		Daemon:      mc.Daemon,
 		AsSignaling: mc.AsSignaling,
 		Log:         mc.Log,
+		Auth:        mc.AuthI,
 		Transport:   mc.TransportI,
 		Signaling:   mc.SignalingI,
 		Api:         mc.ApiI,

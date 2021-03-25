@@ -14,7 +14,7 @@ var (
 	sshCmd = &cobra.Command{
 		Use:     "ssh",
 		Short:   "Run a ssh proxy to other Meepo ssh server",
-		Example: "eval $(meepo ssh -- <username>@<meepo-id> -p <port> ...)",
+		Example: "eval $(meepo ssh -- -p <port> ... <username>@<meepo-id>)",
 		RunE:    meepoSsh,
 	}
 )
@@ -32,7 +32,7 @@ func splitUsernameHost(s string) (string, string, error) {
 	return ss[0], ss[1], nil
 }
 
-// meepo ssh -- <username>@<meepo-id> -p <ssh-port> ...
+// meepo ssh -- -p <ssh-port> ... <username>@<meepo-id>
 func meepoSsh(cmd *cobra.Command, args []string) error {
 	var err error
 

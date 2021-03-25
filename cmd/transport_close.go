@@ -8,17 +8,17 @@ import (
 
 var (
 	transportCloseCmd = &cobra.Command{
-		Use:   "close",
+		Use:   "close <name>",
 		Short: "Close transport",
 		RunE:  meepoTransportClose,
+		Args:  cobra.ExactArgs(1),
 	}
 )
 
 func meepoTransportClose(cmd *cobra.Command, args []string) error {
 	var err error
 
-	fs := cmd.Flags()
-	id, _ := fs.GetString("id")
+	id := args[0]
 
 	sdk, err := NewHTTPSDK(cmd)
 	if err != nil {
@@ -36,6 +36,4 @@ func meepoTransportClose(cmd *cobra.Command, args []string) error {
 
 func init() {
 	transportCmd.AddCommand(transportCloseCmd)
-
-	transportCloseCmd.PersistentFlags().String("id", "", "Meepo ID")
 }

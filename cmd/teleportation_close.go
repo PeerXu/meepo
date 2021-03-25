@@ -8,17 +8,17 @@ import (
 
 var (
 	teleportationCloseCmd = &cobra.Command{
-		Use:   "close",
+		Use:   "close <name>",
 		Short: "Close teleportation",
 		RunE:  meepoTeleportationClose,
+		Args:  cobra.ExactArgs(1),
 	}
 )
 
 func meepoTeleportationClose(cmd *cobra.Command, args []string) error {
 	var err error
 
-	fs := cmd.Flags()
-	name, _ := fs.GetString("name")
+	name := args[0]
 
 	sdk, err := NewHTTPSDK(cmd)
 	if err != nil {

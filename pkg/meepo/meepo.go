@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cast"
 	"github.com/stretchr/objx"
 
+	"github.com/PeerXu/meepo/pkg/meepo/auth"
 	"github.com/PeerXu/meepo/pkg/signaling"
 	chain_signaling "github.com/PeerXu/meepo/pkg/signaling/chain"
 	"github.com/PeerXu/meepo/pkg/teleportation"
@@ -26,6 +27,7 @@ var (
 type Meepo struct {
 	rtc *webrtc.API
 	se  signaling.Engine
+	ae  auth.Engine
 
 	transports    map[string]transport.Transport
 	transportsMtx sync.Mutex
@@ -227,6 +229,10 @@ func (mp *Meepo) removeTeleportationsByPeerIDNL(id string) {
 	}
 }
 
+func (mp *Meepo) getSignatureFromUserData(ud map[string]interface{}) auth.Context {
+	return cast.ToStringMap(objx.New(ud).Get("signature").Inter())
+}
+
 func (mp *Meepo) init() error {
 	mp.initHandlers()
 
@@ -236,6 +242,7 @@ func (mp *Meepo) init() error {
 func NewMeepo(opts ...NewMeepoOption) (*Meepo, error) {
 	var logger logrus.FieldLogger
 	var rtc *webrtc.API
+	var ae auth.Engine
 	var se signaling.Engine
 	var ok bool
 	var err error
@@ -256,12 +263,17 @@ func NewMeepo(opts ...NewMeepoOption) (*Meepo, error) {
 		rtc = webrtc.NewAPI(webrtc.WithSettingEngine(settingEngine))
 	}
 
+	if ae, ok = o.Get("authEngine").Inter().(auth.Engine); !ok {
+		return nil, fmt.Errorf("require authEngine")
+	}
+
 	if se, ok = o.Get("signalingEngine").Inter().(signaling.Engine); !ok {
 		return nil, fmt.Errorf("require signalingEngine")
 	}
 
 	mp := &Meepo{
 		rtc:                      rtc,
+		ae:                       ae,
 		se:                       se,
 		transports:               make(map[string]transport.Transport),
 		teleportationSources:     make(map[string]*teleportation.TeleportationSource),
