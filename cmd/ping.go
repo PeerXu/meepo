@@ -8,17 +8,20 @@ import (
 
 var (
 	pingCmd = &cobra.Command{
-		Use:   "ping",
+		Use:   "ping <id>",
 		Short: "Send ping request to peer meepo",
 		RunE:  meepoPing,
+		Args:  cobra.ExactArgs(1),
 	}
 )
 
 func meepoPing(cmd *cobra.Command, args []string) error {
 	var err error
 
-	fs := cmd.Flags()
-	id, _ := fs.GetString("id")
+	if len(args) == 0 {
+		return fmt.Errorf("Require id")
+	}
+	id := args[0]
 
 	sdk, err := NewHTTPSDK(cmd)
 	if err != nil {
@@ -36,6 +39,4 @@ func meepoPing(cmd *cobra.Command, args []string) error {
 
 func init() {
 	rootCmd.AddCommand(pingCmd)
-
-	pingCmd.PersistentFlags().String("id", "", "Meepo ID")
 }

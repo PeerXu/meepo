@@ -9,32 +9,12 @@ type WebrtcTransportConfig struct {
 	ICEServers []string `yaml:"iceServers"`
 }
 
-func (wtc *WebrtcTransportConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var err error
-
-	var fwtc struct {
-		Name       string   `yaml:"name"`
-		ICEServers []string `yaml:"iceServers"`
-	}
-
-	if err = unmarshal(&fwtc); err != nil {
-		return err
-	}
-
-	wtc.Name = fwtc.Name
-	wtc.ICEServers = fwtc.ICEServers
-
-	return nil
-}
-
-func (wtc *WebrtcTransportConfig) MarshalYAML() (interface{}, error) {
-	_wtc := struct {
-		Name       string   `yaml:"name"`
-		ICEServers []string `yaml:"iceServers"`
-	}{
-		Name:       wtc.Name,
-		ICEServers: wtc.ICEServers,
-	}
-
-	return &_wtc, nil
+func init() {
+	RegisterUnmarshalConfigFunc("meepo.transport", "webrtc", func(u func(interface{}) error) (interface{}, error) {
+		var t struct{ Transport *WebrtcTransportConfig }
+		if err := u(&t); err != nil {
+			return nil, err
+		}
+		return t.Transport, nil
+	})
 }

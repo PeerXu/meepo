@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -10,26 +11,19 @@ import (
 
 var (
 	configSetCmd = &cobra.Command{
-		Use:     "set",
-		Short:   "Set Meepo config setting",
-		Example: "meepo config set <key> <value>",
-		RunE:    meepoConfigSet,
+		Use:   "set <key1>=<value1> [<key2>=<value2> ...]",
+		Short: "Set Meepo config setting",
+		RunE:  meepoConfigSet,
 	}
 )
 
 func meepoConfigSet(cmd *cobra.Command, args []string) error {
 	fs := cmd.Flags()
 
-	key, _ := fs.GetString("key")
-	value, _ := fs.GetString("value")
 	cp, _ := fs.GetString("config")
 
-	if key == "" {
-		return fmt.Errorf("require key")
-	}
-
-	if value == "" {
-		return fmt.Errorf("require value")
+	if len(args) == 0 {
+		return fmt.Errorf("Require config(key=value)")
 	}
 
 	cfg, _, err := config.Load(cp)
@@ -37,8 +31,20 @@ func meepoConfigSet(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err = cfg.Set(key, value); err != nil {
-		return err
+	for _, arg := range args {
+		ss := strings.SplitN(arg, "=", 2)
+		if len(ss) != 2 {
+			return fmt.Errorf("Require config(key=value)")
+		}
+
+		key, val := ss[0], ss[1]
+		if val, err = ParseValue(val); err != nil {
+			return err
+		}
+
+		if err = cfg.Set(key, val); err != nil {
+			return err
+		}
 	}
 
 	if err = cfg.Dump(cp); err != nil {
@@ -50,7 +56,4 @@ func meepoConfigSet(cmd *cobra.Command, args []string) error {
 
 func init() {
 	configCmd.AddCommand(configSetCmd)
-
-	configSetCmd.PersistentFlags().StringP("key", "k", "", "Config setting key")
-	configSetCmd.PersistentFlags().StringP("value", "v", "", "Config setting value")
 }

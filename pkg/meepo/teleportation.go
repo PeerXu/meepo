@@ -13,9 +13,9 @@ func (mp *Meepo) getTeleportationNL(name string) (teleportation.Teleportation, e
 	var tp teleportation.Teleportation
 	var ok bool
 
-	tp, ok = mp.teleportationSources[name]
+	tp, ok = mp.getTeleportationSourceNL(name)
 	if !ok {
-		tp, ok = mp.teleportationSinks[name]
+		tp, ok = mp.getTeleportationSinkNL(name)
 		if !ok {
 			return nil, TeleportationNotExistError
 		}

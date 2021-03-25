@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/objx"
 
+	"github.com/PeerXu/meepo/pkg/meepo/auth"
 	"github.com/PeerXu/meepo/pkg/signaling"
 )
 
@@ -43,6 +44,12 @@ type NewMeepoOption = OFN
 func WithSignalingEngine(se signaling.Engine) OFN {
 	return func(o objx.Map) {
 		o["signalingEngine"] = se
+	}
+}
+
+func WithAuthEngine(ae auth.Engine) OFN {
+	return func(o objx.Map) {
+		o["authEngine"] = ae
 	}
 }
 

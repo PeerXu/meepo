@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -11,7 +12,7 @@ import (
 
 var (
 	configInitCmd = &cobra.Command{
-		Use:   "init",
+		Use:   "init [--overwrite] [<key1>=<value2> ...]",
 		Short: "Initial config file",
 		RunE:  meepoConfigInit,
 	}
@@ -23,7 +24,6 @@ func meepoConfigInit(cmd *cobra.Command, args []string) error {
 
 	fs := cmd.Flags()
 	cp, _ := fs.GetString("config")
-	id, _ := fs.GetString("id")
 	overwrite, _ := fs.GetBool("overwrite")
 
 	if _, loaded, err = config.Load(cp); err != nil {
@@ -38,7 +38,21 @@ func meepoConfigInit(cmd *cobra.Command, args []string) error {
 
 	cfg := config.NewDefaultConfig()
 
-	cfg.Meepo.ID = id
+	for _, arg := range args {
+		ss := strings.SplitN(arg, "=", 2)
+		if len(ss) != 2 {
+			return fmt.Errorf("Require config(key=value)")
+		}
+
+		key, val := ss[0], ss[1]
+		if val, err = ParseValue(val); err != nil {
+			return err
+		}
+
+		if err = cfg.Set(key, val); err != nil {
+			return err
+		}
+	}
 
 	if err = cfg.Dump(cp); err != nil {
 		return err
@@ -52,6 +66,5 @@ func meepoConfigInit(cmd *cobra.Command, args []string) error {
 func init() {
 	configCmd.AddCommand(configInitCmd)
 
-	configInitCmd.PersistentFlags().Bool("overwrite", false, "Overwrite config file")
-	configInitCmd.PersistentFlags().String("id", "", "Meepo ID")
+	configInitCmd.PersistentFlags().Bool("overwrite", false, "Overwrite exists config file")
 }

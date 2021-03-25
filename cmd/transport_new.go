@@ -8,17 +8,17 @@ import (
 
 var (
 	transportNewCmd = &cobra.Command{
-		Use:   "new",
+		Use:   "new <id>",
 		Short: "New transport",
 		RunE:  meepoTransportNew,
+		Args:  cobra.ExactArgs(1),
 	}
 )
 
 func meepoTransportNew(cmd *cobra.Command, args []string) error {
 	var err error
 
-	fs := cmd.Flags()
-	id, _ := fs.GetString("id")
+	id := args[0]
 
 	sdk, err := NewHTTPSDK(cmd)
 	if err != nil {
@@ -37,6 +37,4 @@ func meepoTransportNew(cmd *cobra.Command, args []string) error {
 
 func init() {
 	transportCmd.AddCommand(transportNewCmd)
-
-	transportNewCmd.PersistentFlags().String("id", "", "Meepo ID")
 }

@@ -23,17 +23,26 @@ func (s *ConfigTestSuite) TestEncodeDecodeConfig() {
 	err = yaml.Unmarshal(buf, &out)
 	s.Require().Nil(err)
 
-	ti, ok := out.Meepo.TransportI.(*config.WebrtcTransportConfig)
-	s.Require().True(ok)
-	s.Equal("webrtc", ti.Name)
-
-	si, ok := out.Meepo.SignalingI.(*config.RedisSignalingConfig)
-	s.Require().True(ok)
-	s.Equal("redis", si.Name)
-
-	ai, ok := out.Meepo.ApiI.(*config.HttpApiConfig)
-	s.Require().True(ok)
-	s.Equal("http", ai.Name)
+	{
+		ai, ok := out.Meepo.AuthI.(*config.DummyAuthConfig)
+		s.Require().True(ok)
+		s.Equal("dummy", ai.Name)
+	}
+	{
+		ti, ok := out.Meepo.TransportI.(*config.WebrtcTransportConfig)
+		s.Require().True(ok)
+		s.Equal("webrtc", ti.Name)
+	}
+	{
+		si, ok := out.Meepo.SignalingI.(*config.RedisSignalingConfig)
+		s.Require().True(ok)
+		s.Equal("redis", si.Name)
+	}
+	{
+		ai, ok := out.Meepo.ApiI.(*config.HttpApiConfig)
+		s.Require().True(ok)
+		s.Equal("http", ai.Name)
+	}
 }
 
 func TestConfigTestSuite(t *testing.T) {

@@ -15,12 +15,12 @@ fi
 mkdir -p /root/.meepo/
 cp /root/config.template.yaml /root/.meepo/config.yaml
 
-${MEEPO} config set --key "id" --value "${MEEPO_ID}"
+${MEEPO} config set id="${MEEPO_ID}"
 if [ "x${MEEPO_SIGNALING_URL}" != "x" ]; then
-    ${MEEPO} config set --key "signaling.url" --value "${MEEPO_SIGNALING_URL}"
+    ${MEEPO} config set signaling.url="${MEEPO_SIGNALING_URL}"
 fi
 if [ "x${MEEPO_AS_SIGNALING}" != "x" ]; then
-    ${MEEPO} config set --key "asSignaling" --value "${MEEPO_AS_SIGNALING}"
+    ${MEEPO} config set asSignaling="${MEEPO_AS_SIGNALING}"
 fi
 
 ${MEEPO} serve --daemon=false --log-level=trace

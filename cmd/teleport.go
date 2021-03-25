@@ -11,21 +11,22 @@ import (
 
 var (
 	teleportCmd = &cobra.Command{
-		Use:     "teleport",
+		Use:     "teleport [-n <name>] [-l <local-address>] <id> <remote-address>",
 		Short:   "New teleportation in easy way",
 		Aliases: []string{"tp"},
 		RunE:    meepoTeleport,
+		Args:    cobra.ExactArgs(2),
 	}
 )
 
 func meepoTeleport(cmd *cobra.Command, args []string) error {
 	fs := cmd.Flags()
-	peerID, _ := fs.GetString("id")
 	name, _ := fs.GetString("name")
-	localNetwork, _ := fs.GetString("local-network")
 	localAddress, _ := fs.GetString("local-address")
-	remoteNetwork, _ := fs.GetString("remote-network")
-	remoteAddress, _ := fs.GetString("remote-address")
+	peerID := args[0]
+	remoteAddress := args[1]
+	localNetwork := "tcp"
+	remoteNetwork := "tcp"
 
 	sdk, err := NewHTTPSDK(cmd)
 	if err != nil {
@@ -65,10 +66,6 @@ func meepoTeleport(cmd *cobra.Command, args []string) error {
 func init() {
 	rootCmd.AddCommand(teleportCmd)
 
-	teleportCmd.PersistentFlags().String("id", "", "Meepo ID")
-	teleportCmd.PersistentFlags().String("name", "", "Teleportation name")
-	teleportCmd.PersistentFlags().String("local-network", "tcp", "Local listen network")
-	teleportCmd.PersistentFlags().String("local-address", "", "Local listen address")
-	teleportCmd.PersistentFlags().String("remote-network", "tcp", "Remote server network")
-	teleportCmd.PersistentFlags().String("remote-address", "", "Remote server address")
+	teleportCmd.PersistentFlags().StringP("name", "n", "", "Teleportation name")
+	teleportCmd.PersistentFlags().StringP("local-address", "l", "", "Local listen address")
 }

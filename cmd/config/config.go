@@ -27,12 +27,17 @@ func (c *Config) Get(key string) (string, error) {
 		return strings.Join(c.Meepo.TransportI.(*WebrtcTransportConfig).ICEServers, ","), nil
 	case "asSignaling":
 		return cast.ToString(c.Meepo.AsSignaling), nil
+	case "auth":
+		buf, err := yaml.Marshal(c.Meepo.AuthI)
+		return string(buf), err
 	default:
-		return "", UnsupportedGetConfigKeyError(key)
+		return "", UnsupportedConfigKeyError{key}
 	}
 }
 
 func (c *Config) Set(key, val string) error {
+	var err error
+
 	switch key {
 	case "id":
 		c.Meepo.ID = val
@@ -42,8 +47,28 @@ func (c *Config) Set(key, val string) error {
 		c.Meepo.SignalingI.(*RedisSignalingConfig).URL = val
 	case "asSignaling":
 		c.Meepo.AsSignaling = cast.ToBool(val)
+	case "auth":
+		var ac AuthConfig
+
+		if err = yaml.Unmarshal([]byte(val), &ac); err != nil {
+			return err
+		}
+
+		c.Meepo.Auth = &ac
+		if c.Meepo.AuthI, err = UnmarshalConfig("meepo.auth", ac.Name, WrapKeyYaml("auth", string(val))); err != nil {
+			return err
+		}
+	case "auth.secret":
+		c.Meepo.Auth = &AuthConfig{Name: "secret"}
+		c.Meepo.AuthI = &SecretAuthConfig{
+			Name:   "secret",
+			Secret: val,
+		}
+	case "auth.dummy":
+		c.Meepo.Auth = &AuthConfig{Name: "dummy"}
+		c.Meepo.AuthI = &DummyAuthConfig{Name: "dummy"}
 	default:
-		return UnsupportedSetConfigKeyError(key)
+		return UnsupportedConfigKeyError{key}
 	}
 
 	return nil
@@ -91,6 +116,11 @@ func Load(p string) (config *Config, loaded bool, err error) {
 		return nil, false, err
 	}
 
+	if config.Meepo.Auth == nil {
+		config.Meepo.Auth = &AuthConfig{Name: "dummy"}
+		config.Meepo.AuthI = &DummyAuthConfig{Name: "dummy"}
+	}
+
 	return config, true, nil
 }
 
@@ -102,6 +132,12 @@ func NewDefaultConfig() *Config {
 			AsSignaling: false,
 			Log: &LogConfig{
 				Level: "error",
+			},
+			Auth: &AuthConfig{
+				Name: "dummy",
+			},
+			AuthI: &DummyAuthConfig{
+				Name: "dummy",
 			},
 			Transport: &TransportConfig{
 				Name: "webrtc",

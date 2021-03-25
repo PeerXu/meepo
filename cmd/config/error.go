@@ -2,23 +2,19 @@ package config
 
 import "fmt"
 
-func UnsupportedTransportNameError(name string) error {
-	return fmt.Errorf("Unsupported transport name: %s", name)
-
+type UnsupportedError struct {
+	Namespace string
+	Name      string
 }
 
-func UnsupportedSignalingNameError(name string) error {
-	return fmt.Errorf("Unsupported signaling name: %s", name)
+func (e UnsupportedError) Error() string {
+	return fmt.Sprintf("Unsupported namespace: %v, name: %v", e.Namespace, e.Name)
 }
 
-func UnsupportedApiNameError(name string) error {
-	return fmt.Errorf("Unsupported api name: %s", name)
+type UnsupportedConfigKeyError struct {
+	Key string
 }
 
-func UnsupportedGetConfigKeyError(key string) error {
-	return fmt.Errorf("Unsupported get config key: %s", key)
-}
-
-func UnsupportedSetConfigKeyError(key string) error {
-	return fmt.Errorf("Unsupported set config key: %s", key)
+func (e UnsupportedConfigKeyError) Error() string {
+	return fmt.Sprintf("Unsupported config key: %v", e.Key)
 }

@@ -25,7 +25,7 @@ Meepo的目标是提供一个去中心化的, 便捷的连接工具.
 `<CustomID>`替换成自己想叫的名字, 建议足够复杂防止与他人冲突.
 
 ```bash
-$ meepo config init --id <CustomID>
+$ meepo config init id=<CustomID>
 $ meepo serve
 ```
 
@@ -44,7 +44,7 @@ $ meepo whoami
 $ meepo serve
 ```
 
- 通过whoami子命令可以校验Meepo服务启动是否成功.
+通过whoami子命令可以校验Meepo服务启动是否成功.
 
 ```bash
 $ meepo whoami
@@ -76,7 +76,7 @@ $ meepo shutdown
 
 同上, 请参考上文过程.
 
-假设H1的监听地址为 `0.0.0.0:8080`
+假设H1的监听地址为 `127.0.0.1:8080`
 
 2. 在HTTP Client(下文称之为 C1)上, 运行Meepo服务.
 
@@ -85,28 +85,31 @@ $ meepo shutdown
 3. 在C1上建立连接
 
 ```bash
-$ meepo teleport --id <CustomID> --name http --remote-address 127.0.0.1:8080
+$ meepo teleport -n http -l :8080 H1 :8080
 # sometime later...
 # output:
 Teleport SUCCESS
-Enjoy your teleportation with 127.0.0.1:65311
+Enjoy your teleportation with [::]:8080
 ```
 
-这时候已经成功建立连接, 可以通过 `http://127.0.0.1:65311` 访问HTTP服务.
+这时候已经成功建立连接, 可以通过 `http://127.0.0.1:8080` 访问H1提供的HTTP服务.
 
 4. 查看连接情况
 
 ```bash
 $ meepo teleportation list
 # output:
-Name    Transport       Portal  Source  Sink    Channels
-http    b       source  tcp:127.0.0.1:65311     tcp:127.0.0.1:8080      0
++------+-----------+--------+--------------------+--------------------+----------+
+| NAME | TRANSPORT | PORTAL |       SOURCE       |        SINK        | CHANNELS |
++------+-----------+--------+--------------------+--------------------+----------+
+| http | H1        | source | tcp:[::]:8080      | tcp::8080          |        0 |
++------+-----------+--------+--------------------+--------------------+----------+
 ```
 
 5. 关闭连接
 
 ```bash
-$ meepo teleportation close --name http
+$ meepo teleportation close http
 # output:
 Teleportation closing
 ```
@@ -152,13 +155,13 @@ M1 --- M2(Signaling Server) --- M3
 如果在初始化时未指定ID,  可以通过以下命令指定.
 
 ```bash
-$ meepo config set --key id --value <CustomID>
+$ meepo config set id=<CustomID>
 ```
 
 2. `Meepo`配置`asSignaling`字段为`true`.
 
 ```bash
-$ meepo config set --key asSignaling --value true
+$ meepo config set asSignaling=true
 ```
 
 3. 重启`Meepo`
@@ -167,6 +170,68 @@ $ meepo config set --key asSignaling --value true
 $ meepo shutdown
 # wait a few seconds...
 $ meepo serve
+```
+
+## 安全
+
+在默认配置下, `Meepo`之间的连接是不需要安全认证的. 这样带来了一定的便捷性, 同时也引入了安全问题.
+
+所以`Meepo`暂时支持以共享密钥(secret)的形式增加安全认证机制.
+
+例子:
+
+现在环境中有3个节点, 分别为`Alice`, `Bob`和`Eve`.
+
+假设`Alice`和`Bob`之间采用共享密钥的形式通信的话, 那么`Alice`和`Bob`是能够建立连接的.
+
+但是因为`Eve`并没有获取到共享密钥, 所以如果`Alice`或`Bob`想连接到`Eve`上, 是无法成功的, 当然`Eve`也无法连接到他们.
+
+```bash
+# Alice未执行初始化时
+$ meepo config init id=Alice auth.secret=AliceAndBob
+# ...
+$ meepo serve
+# ...
+$ meepo whoami
+# Alice
+
+# 如果Bob已经执行了初始化:
+$ meepo config set auth.secret=AliceAndBob
+# ...
+$ meepo serve
+# ...
+$ meepo whoami
+# Bob
+$ meepo transport new Alice
+# wait a few seconds...
+$ meepo transport list
++-------+-----------+
+| PEER  |   STATE   |
++-------+-----------+
+| Alice | connected |
++-------+-----------+
+```
+
+如果`Eve`也需要加入到`Alice`和`Bob`所组成的小网络, 那么需要配置相同的secret. 可以在`Alice`或`Bob`中导出配置, 并且共享给`Eve`.
+
+```bash
+# Alice:
+$ meepo config get auth | base64
+# bmFtZTogc2VjcmV0CnNlY3JldDogQWxpY2VBbmRCb2IK
+
+# Eve:
+$ meepo config set auth=file://<(echo 'bmFtZTogc2VjcmV0CnNlY3JldDogQWxpY2VBbmRCb2IK' | base64 -d)
+# ...
+$ meepo serve
+# ...
+$ meepo transport new Alice
+# wait a few seconds...
+$ meepo transport list
++-------+-----------+
+| PEER  |   STATE   |
++-------+-----------+
+| Alice | connected |
++-------+-----------+
 ```
 
 ## 计划
@@ -182,6 +247,7 @@ $ meepo serve
 - [ ] 支持http proxy
 - [x] 支持port forward
 - [x] 自组网功能
+- [x] SignalingEngine认证功能
 
 
 ## 为Meepo做贡献

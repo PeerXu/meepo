@@ -6,6 +6,7 @@ import (
 	"github.com/pion/webrtc/v3"
 	"github.com/sirupsen/logrus"
 
+	"github.com/PeerXu/meepo/pkg/meepo/auth"
 	"github.com/PeerXu/meepo/pkg/signaling"
 	"github.com/PeerXu/meepo/pkg/transport"
 	webrtc_transport "github.com/PeerXu/meepo/pkg/transport/webrtc"
@@ -48,9 +49,21 @@ func (mp *Meepo) NewTransport(peerID string) (transport.Transport, error) {
 		webrtc_transport.WithICEServers(mp.getICEServers()),
 		webrtc_transport.AsOfferer(),
 		webrtc_transport.WithOfferHook(func(offer *webrtc.SessionDescription) (*webrtc.SessionDescription, error) {
+			offerSignature, err := mp.ae.Sign(map[string]interface{}{
+				"offer": offer,
+			})
+
+			if err != nil {
+				logger.WithError(err).Errorf("failed to sign offer payload")
+				return nil, err
+			}
+
 			src := &signaling.Descriptor{
 				ID:                 mp.GetID(),
 				SessionDescription: offer,
+				UserData: map[string]interface{}{
+					"signature": offerSignature,
+				},
 			}
 
 			dst, err := mp.se.Wire(&signaling.Descriptor{ID: peerID}, src)
@@ -58,6 +71,15 @@ func (mp *Meepo) NewTransport(peerID string) (transport.Transport, error) {
 				logger.WithError(err).Errorf("failed to wire")
 				return nil, err
 			}
+
+			answerSignature := mp.getSignatureFromUserData(dst.UserData)
+			if err = mp.ae.Verify(map[string]interface{}{
+				"answer": dst.SessionDescription,
+			}, answerSignature); err != nil {
+				logger.WithError(err).Errorf("failed to verify answer signature")
+				return nil, err
+			}
+
 			logger.Tracef("signaling engine wire")
 
 			return dst.SessionDescription, nil
@@ -109,6 +131,14 @@ func (mp *Meepo) onNewTransport(src *signaling.Descriptor) (*signaling.Descripto
 		return nil, err
 	}
 
+	offerSignature := mp.getSignatureFromUserData(src.UserData)
+	if err = mp.ae.Verify(map[string]interface{}{
+		"offer": src.SessionDescription,
+	}, offerSignature); err != nil {
+		logger.WithError(err).Errorf("failed to verify offer signature")
+		return nil, err
+	}
+
 	var dst signaling.Descriptor
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -121,6 +151,8 @@ func (mp *Meepo) onNewTransport(src *signaling.Descriptor) (*signaling.Descripto
 		webrtc_transport.WithOffer(src.SessionDescription),
 		webrtc_transport.AsAnswerer(),
 		webrtc_transport.WithAnswerHook(func(answer *webrtc.SessionDescription, hookErr error) {
+			var answerSignature auth.Context
+
 			defer wg.Done()
 
 			if hookErr != nil {
@@ -129,8 +161,18 @@ func (mp *Meepo) onNewTransport(src *signaling.Descriptor) (*signaling.Descripto
 				return
 			}
 
+			if answerSignature, err = mp.ae.Sign(map[string]interface{}{
+				"answer": answer,
+			}); err != nil {
+				logger.WithError(err).Errorf("failed to sign answer payload")
+				return
+			}
+
 			dst.ID = mp.GetID()
 			dst.SessionDescription = answer
+			dst.UserData = map[string]interface{}{
+				"signature": answerSignature,
+			}
 		}),
 	)
 	if err != nil {

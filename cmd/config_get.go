@@ -10,22 +10,17 @@ import (
 
 var (
 	configGetCmd = &cobra.Command{
-		Use:     "get",
-		Short:   "Get Meepo config setting",
-		Example: "meepo config get <key>",
-		RunE:    meepoConfigGet,
+		Use:   "get <key>",
+		Short: "Get Meepo config setting",
+		RunE:  meepoConfigGet,
+		Args:  cobra.ExactArgs(1),
 	}
 )
 
 func meepoConfigGet(cmd *cobra.Command, args []string) error {
 	fs := cmd.Flags()
-
-	key, _ := fs.GetString("key")
 	cp, _ := fs.GetString("config")
-
-	if key == "" {
-		return fmt.Errorf("require key")
-	}
+	key := args[0]
 
 	cfg, _, err := config.Load(cp)
 	if err != nil {
@@ -37,13 +32,11 @@ func meepoConfigGet(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println(val)
+	fmt.Print(val)
 
 	return nil
 }
 
 func init() {
 	configCmd.AddCommand(configGetCmd)
-
-	configGetCmd.PersistentFlags().StringP("key", "k", "", "Config setting key")
 }
