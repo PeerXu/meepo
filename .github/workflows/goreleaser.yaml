@@ -49,7 +49,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [[ $GITHUB_REF == refs/tags/* ]]; then
-            goreleaser releaser --rm-dist
+            goreleaser release --rm-dist
           elif [[ $GITHUB_REF == refs/heads/main ]]; then
-            goreleaser releaser --rm-dist --snapshot
+            goreleaser release --rm-dist --snapshot
           fi
