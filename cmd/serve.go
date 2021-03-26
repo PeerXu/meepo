@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/VividCortex/godaemon"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -17,6 +16,7 @@ import (
 	"github.com/PeerXu/meepo/pkg/meepo/auth"
 	"github.com/PeerXu/meepo/pkg/signaling"
 	redis_signaling "github.com/PeerXu/meepo/pkg/signaling/redis"
+	mdaemon "github.com/PeerXu/meepo/pkg/util/daemon"
 	mrand "github.com/PeerXu/meepo/pkg/util/random"
 )
 
@@ -69,7 +69,7 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	}
 
 	if cfg.Meepo.Daemon {
-		godaemon.MakeDaemon(&godaemon.DaemonAttr{})
+		mdaemon.Daemon()
 	}
 
 	if !loaded {
