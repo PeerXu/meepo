@@ -15,6 +15,26 @@ Meepo的目标是提供一个去中心化的, 便捷的连接工具.
 
 因此, 作者提供了一个工具, 使得客户端可以访问无法暴露端口的服务端.
 
+## 安装
+
+### Linux
+
+如果发行版支持`snap`, 那么可以直接安装.
+
+```bash
+$ sudo snap install meepo
+```
+
+如果发行版不支持`snap`, 需要从[release](https://github.com/PeerXu/meepo/releases/latest)下载对应版本并手动安装.
+
+### macOS
+
+暂时不支持`homebrew`, 需要从[release](https://github.com/PeerXu/meepo/releases/latest)下载对应版本并手动安装.
+
+### Windows
+
+暂时不支持`chocolatey`, 需要从[release](https://github.com/PeerXu/meepo/releases/latest)下载对应版本并手动安装.
+
 
 ## 快速入门
 
