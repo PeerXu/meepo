@@ -19,8 +19,6 @@ Meepo的目标是提供一个去中心化的, 便捷的连接工具.
 
 ### Linux
 
-如果发行版支持`snap`, 那么可以直接安装.
-
 ```bash
 $ sudo snap install meepo
 ```
@@ -29,7 +27,9 @@ $ sudo snap install meepo
 
 ### macOS
 
-暂时不支持`homebrew`, 需要从[release](https://github.com/PeerXu/meepo/releases/latest)下载对应版本并手动安装.
+```bash
+$ brew install PeerXu/tap/meepo
+```
 
 ### Windows
 

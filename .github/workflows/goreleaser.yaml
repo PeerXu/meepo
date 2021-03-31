@@ -25,8 +25,7 @@ jobs:
           echo "GOVERSION=$(go version|awk '{print $3}')" >> $GITHUB_ENV
       - name: Set up Snapcraft
         run: |
-          sudo apt update
-          sudo apt install -yq snapcraft
+          sudo snap install --classic snapcraft
       - name: Cache Go modules
         uses: actions/cache@v2.1.4
         with:
@@ -37,9 +36,9 @@ jobs:
       - name: Snapcraft Login
         if: success() && startsWith(github.ref, 'refs/tags/')
         env:
-          SNAPCRAFT_LOGIN: ${{ secrets.SNAPCRAFT_LOGIN }}
+          SNAPCRAFT_TOKEN: ${{ secrets.SNAPCRAFT_TOKEN }}
         run: |
-          snapcraft login --with <(echo "$SNAPCRAFT_LOGIN")
+          snapcraft login --with <(echo "$SNAPCRAFT_TOKEN")
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
@@ -47,6 +46,7 @@ jobs:
       - name: Run GoReleaser
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
         run: |
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             goreleaser release --rm-dist
