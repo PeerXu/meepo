@@ -36,7 +36,7 @@ release:
   github:
     owner: PeerXu
     name: meepo
-  draft: false
+  draft: true
 snapcrafts:
 - name: meepo
   name_template: '{{ .ProjectName }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
@@ -65,3 +65,17 @@ snapcrafts:
       plugs:
       - network
       - network-bind
+brews:
+- description: |
+    Meepo help you to build your private network over Internet in easy way.
+  tap:
+    owner: PeerXu
+    name: homebrew-tap
+    token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+  folder: Formula
+  homepage: https://github.com/PeerXu/meepo
+  license: MIT
+  test: |
+    system "#{bin}/meepo version"
+  install: |
+    bin.install "meepo"
