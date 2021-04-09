@@ -48,8 +48,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
         run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
+          if [[ $GITHUB_REF == refs/tags/* ]]
+          then
             goreleaser release --rm-dist
-          elif [[ $GITHUB_REF == refs/heads/dev ]]; then
+          else
             goreleaser release --rm-dist --snapshot
           fi
