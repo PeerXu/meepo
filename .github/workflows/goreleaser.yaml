@@ -24,8 +24,11 @@ jobs:
         run: |
           echo "GOVERSION=$(go version|awk '{print $3}')" >> $GITHUB_ENV
       - name: Set up Snapcraft
+        # HACK: the mkdirs are  a hack for https://bugs.launchpad.net/snapcraft/+bug/1889741
         run: |
           sudo snap install --classic snapcraft
+          mkdir -p $HOME/.cache/snapcraft/download
+          mkdir -p $HOME/.cache/snapcraft/stage-packages
       - name: Cache Go modules
         uses: actions/cache@v2.1.4
         with:
@@ -48,8 +51,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
         run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
+          if [[ $GITHUB_REF == refs/tags/* ]]
+          then
             goreleaser release --rm-dist
-          elif [[ $GITHUB_REF == refs/heads/main ]]; then
+          else
             goreleaser release --rm-dist --snapshot
           fi
