@@ -50,6 +50,6 @@ jobs:
         run: |
           if [[ $GITHUB_REF == refs/tags/* ]]; then
             goreleaser release --rm-dist
-          elif [[ $GITHUB_REF == refs/heads/main ]]; then
+          elif [[ $GITHUB_REF == refs/heads/dev ]]; then
             goreleaser release --rm-dist --snapshot
           fi
