@@ -24,8 +24,11 @@ jobs:
         run: |
           echo "GOVERSION=$(go version|awk '{print $3}')" >> $GITHUB_ENV
       - name: Set up Snapcraft
+        # HACK: the mkdirs are  a hack for https://bugs.launchpad.net/snapcraft/+bug/1889741
         run: |
           sudo snap install --classic snapcraft
+          mkdir -p $HOME/.cache/snapcraft/download
+          mkdir -p $HOME/.cache/snapcraft/stage-packages
       - name: Cache Go modules
         uses: actions/cache@v2.1.4
         with:
