@@ -396,7 +396,11 @@ func (e *RedisEngine) getContext() context.Context {
 }
 
 func (e *RedisEngine) sendEvent(id string, evt *Event) error {
-	logger := e.getLogger().WithField("#method", "sendEvent")
+	logger := e.getLogger().WithFields(logrus.Fields{
+		"#method": "sendEvent",
+		"name":    evt.Name,
+		"session": evt.Session,
+	})
 
 	msg, err := encode(evt)
 	if err != nil {
@@ -452,16 +456,26 @@ func (e *RedisEngine) Wire(dst, src *signaling.Descriptor) (*signaling.Descripto
 	}()
 	logger.Tracef("acquire session channel")
 
+	var wiredEvt *Event
+	var wiredErr error
+	var wiredWg sync.WaitGroup
+
+	wiredWg.Add(1)
+	go func() {
+		wiredEvt, wiredErr = e.waitWiredEvent(wireEvt.Session)
+		wiredWg.Done()
+	}()
+
 	if err := e.sendEvent(dst.ID, wireEvt); err != nil {
 		logger.WithError(err).Debugf("failed to send event")
 		return nil, err
 	}
 
-	wiredEvt, err := e.waitWiredEvent(wireEvt.Session)
-	if err != nil {
-		return nil, err
+	wiredWg.Wait()
+	if wiredErr != nil {
+		return nil, wiredErr
 	}
-	logger.Tracef("receive event from sesion channel")
+	logger.Tracef("receive event from session channel")
 
 	return wiredEvt.Descriptor, nil
 }

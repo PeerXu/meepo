@@ -92,20 +92,15 @@ func (mp *Meepo) NewTransport(peerID string) (transport.Transport, error) {
 	tp.OnDataChannelCreate("sys", mp.onTransportSysDataChannelCreate)
 	logger.Tracef("register on data channel create handler")
 
-	tp.OnTransportState(transport.TransportStateFailed, func(transport.HandleID) {
-		mp.removeTeleportationsByPeerID(peerID)
-		logger.Tracef("remove teleportations")
+	h := func(transport.HandleID) {
+		mp.closeTeleportationsByPeerID(peerID)
+		logger.Tracef("close teleportations")
 
 		mp.removeTransport(peerID)
 		logger.Tracef("remove transport")
-	})
-	tp.OnTransportState(transport.TransportStateClosed, func(transport.HandleID) {
-		mp.removeTeleportationsByPeerID(peerID)
-		logger.Tracef("remove teleportations")
-
-		mp.removeTransport(peerID)
-		logger.Tracef("remove transport")
-	})
+	}
+	tp.OnTransportState(transport.TransportStateFailed, h)
+	tp.OnTransportState(transport.TransportStateClosed, h)
 	logger.Tracef("register on transport state change handler")
 
 	mp.addTransport(peerID, tp)
@@ -182,20 +177,15 @@ func (mp *Meepo) onNewTransport(src *signaling.Descriptor) (*signaling.Descripto
 	tp.OnDataChannelCreate("sys", mp.onTransportSysDataChannelCreate)
 	logger.Tracef("register on data channel create handler")
 
-	tp.OnTransportState(transport.TransportStateFailed, func(transport.HandleID) {
-		mp.removeTeleportationsByPeerID(peerID)
-		logger.Tracef("remove teleportations")
+	h := func(transport.HandleID) {
+		mp.closeTeleportationsByPeerID(peerID)
+		logger.Tracef("close teleportations")
 
 		mp.removeTransport(peerID)
 		logger.Tracef("remove transport")
-	})
-	tp.OnTransportState(transport.TransportStateClosed, func(transport.HandleID) {
-		mp.removeTeleportationsByPeerID(peerID)
-		logger.Tracef("remove teleportations")
-
-		mp.removeTransport(peerID)
-		logger.Tracef("remove transport")
-	})
+	}
+	tp.OnTransportState(transport.TransportStateFailed, h)
+	tp.OnTransportState(transport.TransportStateClosed, h)
 	logger.Tracef("register on transport state change handler")
 
 	wg.Wait()
