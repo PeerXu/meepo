@@ -25,11 +25,6 @@ func (mp *Meepo) closeTransport(peerID string) error {
 		return err
 	}
 
-	mp.removeTransport(peerID)
-	logger.Tracef("remove transport")
-	mp.removeTeleportationsByPeerID(peerID)
-	logger.Tracef("remove teleportations")
-
 	logger.Infof("transport closed")
 
 	return nil

@@ -211,21 +211,10 @@ func (mp *Meepo) removeTransportNL(id string) {
 	delete(mp.transports, id)
 }
 
-func (mp *Meepo) removeTeleportationsByPeerID(id string) {
-	mp.teleportationsMtx.Lock()
-	defer mp.teleportationsMtx.Unlock()
-	mp.removeTeleportationsByPeerIDNL(id)
-}
-
-func (mp *Meepo) removeTeleportationsByPeerIDNL(id string) {
-	ts, _ := mp.listTeleportationsByPeerIDNL(id)
+func (mp *Meepo) closeTeleportationsByPeerID(id string) {
+	ts, _ := mp.listTeleportationsByPeerID(id)
 	for _, t := range ts {
-		switch t.Portal() {
-		case teleportation.PortalSink:
-			mp.removeTeleportationSinkNL(t.Name())
-		case teleportation.PortalSource:
-			mp.removeTeleportationSourceNL(t.Name())
-		}
+		t.Close()
 	}
 }
 

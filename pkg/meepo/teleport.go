@@ -39,10 +39,15 @@ func (mp *Meepo) Teleport(peerID string, remote net.Addr, opts ...TeleportOption
 			return nil, err
 		}
 		wg.Add(1)
-		tp.OnTransportState(transport.TransportStateConnected, func(hid transport.HandleID) {
+		fn := func(transport.HandleID) {
 			wg.Done()
-			tp.UnsetOnTransportState(transport.TransportStateConnected, hid)
-		})
+		}
+		h1 := tp.OnTransportState(transport.TransportStateConnected, fn)
+		defer tp.UnsetOnTransportState(transport.TransportStateConnected, h1)
+		h2 := tp.OnTransportState(transport.TransportStateFailed, fn)
+		defer tp.UnsetOnTransportState(transport.TransportStateFailed, h2)
+		h3 := tp.OnTransportState(transport.TransportStateClosed, fn)
+		defer tp.UnsetOnTransportState(transport.TransportStateClosed, h3)
 
 		wg.Wait()
 	}
