@@ -1,27 +1,56 @@
 package meepo
 
-import "github.com/PeerXu/meepo/pkg/teleportation"
+import (
+	"github.com/PeerXu/meepo/pkg/teleportation"
+	"github.com/spf13/cast"
+	"github.com/stretchr/objx"
+)
 
-func (mp *Meepo) GetTeleportation(name string) (teleportation.Teleportation, error) {
+type GetTeleportationFunc func(string) (teleportation.Teleportation, bool)
+
+func (mp *Meepo) GetTeleportation(name string, opts ...GetTeleportationOption) (teleportation.Teleportation, error) {
 	mp.teleportationsMtx.Lock()
 	defer mp.teleportationsMtx.Unlock()
 
-	return mp.getTeleportationNL(name)
+	return mp.getTeleportationNL(name, opts...)
 }
 
-func (mp *Meepo) getTeleportationNL(name string) (teleportation.Teleportation, error) {
+func newGetTeleportationOption() objx.Map {
+	return objx.New(map[string]interface{}{})
+}
+
+func (mp *Meepo) getTeleportationNL(name string, opts ...GetTeleportationOption) (teleportation.Teleportation, error) {
 	var tp teleportation.Teleportation
 	var ok bool
 
-	tp, ok = mp.getTeleportationSourceNL(name)
-	if !ok {
-		tp, ok = mp.getTeleportationSinkNL(name)
-		if !ok {
-			return nil, TeleportationNotExistError
+	o := newGetTeleportationOption()
+	for _, opt := range opts {
+		opt(o)
+	}
+
+	var fns []GetTeleportationFunc
+	switch cast.ToString(o.Get("getFirst").Inter()) {
+	case "sink":
+		fns = []GetTeleportationFunc{
+			func(name string) (teleportation.Teleportation, bool) { return mp.getTeleportationSinkNL(name) },
+			func(name string) (teleportation.Teleportation, bool) { return mp.getTeleportationSourceNL(name) },
+		}
+	case "source":
+		fallthrough
+	default:
+		fns = []GetTeleportationFunc{
+			func(name string) (teleportation.Teleportation, bool) { return mp.getTeleportationSourceNL(name) },
+			func(name string) (teleportation.Teleportation, bool) { return mp.getTeleportationSinkNL(name) },
 		}
 	}
 
-	return tp, nil
+	for _, fn := range fns {
+		if tp, ok = fn(name); ok {
+			return tp, nil
+		}
+	}
+
+	return nil, TeleportationNotExistError
 }
 
 func (mp *Meepo) addTeleportationSource(name string, ts *teleportation.TeleportationSource) {

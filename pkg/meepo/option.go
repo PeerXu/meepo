@@ -104,3 +104,17 @@ func WithName(name string) OFN {
 		o["name"] = name
 	}
 }
+
+type GetTeleportationOption = OFN
+
+func WithSourceFirst() OFN {
+	return func(o objx.Map) {
+		o["getFirst"] = "source"
+	}
+}
+
+func WithSinkFirst() OFN {
+	return func(o objx.Map) {
+		o["getFirst"] = "sink"
+	}
+}

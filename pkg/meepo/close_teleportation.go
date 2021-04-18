@@ -18,21 +18,14 @@ type CloseTeleportationResponse struct {
 }
 
 func (mp *Meepo) CloseTeleportation(name string) error {
-	mp.teleportationsMtx.Lock()
-	defer mp.teleportationsMtx.Unlock()
-
-	return mp.closeTeleportationNL(name)
-}
-
-func (mp *Meepo) closeTeleportationNL(name string) error {
 	var err error
 
 	logger := mp.getLogger().WithFields(logrus.Fields{
-		"#method": "closeTeleportation",
+		"#method": "CloseTeleportation",
 		"name":    name,
 	})
 
-	tp, err := mp.getTeleportationNL(name)
+	tp, err := mp.GetTeleportation(name, WithSourceFirst())
 	if err != nil {
 		logger.WithError(err).Errorf("failed to get teleportation")
 		return err
@@ -79,7 +72,7 @@ func (mp *Meepo) onCloseTeleportation(dc transport.DataChannel, in interface{}) 
 			"name":    req.Name,
 		})
 
-	ts, err := mp.GetTeleportation(req.Name)
+	ts, err := mp.GetTeleportation(req.Name, WithSinkFirst())
 	if err != nil {
 		logger.WithError(err).Errorf("failed to get teleportation")
 		mp.sendMessage(dc, mp.invertMessageWithError(req, err))

@@ -9,6 +9,7 @@ import (
 	"github.com/PeerXu/meepo/pkg/meepo/auth"
 	"github.com/PeerXu/meepo/pkg/signaling"
 	"github.com/PeerXu/meepo/pkg/transport"
+	_ "github.com/PeerXu/meepo/pkg/transport/loopback"
 	webrtc_transport "github.com/PeerXu/meepo/pkg/transport/webrtc"
 )
 
@@ -41,50 +42,60 @@ func (mp *Meepo) NewTransport(peerID string) (transport.Transport, error) {
 		return nil, err
 	}
 
-	tp, err := transport.NewTransport("webrtc",
+	var name string
+	opts := []transport.NewTransportOption{
 		transport.WithID(mp.GetID()),
 		transport.WithPeerID(peerID),
 		transport.WithLogger(mp.getRawLogger()),
-		webrtc_transport.WithWebrtcAPI(mp.rtc),
-		webrtc_transport.WithICEServers(mp.getICEServers()),
-		webrtc_transport.AsOfferer(),
-		webrtc_transport.WithOfferHook(func(offer *webrtc.SessionDescription) (*webrtc.SessionDescription, error) {
-			offerSignature, err := mp.ae.Sign(map[string]interface{}{
-				"offer": offer,
-			})
+	}
+	if peerID == mp.GetID() {
+		name = "loopback"
+	} else {
+		name = "webrtc"
+		opts = append(opts,
+			webrtc_transport.WithWebrtcAPI(mp.rtc),
+			webrtc_transport.WithICEServers(mp.getICEServers()),
+			webrtc_transport.AsOfferer(),
+			webrtc_transport.WithOfferHook(func(offer *webrtc.SessionDescription) (*webrtc.SessionDescription, error) {
+				offerSignature, err := mp.ae.Sign(map[string]interface{}{
+					"offer": offer,
+				})
 
-			if err != nil {
-				logger.WithError(err).Errorf("failed to sign offer payload")
-				return nil, err
-			}
+				if err != nil {
+					logger.WithError(err).Errorf("failed to sign offer payload")
+					return nil, err
+				}
 
-			src := &signaling.Descriptor{
-				ID:                 mp.GetID(),
-				SessionDescription: offer,
-				UserData: map[string]interface{}{
-					"signature": offerSignature,
-				},
-			}
+				src := &signaling.Descriptor{
+					ID:                 mp.GetID(),
+					SessionDescription: offer,
+					UserData: map[string]interface{}{
+						"signature": offerSignature,
+					},
+				}
 
-			dst, err := mp.se.Wire(&signaling.Descriptor{ID: peerID}, src)
-			if err != nil {
-				logger.WithError(err).Errorf("failed to wire")
-				return nil, err
-			}
+				dst, err := mp.se.Wire(&signaling.Descriptor{ID: peerID}, src)
+				if err != nil {
+					logger.WithError(err).Errorf("failed to wire")
+					return nil, err
+				}
 
-			answerSignature := mp.getSignatureFromUserData(dst.UserData)
-			if err = mp.ae.Verify(map[string]interface{}{
-				"answer": dst.SessionDescription,
-			}, answerSignature); err != nil {
-				logger.WithError(err).Errorf("failed to verify answer signature")
-				return nil, err
-			}
+				answerSignature := mp.getSignatureFromUserData(dst.UserData)
+				if err = mp.ae.Verify(map[string]interface{}{
+					"answer": dst.SessionDescription,
+				}, answerSignature); err != nil {
+					logger.WithError(err).Errorf("failed to verify answer signature")
+					return nil, err
+				}
 
-			logger.Tracef("signaling engine wire")
+				logger.Tracef("signaling engine wire")
 
-			return dst.SessionDescription, nil
-		}),
-	)
+				return dst.SessionDescription, nil
+			}),
+		)
+	}
+
+	tp, err := transport.NewTransport(name, opts...)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to new transport")
 		return nil, err

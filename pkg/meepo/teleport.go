@@ -33,14 +33,14 @@ func (mp *Meepo) Teleport(peerID string, remote net.Addr, opts ...TeleportOption
 			return nil, err
 		}
 
-		var wg sync.WaitGroup
+		done := make(chan struct{})
+		var doneOnce sync.Once
 		tp, err = mp.NewTransport(peerID)
 		if err != nil {
 			return nil, err
 		}
-		wg.Add(1)
 		fn := func(transport.HandleID) {
-			wg.Done()
+			doneOnce.Do(func() { close(done) })
 		}
 		h1 := tp.OnTransportState(transport.TransportStateConnected, fn)
 		defer tp.UnsetOnTransportState(transport.TransportStateConnected, h1)
@@ -49,7 +49,7 @@ func (mp *Meepo) Teleport(peerID string, remote net.Addr, opts ...TeleportOption
 		h3 := tp.OnTransportState(transport.TransportStateClosed, fn)
 		defer tp.UnsetOnTransportState(transport.TransportStateClosed, h3)
 
-		wg.Wait()
+		<-done
 	}
 
 	tss, err := mp.listTeleportationsByPeerID(peerID)

@@ -19,6 +19,7 @@ type TeleportationSource struct {
 	opt    objx.Map
 	logger logrus.FieldLogger
 	idx    int64
+	closed int32
 
 	name         string
 	source       net.Addr
@@ -68,6 +69,10 @@ func (ts *TeleportationSource) onError(err error) {
 }
 
 func (ts *TeleportationSource) close() error {
+	if atomic.SwapInt32(&ts.closed, 1) == 1 {
+		return nil
+	}
+
 	var eg errgroup.Group
 
 	ts.lisMtx.Lock()
@@ -100,7 +105,6 @@ func (ts *TeleportationSource) acceptLoop() {
 	}
 
 	for {
-
 		if conn, err = lis.Accept(); err != nil {
 			if ts.onErrorHandler != nil && err != io.EOF {
 				ts.onError(err)

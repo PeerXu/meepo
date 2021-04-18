@@ -8,17 +8,17 @@ type DataChannelState int
 
 const (
 	DataChannelStateConnecting DataChannelState = iota + 1
-	DataChannelOpen
-	DataChannelClosing
-	DataChannelClosed
+	DataChannelStateOpen
+	DataChannelStateClosing
+	DataChannelStateClosed
 )
 
 var (
 	DataChannelStateStr = []string{
 		DataChannelStateConnecting: "connecting",
-		DataChannelOpen:            "open",
-		DataChannelClosing:         "closing",
-		DataChannelClosed:          "closed",
+		DataChannelStateOpen:       "open",
+		DataChannelStateClosing:    "closing",
+		DataChannelStateClosed:     "closed",
 	}
 )
 
