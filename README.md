@@ -196,21 +196,25 @@ $ meepo serve
 
 [Socks5](https://zh.wikipedia.org/wiki/SOCKS)是我们常用的网络代理协议之一.
 
-`Meepo`允许用户使用`Socks5`代理客户端通过域名访问其他`Meepo`节点提供的服务.
+`Meepo`允许用户使用`Socks5`代理访问其他`Meepo`节点提供的服务.
+
+例如节点ID为`hello`, 在80端口上提供了`http`服务.
+
+在适当的配置下, 可以直接在浏览器上访问`http://hello.mpo/`访问对应的内容.
 
 域名是采用简单的定义规则, 就是`<id>.mpo`.
 
-例如节点ID为`hello`, 那么对应的域名就是`hello.mpo`.
+默认参数下, `Socks5`代理监听`127.0.0.1:12341`.
 
 接下来介绍一下使用方法.
 
 现在有两个`Meepo`节点, ID分别为`m`和`b`.
 
-在`b`节点上, 提供了两个服务, 分别是`ssh`服务(22端口)和`http`服务(8000端口).
+在`b`节点上, 提供了两个服务, 分别是`ssh`服务(22端口)和`http`服务(80端口).
 
-那么就可以在`m`节点上通过`socks5`代理方便地访问`ssh`服务和`http`服务.
+那么就可以在`m`节点上通过`Socks5`代理方便地访问`ssh`服务和`http`服务.
 
-首先, 需要在`m`节点上启用`socks5`功能.
+首先, 需要在`m`节点上启用`Socks5`功能. (默认情况下已经启用, 不需要手动配置)
 
 ```bash
 # set socks5 proxy config
@@ -222,21 +226,22 @@ $ meepo serve
 
 这时候, 已经完成配置工作.
 
-可以直接通过域名访问对应的服务了.
+可以直接通过域名访问对应的服务.
 
 例如访问`b`节点的`http`服务, 则可以通过配置系统的`socks5`代理配置即可.
 
 下面用`curl`举例子.
 
 ```bash
-$ curl -x socks5h://127.0.0.1:12341 http://b.mpo:8000/index.html
-# <h1>hello World</h1>
+$ curl -x socks5h://127.0.0.1:12341 http://b.mpo/index.html
+# print http output
 ```
 
 例如访问`b`节点的`ssh`服务.
 
 ```bash
 ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:12341 %h %p' meepo@b.mpo
+# connect to ssh server
 ```
 
 ## 安全
