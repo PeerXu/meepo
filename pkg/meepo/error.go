@@ -14,6 +14,9 @@ var (
 	NotWirableError                = fmt.Errorf("Not wirable")
 	HopIsZeroError                 = fmt.Errorf("Hop is zero")
 	ReachTransportEdgeError        = fmt.Errorf("Reach transport edge")
+	UnsupportedSocks5CommandError  = fmt.Errorf("Unsupported socks5 command")
+	NetworkUnreachableError        = fmt.Errorf("Network unreachable")
+	UnsupportedNetworkTypeError    = fmt.Errorf("Unsupported network type")
 )
 
 func SessionChannelExistError(session int32) error {

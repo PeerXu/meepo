@@ -20,6 +20,7 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/objx v0.3.0
 	github.com/stretchr/testify v1.7.0
+	github.com/thinkgos/go-socks5 v0.2.2
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )

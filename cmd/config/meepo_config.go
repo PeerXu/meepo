@@ -5,6 +5,7 @@ type MeepoConfig struct {
 	Daemon      bool             `yaml:"daemon"`
 	AsSignaling bool             `yaml:"asSignaling"`
 	Log         *LogConfig       `yaml:"log"`
+	Proxy       *ProxyConfig     `yaml:"proxy"`
 	Auth        *AuthConfig      `yaml:"auth"`
 	AuthI       interface{}      `yaml:"-"`
 	Transport   *TransportConfig `yaml:"transport"`
@@ -23,6 +24,7 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Daemon      bool             `yaml:"daemon"`
 		AsSignaling bool             `yaml:"asSignaling"`
 		Log         *LogConfig       `yaml:"log"`
+		Proxy       *ProxyConfig     `yaml:"proxy"`
 		Auth        *AuthConfig      `yaml:"auth"`
 		Transport   *TransportConfig `yaml:"transport"`
 		Signaling   *SignalingConfig `yaml:"signaling"`
@@ -65,25 +67,28 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	mc.Daemon = fmc.Daemon
 	mc.AsSignaling = fmc.AsSignaling
 	mc.Log = fmc.Log
+	mc.Proxy = fmc.Proxy
 
 	return nil
 }
 
 func (mc *MeepoConfig) MarshalYAML() (interface{}, error) {
 	_mc := struct {
-		ID          string      `yaml:"id"`
-		Daemon      bool        `yaml:"daemon"`
-		AsSignaling bool        `yaml:"asSignaling"`
-		Log         *LogConfig  `yaml:"log"`
-		Auth        interface{} `yaml:"auth"`
-		Transport   interface{} `yaml:"transport"`
-		Signaling   interface{} `yaml:"signaling"`
-		Api         interface{} `yaml:"api"`
+		ID          string       `yaml:"id"`
+		Daemon      bool         `yaml:"daemon"`
+		AsSignaling bool         `yaml:"asSignaling"`
+		Log         *LogConfig   `yaml:"log"`
+		Proxy       *ProxyConfig `yaml:"proxy"`
+		Auth        interface{}  `yaml:"auth"`
+		Transport   interface{}  `yaml:"transport"`
+		Signaling   interface{}  `yaml:"signaling"`
+		Api         interface{}  `yaml:"api"`
 	}{
 		ID:          mc.ID,
 		Daemon:      mc.Daemon,
 		AsSignaling: mc.AsSignaling,
 		Log:         mc.Log,
+		Proxy:       mc.Proxy,
 		Auth:        mc.AuthI,
 		Transport:   mc.TransportI,
 		Signaling:   mc.SignalingI,

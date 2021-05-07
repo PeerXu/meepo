@@ -27,8 +27,7 @@ type TeleportationSource struct {
 	transport    transport.Transport
 	datachannels map[string]transport.DataChannel
 
-	newListener NewListener
-	lis         net.Listener
+	dialRequests chan *DialRequest
 
 	doTeleportFunc DoTeleportFunc
 	onCloseHandler OnCloseHandler
@@ -43,21 +42,6 @@ func (ts *TeleportationSource) getLogger() logrus.FieldLogger {
 		"#instance": "TeleportationSource",
 		"name":      ts.Name(),
 	})
-}
-
-func (ts *TeleportationSource) getOrCreateListener() (net.Listener, error) {
-	var err error
-
-	ts.lisMtx.Lock()
-	defer ts.lisMtx.Unlock()
-
-	if ts.lis == nil {
-		if ts.lis, err = ts.newListener(ts.source.Network(), ts.source.String()); err != nil {
-			return nil, err
-		}
-	}
-
-	return ts.lis, nil
 }
 
 func (ts *TeleportationSource) onError(err error) {
@@ -75,12 +59,6 @@ func (ts *TeleportationSource) close() error {
 
 	var eg errgroup.Group
 
-	ts.lisMtx.Lock()
-	if ts.lis != nil {
-		eg.Go(ts.lis.Close)
-	}
-	ts.lisMtx.Unlock()
-
 	ts.datachannelsMtx.Lock()
 	for _, dc := range ts.datachannels {
 		eg.Go(dc.Close)
@@ -90,43 +68,27 @@ func (ts *TeleportationSource) close() error {
 	return eg.Wait()
 }
 
-func (ts *TeleportationSource) acceptLoop() {
-	logger := ts.getLogger().WithField("#method", "acceptLoop")
+func (ts *TeleportationSource) requestLoop() {
+	logger := ts.getLogger().WithField("#method", "fetchConnLoop")
 
-	var conn net.Conn
-	var err error
-
-	defer logger.Tracef("accept loop exited")
-
-	lis, err := ts.getOrCreateListener()
-	if err != nil {
-		logger.WithError(err).Debugf("failed to new listener")
-		return
-	}
+	defer logger.Tracef("exited")
 
 	for {
-		if conn, err = lis.Accept(); err != nil {
-			if ts.onErrorHandler != nil && err != io.EOF {
-				ts.onError(err)
-			}
+		dr, ok := <-ts.dialRequests
+		if !ok {
 			return
 		}
-
-		go ts.onAccept(conn)
+		go ts.onDial(dr)
 	}
 }
 
-func (ts *TeleportationSource) onAccept(conn net.Conn) {
-	var wg sync.WaitGroup
+func (ts *TeleportationSource) onDial(dr *DialRequest) {
 	var dc transport.DataChannel
 	var err error
 
+	conn := dr.Conn
 	rg := mgroup.NewRaceGroupFunc()
-	logger := ts.getLogger().WithField("#method", "onAccept")
-
-	defer func() {
-		wg.Wait()
-	}()
+	logger := ts.getLogger().WithField("#method", "onDial")
 
 	outerConnCloser := conn.Close
 	defer func() {
@@ -189,6 +151,11 @@ func (ts *TeleportationSource) onAccept(conn net.Conn) {
 			delete(ts.datachannels, dc.Label())
 			ts.datachannelsMtx.Unlock()
 			innerLogger.Tracef("remove from data channels")
+
+			if dr.Quit != nil {
+				close(dr.Quit)
+				innerLogger.Tracef("send quit signal")
+			}
 
 			innerLogger.WithError(err).Tracef("done")
 		}()
@@ -260,7 +227,7 @@ func NewTeleportationSource(opts ...NewTeleportationSourceOption) (*Teleportatio
 	var dtf DoTeleportFunc
 	var och OnCloseHandler
 	var oeh OnErrorHandler
-	var nl NewListener
+	var drc chan *DialRequest
 	var val interface{}
 
 	o := newNewteleportationSourceOptions()
@@ -301,8 +268,8 @@ func NewTeleportationSource(opts ...NewTeleportationSourceOption) (*Teleportatio
 		oeh = val.(OnErrorHandler)
 	}
 
-	if nl, ok = o.Get("newListener").Inter().(NewListener); !ok {
-		nl = net.Listen
+	if val = o.Get("dialRequestChannel").Inter(); val != nil {
+		drc = val.(chan *DialRequest)
 	}
 
 	ts := &TeleportationSource{
@@ -313,13 +280,13 @@ func NewTeleportationSource(opts ...NewTeleportationSourceOption) (*Teleportatio
 		sink:           sink,
 		transport:      tp,
 		datachannels:   make(map[string]transport.DataChannel),
-		newListener:    nl,
 		doTeleportFunc: dtf,
 		onCloseHandler: och,
 		onErrorHandler: oeh,
+		dialRequests:   drc,
 	}
 
-	go ts.acceptLoop()
+	go ts.requestLoop()
 
 	return ts, nil
 }

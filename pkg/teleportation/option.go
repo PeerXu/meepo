@@ -44,14 +44,6 @@ func WithTransport(t transport.Transport) OFN {
 	}
 }
 
-type NewListener func(network, address string) (net.Listener, error)
-
-func WithNewListener(f NewListener) OFN {
-	return func(o objx.Map) {
-		o["newListener"] = f
-	}
-}
-
 type NewDial func(network, address string) (net.Conn, error)
 
 func WithNewDial(f NewDial) OFN {
@@ -89,5 +81,24 @@ type OnErrorHandler func(error)
 func WithOnErrorHandler(h OnErrorHandler) OFN {
 	return func(o objx.Map) {
 		o["onErrorHandler"] = h
+	}
+}
+
+type DialRequest struct {
+	Conn net.Conn
+	Quit chan struct{}
+}
+
+func NewDialRequest(conn net.Conn) *DialRequest {
+	return &DialRequest{Conn: conn}
+}
+
+func NewDialRequestWithQuit(conn net.Conn, quit chan struct{}) *DialRequest {
+	return &DialRequest{Conn: conn, Quit: quit}
+}
+
+func SetDialRequestChannel(c chan *DialRequest) OFN {
+	return func(o objx.Map) {
+		o["dialRequestChannel"] = c
 	}
 }

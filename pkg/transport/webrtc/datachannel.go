@@ -2,6 +2,7 @@ package webrtc_transport
 
 import (
 	"sync"
+	"time"
 
 	"github.com/pion/datachannel"
 	"github.com/pion/webrtc/v3"
@@ -17,6 +18,7 @@ type WebrtcDataChannel struct {
 	ddc datachannel.ReadWriteCloser
 
 	detachOnce sync.Once
+	opened     chan struct{}
 
 	transport *WebrtcTransport
 }
@@ -26,6 +28,15 @@ func (wdc *WebrtcDataChannel) getLogger() logrus.FieldLogger {
 		"#instance": "WebrtcDataChannel",
 		"label":     wdc.Label(),
 	})
+}
+
+func (wdc *WebrtcDataChannel) waitOpened() error {
+	select {
+	case <-wdc.opened:
+		return nil
+	case <-time.After(5 * time.Second):
+		return WaitDataChannelOpenedTimeoutError
+	}
 }
 
 func (wdc *WebrtcDataChannel) Transport() transport.Transport {
@@ -44,16 +55,25 @@ func (wdc *WebrtcDataChannel) OnOpen(f func()) {
 	wdc.dc.OnOpen(func() {
 		wdc.detachOnce.Do(func() {
 			wdc.ddc, _ = wdc.dc.Detach()
+			close(wdc.opened)
 		})
 		f()
 	})
 }
 
 func (wdc *WebrtcDataChannel) Read(p []byte) (int, error) {
+	if err := wdc.waitOpened(); err != nil {
+		return 0, err
+	}
+
 	return wdc.ddc.Read(p)
 }
 
 func (wdc *WebrtcDataChannel) Write(p []byte) (int, error) {
+	if err := wdc.waitOpened(); err != nil {
+		return 0, err
+	}
+
 	return wdc.ddc.Write(p)
 }
 
@@ -65,6 +85,7 @@ func NewWebrtcDataChannel(logger logrus.FieldLogger, dc *webrtc.DataChannel, tp 
 	wdc := &WebrtcDataChannel{
 		logger:    logger,
 		dc:        dc,
+		opened:    make(chan struct{}),
 		transport: tp,
 	}
 

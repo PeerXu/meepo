@@ -9,7 +9,7 @@ Meepo的目标是提供一个去中心化的, 便捷的连接工具.
 
 ## 起因
 
-在传统的客户端-服务端架构的网络中, 服务端所在的网络需要能够被客户端访问, 才能完成既定功能.
+在传统的客户端-服务端架构的网络中, 服务端所在的网络需要能够被客户端访问, 服务端才能正常提供服务.
 
 但是, 由于各种原因, 导致服务端没有足够的资源去暴露端口.
 
@@ -192,6 +192,53 @@ $ meepo shutdown
 $ meepo serve
 ```
 
+### Socks5代理
+
+[Socks5](https://zh.wikipedia.org/wiki/SOCKS)是我们常用的网络代理协议之一.
+
+`Meepo`允许用户使用`Socks5`代理客户端通过域名访问其他`Meepo`节点提供的服务.
+
+域名是采用简单的定义规则, 就是`<id>.mpo`.
+
+例如节点ID为`hello`, 那么对应的域名就是`hello.mpo`.
+
+接下来介绍一下使用方法.
+
+现在有两个`Meepo`节点, ID分别为`m`和`b`.
+
+在`b`节点上, 提供了两个服务, 分别是`ssh`服务(22端口)和`http`服务(8000端口).
+
+那么就可以在`m`节点上通过`socks5`代理方便地访问`ssh`服务和`http`服务.
+
+首先, 需要在`m`节点上启用`socks5`功能.
+
+```bash
+# set socks5 proxy config
+$ meepo config set proxy.socks5=file://<(echo 'aG9zdDogMTI3LjAuMC4xCnBvcnQ6IDEyMzQxCg=='|base64 -d)
+# restart meepo
+$ meepo shutdown
+$ meepo serve
+```
+
+这时候, 已经完成配置工作.
+
+可以直接通过域名访问对应的服务了.
+
+例如访问`b`节点的`http`服务, 则可以通过配置系统的`socks5`代理配置即可.
+
+下面用`curl`举例子.
+
+```bash
+$ curl -x socks5h://127.0.0.1:12341 http://b.mpo:8000/index.html
+# <h1>hello World</h1>
+```
+
+例如访问`b`节点的`ssh`服务.
+
+```bash
+ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:12341 %h %p' meepo@b.mpo
+```
+
 ## 安全
 
 在默认配置下, `Meepo`之间的连接是不需要安全认证的. 这样带来了一定的便捷性, 同时也引入了安全问题.
@@ -254,16 +301,28 @@ $ meepo transport list
 +-------+-----------+
 ```
 
+## 常见问题
+
+### 修改配置时出现 permission denied
+
+该问题通常出现在操作系统是Linux的情况下.
+
+因为默认配置文件存放在 `/etc/meepo/meepo.yaml`(通过snap安装则在 `/var/snap/meepo/current/etc/meepo.yaml`)下, 所以修改需要对应权限.
+
+```bash
+$ sudo bash -c "meepo config set auth=file://<(echo '...'|base64 -d)"
+```
+
 ## 计划
 
-如果有不错的想法, 不妨通过[Telegram](https://t.me/meepoDiscussion)或[issues](https://github.com/PeerXu/meepo/issues)留言.
+如果有不错的想法, 不妨通过[Telegram](https://t.me/meepoDiscussion)或[issues](https://github.com/PeerXu/meepo/issues)联系.
 
 - [x] SSH连接端口复用
 - [ ] 缩短gather时间
 - [ ] 工作原理文档的补全
 - [ ] 中英文档的补全
 - [x] 连接变得可管理
-- [ ] 支持socks5 proxy
+- [x] 支持socks5 proxy
 - [ ] 支持http proxy
 - [x] 支持port forward
 - [x] 自组网功能

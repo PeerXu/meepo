@@ -25,3 +25,23 @@ func getListenableAddr() net.Addr {
 		}
 	}
 }
+
+func (mp *Meepo) resolveTeleportationSourceAddr(network, address string) (net.Addr, error) {
+	switch network {
+	case "socks5":
+		return SOCKS5ADDR, nil
+	case "tcp":
+		return net.ResolveTCPAddr(network, address)
+	default:
+		return nil, UnsupportedNetworkTypeError
+	}
+}
+
+func (mp *Meepo) resolveTeleportationSinkAddr(network, address string) (net.Addr, error) {
+	switch network {
+	case "tcp":
+		return net.ResolveTCPAddr(network, address)
+	default:
+		return nil, UnsupportedNetworkTypeError
+	}
+}
