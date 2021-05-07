@@ -1,9 +1,5 @@
 package sync
 
-import (
-	"sync"
-)
-
 type ChannelLocker interface {
 	Acquire(id int32) error
 	Release(id int32) error
@@ -13,7 +9,7 @@ type ChannelLocker interface {
 
 type channelLocker struct {
 	chs map[int32]chan interface{}
-	mtx sync.Locker
+	mtx Locker
 }
 
 func (t *channelLocker) Acquire(id int32) error {
@@ -47,8 +43,6 @@ func (t *channelLocker) Release(id int32) error {
 }
 
 func (t *channelLocker) Get(id int32) (chan interface{}, error) {
-	t.mtx.Lock()
-	defer t.mtx.Unlock()
 	return t.getNL(id)
 }
 
@@ -76,6 +70,6 @@ func (t *channelLocker) getNL(id int32) (chan interface{}, error) {
 func NewChannelLocker() ChannelLocker {
 	return &channelLocker{
 		chs: make(map[int32]chan interface{}),
-		mtx: new(sync.Mutex),
+		mtx: NewLock(),
 	}
 }

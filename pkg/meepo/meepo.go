@@ -2,9 +2,7 @@ package meepo
 
 import (
 	"fmt"
-	"math/rand"
 	"sync"
-	"time"
 
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/pion/webrtc/v3"
@@ -17,27 +15,26 @@ import (
 	chain_signaling "github.com/PeerXu/meepo/pkg/signaling/chain"
 	"github.com/PeerXu/meepo/pkg/teleportation"
 	"github.com/PeerXu/meepo/pkg/transport"
+	mrandom "github.com/PeerXu/meepo/pkg/util/random"
 	msync "github.com/PeerXu/meepo/pkg/util/sync"
 )
 
-var (
-	random *rand.Rand
-)
-
 type Meepo struct {
-	rtc *webrtc.API
-	se  signaling.Engine
-	ae  auth.Engine
+	rtc    *webrtc.API
+	se     signaling.Engine
+	ae     auth.Engine
+	socks5 Socks5Server
 
-	transports    map[string]transport.Transport
-	transportsMtx sync.Mutex
+	transports     map[string]transport.Transport
+	transportsMtx  msync.Locker
+	transportLocks sync.Map
 
 	teleportationSources map[string]*teleportation.TeleportationSource
 	teleportationSinks   map[string]*teleportation.TeleportationSink
-	teleportationsMtx    sync.Mutex
+	teleportationsMtx    msync.Locker
 
 	wireHandler    signaling.WireHandler
-	wireHandlerMtx sync.Mutex
+	wireHandlerMtx msync.Locker
 
 	opt    objx.Map
 	logger logrus.FieldLogger
@@ -51,10 +48,10 @@ type Meepo struct {
 	broadcastCache *lru.ARCCache
 
 	requestHandlers    map[string]RequestHandler
-	requestHandlersMtx sync.Mutex
+	requestHandlersMtx msync.Locker
 
 	broadcastRequestHandlers    map[string]BroadcastRequestHandler
-	broadcastRequestHandlersMtx sync.Mutex
+	broadcastRequestHandlersMtx msync.Locker
 }
 
 func (mp *Meepo) getRawLogger() logrus.FieldLogger {
@@ -272,6 +269,12 @@ func NewMeepo(opts ...NewMeepoOption) (*Meepo, error) {
 		channelLocker:            msync.NewChannelLocker(),
 		opt:                      o,
 		logger:                   logger,
+
+		transportsMtx:               msync.NewLock(),
+		teleportationsMtx:           msync.NewLock(),
+		wireHandlerMtx:              msync.NewLock(),
+		requestHandlersMtx:          msync.NewLock(),
+		broadcastRequestHandlersMtx: msync.NewLock(),
 	}
 
 	if o.Get("asSignaling").Bool() {
@@ -298,9 +301,5 @@ func NewMeepo(opts ...NewMeepoOption) (*Meepo, error) {
 }
 
 func generateSession() int32 {
-	return random.Int31()
-}
-
-func init() {
-	random = rand.New(rand.NewSource(time.Now().UnixNano()))
+	return mrandom.Random.Int31()
 }

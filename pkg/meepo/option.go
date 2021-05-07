@@ -118,3 +118,25 @@ func WithSinkFirst() OFN {
 		o["getFirst"] = "sink"
 	}
 }
+
+// Socks5 Server
+
+type NewSocks5ServerOption = OFN
+
+func WithMeepo(mp *Meepo) OFN {
+	return func(o objx.Map) {
+		o["meepo"] = mp
+	}
+}
+
+func WithHost(host string) OFN {
+	return func(o objx.Map) {
+		o["host"] = host
+	}
+}
+
+func WithPort(port int32) OFN {
+	return func(o objx.Map) {
+		o["port"] = port
+	}
+}

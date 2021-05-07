@@ -4,10 +4,11 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
+
 	encoding_api "github.com/PeerXu/meepo/pkg/api/encoding"
 	"github.com/PeerXu/meepo/pkg/meepo"
 	"github.com/PeerXu/meepo/pkg/teleportation"
-	"github.com/gin-gonic/gin"
 )
 
 type NewTeleportationRequest struct {

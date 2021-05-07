@@ -30,6 +30,9 @@ func (c *Config) Get(key string) (string, error) {
 	case "auth":
 		buf, err := yaml.Marshal(c.Meepo.AuthI)
 		return string(buf), err
+	case "proxy.socks5":
+		buf, err := yaml.Marshal(c.Meepo.Proxy.Socks5)
+		return string(buf), err
 	default:
 		return "", UnsupportedConfigKeyError{key}
 	}
@@ -67,6 +70,19 @@ func (c *Config) Set(key, val string) error {
 	case "auth.dummy":
 		c.Meepo.Auth = &AuthConfig{Name: "dummy"}
 		c.Meepo.AuthI = &DummyAuthConfig{Name: "dummy"}
+	case "proxy.socks5":
+		var sc Socks5Config
+
+		if val == "" {
+			c.Meepo.Proxy.Socks5 = nil
+			break
+		}
+
+		if err = yaml.Unmarshal([]byte(val), &sc); err != nil {
+			return err
+		}
+
+		c.Meepo.Proxy.Socks5 = &sc
 	default:
 		return UnsupportedConfigKeyError{key}
 	}
@@ -119,6 +135,10 @@ func Load(p string) (config *Config, loaded bool, err error) {
 	if config.Meepo.Auth == nil {
 		config.Meepo.Auth = &AuthConfig{Name: "dummy"}
 		config.Meepo.AuthI = &DummyAuthConfig{Name: "dummy"}
+	}
+
+	if config.Meepo.Proxy == nil {
+		config.Meepo.Proxy = &ProxyConfig{}
 	}
 
 	return config, true, nil
@@ -177,6 +197,12 @@ func NewDefaultConfig() *Config {
 				Name: "http",
 				Host: "127.0.0.1",
 				Port: 12345,
+			},
+			Proxy: &ProxyConfig{
+				Socks5: &Socks5Config{
+					Host: "127.0.0.1",
+					Port: 12341,
+				},
 			},
 		},
 	}

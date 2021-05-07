@@ -3,6 +3,7 @@ package meepo
 import (
 	"fmt"
 	"net"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
@@ -105,12 +106,42 @@ func (mp *Meepo) NewTeleportation(id string, remote net.Addr, opts ...NewTelepor
 		return nil, err
 	}
 
+	var lisCloseOnce sync.Once
+	dialRequests := make(chan *teleportation.DialRequest)
+	lis, err := net.Listen(local.Network(), local.String())
+	if err != nil {
+		logger.WithError(err).Errorf("failed to listen local address")
+		return nil, err
+	}
+	lisCloser := func() {
+		logger.WithError(lis.Close()).Tracef("listener closed")
+	}
+
+	go func() {
+		innerLogger := mp.getLogger().WithFields(logrus.Fields{
+			"#method": "accpetLoop",
+		})
+
+		defer close(dialRequests)
+		defer lisCloseOnce.Do(lisCloser)
+		for {
+			conn, err := lis.Accept()
+			if err != nil {
+				innerLogger.WithError(err).Debugf("failed to accept from listener")
+				return
+			}
+			dialRequests <- teleportation.NewDialRequest(conn)
+			innerLogger.Tracef("accepted")
+		}
+	}()
+
 	ts, err = teleportation.NewTeleportationSource(
 		teleportation.WithLogger(mp.getRawLogger()),
 		teleportation.WithName(name),
 		teleportation.WithSource(local),
 		teleportation.WithSink(remote),
 		teleportation.WithTransport(tp),
+		teleportation.SetDialRequestChannel(dialRequests),
 		teleportation.WithDoTeleportFunc(func(label string) error {
 			innerLogger := mp.getLogger().WithFields(logrus.Fields{
 				"#method": "doTeleportFunc",
@@ -146,24 +177,30 @@ func (mp *Meepo) NewTeleportation(id string, remote net.Addr, opts ...NewTelepor
 		teleportation.WithOnCloseHandler(func() {
 			mp.removeTeleportationSource(ts.Name())
 			logger.Tracef("remove teleportation source")
+
+			lisCloseOnce.Do(lisCloser)
 		}),
 		teleportation.WithOnErrorHandler(func(err error) {
 			mp.removeTeleportationSource(ts.Name())
-			logger.Tracef("remove teleportation source")
+			logger.WithError(err).Tracef("remove teleportation source")
+
+			lisCloseOnce.Do(lisCloser)
 		}),
 	)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to new teleportation source")
 		return nil, err
 	}
+
 	tp.OnTransportState(transport.TransportStateFailed, func(hid transport.HandleID) {
 		ts.Close()
 		tp.UnsetOnTransportState(transport.TransportStateFailed, hid)
 	})
-	logger.Infof("new teleportation source")
 
 	mp.addTeleportationSource(ts.Name(), ts)
 	logger.Tracef("add teleportation source")
+
+	logger.Infof("new teleportation source")
 
 	return ts, nil
 }
@@ -188,14 +225,14 @@ func (mp *Meepo) onNewTeleportation(dc transport.DataChannel, in interface{}) {
 		return
 	}
 
-	source, err := net.ResolveTCPAddr(req.LocalNetwork, req.LocalAddress)
+	source, err := mp.resolveTeleportationSourceAddr(req.LocalNetwork, req.LocalAddress)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to resolve source addr")
 		mp.sendMessage(dc, mp.invertMessageWithError(req, err))
 		return
 	}
 
-	sink, err := net.ResolveTCPAddr(req.RemoteNetwork, req.RemoteAddress)
+	sink, err := mp.resolveTeleportationSinkAddr(req.RemoteNetwork, req.RemoteAddress)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to resolve sink addr")
 		mp.sendMessage(dc, mp.invertMessageWithError(req, err))

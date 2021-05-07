@@ -1,6 +1,14 @@
 package meepo
 
-import "github.com/PeerXu/meepo/pkg/transport"
+import (
+	"github.com/PeerXu/meepo/pkg/transport"
+	msync "github.com/PeerXu/meepo/pkg/util/sync"
+)
+
+func (mp *Meepo) getTransportLock(peerID string) msync.Locker {
+	val, _ := mp.transportLocks.LoadOrStore(peerID, msync.NewLock())
+	return val.(msync.Locker)
+}
 
 func (mp *Meepo) getTransport(peerID string) (transport.Transport, error) {
 	mp.transportsMtx.Lock()

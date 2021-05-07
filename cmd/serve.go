@@ -17,6 +17,7 @@ import (
 	"github.com/PeerXu/meepo/pkg/signaling"
 	redis_signaling "github.com/PeerXu/meepo/pkg/signaling/redis"
 	mdaemon "github.com/PeerXu/meepo/pkg/util/daemon"
+	meg "github.com/PeerXu/meepo/pkg/util/group"
 	mrand "github.com/PeerXu/meepo/pkg/util/random"
 )
 
@@ -129,7 +130,7 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 		newMeepoOptions = append(newMeepoOptions, meepo.WithAsSignaling(true))
 	}
 
-	meepo, err := meepo.NewMeepo(newMeepoOptions...)
+	mp, err := meepo.NewMeepo(newMeepoOptions...)
 	if err != nil {
 		return err
 	}
@@ -139,7 +140,7 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 		"http",
 		http_api.WithHost(apiCfg.Host),
 		http_api.WithPort(apiCfg.Port),
-		api.WithMeepo(meepo),
+		api.WithMeepo(mp),
 	)
 	if err != nil {
 		return err
@@ -150,20 +151,63 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	}
 	logger.Infof("api server startd")
 
+	var socks5 meepo.Socks5Server
+	if cfg.Meepo.Proxy != nil && cfg.Meepo.Proxy.Socks5 != nil {
+		socks5Cfg := cfg.Meepo.Proxy.Socks5
+		socks5, err = meepo.NewSocks5Server(
+			meepo.WithMeepo(mp),
+			meepo.WithHost(socks5Cfg.Host),
+			meepo.WithPort(socks5Cfg.Port),
+		)
+		if err != nil {
+			return err
+		}
+
+		if err = socks5.Start(context.TODO()); err != nil {
+			return err
+		}
+		logger.Infof("socks5 server started")
+	}
+
 	go func() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt)
 
 		<-c
-		logger.Debugf("api server terminating")
 
 		if err = api.Stop(context.TODO()); err != nil {
 			logger.WithError(err).Errorf("failed to stop api server")
+		} else {
+			logger.Debugf("api server terminating")
+		}
+
+		if socks5 != nil {
+			if err = socks5.Stop(context.TODO()); err != nil {
+				logger.WithError(err).Errorf("failed to stop socks5 server")
+			} else {
+				logger.Debugf("socks5 server terminating")
+			}
 		}
 	}()
 
-	api.Wait()
-	logger.Infof("api server terminated")
+	eg := meg.NewAllGroupFunc()
+
+	eg.Go(func() (interface{}, error) {
+		er := api.Wait()
+		logger.WithError(er).Debugf("api server terminated")
+		return nil, er
+	})
+
+	if socks5 != nil {
+		eg.Go(func() (interface{}, error) {
+			er := socks5.Wait()
+			logger.WithError(er).Debugf("socks5 server terminated")
+			return nil, er
+		})
+	}
+
+	_, err = eg.Wait()
+	logger.WithError(err).Infof("meepo terminated")
 
 	return nil
 }

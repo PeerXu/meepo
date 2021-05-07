@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/objx"
 
 	"github.com/PeerXu/meepo/pkg/transport"
+	msync "github.com/PeerXu/meepo/pkg/util/sync"
 )
 
 func newNewLoopbackTransportOptions() objx.Map {
@@ -23,19 +24,19 @@ type LoopbackTransport struct {
 	handleIdx transport.HandleID
 
 	state    transport.TransportState
-	stateMtx sync.Locker
+	stateMtx msync.Locker
 
 	channels    map[string]*LoopbackDataChannel
-	channelsMtx sync.Locker
+	channelsMtx msync.Locker
 
 	onTransportStateChangeHandler    func(transport.TransportState)
-	onTransportStateChangeHandlerMtx sync.Locker
+	onTransportStateChangeHandlerMtx msync.Locker
 
 	onDataChannelCreateHandlers    map[string]transport.OnDataChannelCreateHandler
-	onDataChannelCreateHandlersMtx sync.Locker
+	onDataChannelCreateHandlersMtx msync.Locker
 
 	onTransportStateHandlers    map[transport.TransportState]map[transport.HandleID]transport.OnTransportStateHandler
-	onTransportStateHandlersMtx sync.Locker
+	onTransportStateHandlersMtx msync.Locker
 
 	err     error
 	errOnce sync.Once
@@ -68,18 +69,18 @@ func NewLoopbackTransport(opts ...transport.NewTransportOption) (transport.Trans
 		logger: logger,
 
 		state:    transport.TransportStateNew,
-		stateMtx: new(sync.Mutex),
+		stateMtx: msync.NewLock(),
 
 		channels:    make(map[string]*LoopbackDataChannel),
-		channelsMtx: new(sync.Mutex),
+		channelsMtx: msync.NewLock(),
 
-		onTransportStateChangeHandlerMtx: new(sync.Mutex),
+		onTransportStateChangeHandlerMtx: msync.NewLock(),
 
 		onDataChannelCreateHandlers:    make(map[string]transport.OnDataChannelCreateHandler),
-		onDataChannelCreateHandlersMtx: new(sync.Mutex),
+		onDataChannelCreateHandlersMtx: msync.NewLock(),
 
 		onTransportStateHandlers:    make(map[transport.TransportState]map[transport.HandleID]transport.OnTransportStateHandler),
-		onTransportStateHandlersMtx: new(sync.Mutex),
+		onTransportStateHandlersMtx: msync.NewLock(),
 	}
 
 	go lt.onTransportCreate()
