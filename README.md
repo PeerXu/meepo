@@ -2,7 +2,7 @@
 [![Telegram](https://img.shields.io/badge/Telegram-online-brightgreen.svg)](https://t.me/meepoDiscussion)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/PeerXu/meepo/pulls)
 
-[Chinese](https://github.com/PeerXu/meepo/README_cn.md)
+[Chinese](./README_cn.md)
 
 Meepo aims to publish network service more easy and decentralized.
 
