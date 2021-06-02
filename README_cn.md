@@ -51,7 +51,7 @@ $ brew install PeerXu/tap/meepo
 alice$ meepo config init id=alice
 alice$ meepo serve
 ```
-**注意: 如果在初始化时为指定ID, 系统会在启动时, 随机分配一个ID.**
+**注意: 如果在初始化时未指定ID, 系统会在启动时, 随机分配一个ID.**
 
 通过whoami子命令可以校验`Meepo`服务启动是否成功.
 
