@@ -231,9 +231,7 @@ func (wt *WebrtcTransport) initAsAnswerer() {
 	answerHook := wt.opt.Get("answerHook").Inter().(AnswerHook)
 
 	wt.pc, err = api.NewPeerConnection(webrtc.Configuration{
-		ICEServers: []webrtc.ICEServer{
-			{URLs: iceServers},
-		},
+		ICEServers: unmarshalICEServers(iceServers),
 	})
 	if err != nil {
 		logger.WithError(err).Debugf("failed to new peer connection")
@@ -353,9 +351,7 @@ func (wt *WebrtcTransport) initAsOfferer() {
 	offerHook := wt.opt.Get("offerHook").Inter().(OfferHook)
 
 	wt.pc, err = api.NewPeerConnection(webrtc.Configuration{
-		ICEServers: []webrtc.ICEServer{
-			{URLs: iceServers},
-		},
+		ICEServers: unmarshalICEServers(iceServers),
 	})
 	if err != nil {
 		logger.WithError(err).Debugf("failed to new peer connection")
