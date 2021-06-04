@@ -5,6 +5,9 @@ import (
 )
 
 var (
+	InvalidPeerIDError             = fmt.Errorf("Invalid peer ID")
+	NotFoundError                  = fmt.Errorf("Not found")
+	UnexpectedTypeError            = fmt.Errorf("Unexpected type")
 	UnsupportedRequestHandlerError = fmt.Errorf("Unsupported request method")
 	TransportNotExistError         = fmt.Errorf("Transport not exists")
 	TransportExistError            = fmt.Errorf("Transport already exists")
@@ -17,6 +20,7 @@ var (
 	UnsupportedSocks5CommandError  = fmt.Errorf("Unsupported socks5 command")
 	NetworkUnreachableError        = fmt.Errorf("Network unreachable")
 	UnsupportedNetworkTypeError    = fmt.Errorf("Unsupported network type")
+	IncorrectSignatureError        = fmt.Errorf("Incorrect signature")
 )
 
 func SessionChannelExistError(session int32) error {

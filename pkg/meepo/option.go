@@ -1,6 +1,7 @@
 package meepo
 
 import (
+	"crypto/ed25519"
 	"net"
 	"time"
 
@@ -8,7 +9,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/objx"
 
-	"github.com/PeerXu/meepo/pkg/meepo/auth"
 	"github.com/PeerXu/meepo/pkg/signaling"
 )
 
@@ -47,12 +47,6 @@ func WithSignalingEngine(se signaling.Engine) OFN {
 	}
 }
 
-func WithAuthEngine(ae auth.Engine) OFN {
-	return func(o objx.Map) {
-		o["authEngine"] = ae
-	}
-}
-
 func WithWebrtcAPI(webrtcAPI *webrtc.API) OFN {
 	return func(o objx.Map) {
 		o["webrtcAPI"] = webrtcAPI
@@ -65,15 +59,16 @@ func WithICEServers(iceServers []string) OFN {
 	}
 }
 
-func WithLogger(logger logrus.FieldLogger) OFN {
+func WithED25519KeyPair(pubk ed25519.PublicKey, prik ed25519.PrivateKey) OFN {
 	return func(o objx.Map) {
-		o["logger"] = logger
+		o["ed25519PublicKey"] = pubk
+		o["ed25519PrivateKey"] = prik
 	}
 }
 
-func WithID(id string) OFN {
+func WithLogger(logger logrus.FieldLogger) OFN {
 	return func(o objx.Map) {
-		o["id"] = id
+		o["logger"] = logger
 	}
 }
 

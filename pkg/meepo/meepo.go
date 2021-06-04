@@ -1,6 +1,7 @@
 package meepo
 
 import (
+	"crypto/ed25519"
 	"fmt"
 	"sync"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/spf13/cast"
 	"github.com/stretchr/objx"
 
-	"github.com/PeerXu/meepo/pkg/meepo/auth"
 	"github.com/PeerXu/meepo/pkg/signaling"
 	chain_signaling "github.com/PeerXu/meepo/pkg/signaling/chain"
 	"github.com/PeerXu/meepo/pkg/teleportation"
@@ -22,7 +22,6 @@ import (
 type Meepo struct {
 	rtc    *webrtc.API
 	se     signaling.Engine
-	ae     auth.Engine
 	socks5 Socks5Server
 
 	transports     map[string]transport.Transport
@@ -40,6 +39,8 @@ type Meepo struct {
 	logger logrus.FieldLogger
 
 	// Options
+	pubk       ed25519.PublicKey
+	prik       ed25519.PrivateKey
 	id         string
 	iceServers []string
 
@@ -70,10 +71,6 @@ func (m *Message) GetMessage() *Message {
 }
 
 func (mp *Meepo) GetID() string {
-	if mp.id == "" {
-		mp.id = cast.ToString(mp.opt.Get("id").Inter())
-	}
-
 	return mp.id
 }
 
@@ -215,10 +212,6 @@ func (mp *Meepo) closeTeleportationsByPeerID(id string) {
 	}
 }
 
-func (mp *Meepo) getSignatureFromUserData(ud map[string]interface{}) auth.Context {
-	return cast.ToStringMap(objx.New(ud).Get("signature").Inter())
-}
-
 func (mp *Meepo) init() error {
 	mp.initHandlers()
 
@@ -228,8 +221,9 @@ func (mp *Meepo) init() error {
 func NewMeepo(opts ...NewMeepoOption) (*Meepo, error) {
 	var logger logrus.FieldLogger
 	var rtc *webrtc.API
-	var ae auth.Engine
 	var se signaling.Engine
+	var pubk ed25519.PublicKey
+	var prik ed25519.PrivateKey
 	var ok bool
 	var err error
 
@@ -249,18 +243,24 @@ func NewMeepo(opts ...NewMeepoOption) (*Meepo, error) {
 		rtc = webrtc.NewAPI(webrtc.WithSettingEngine(settingEngine))
 	}
 
-	if ae, ok = o.Get("authEngine").Inter().(auth.Engine); !ok {
-		return nil, fmt.Errorf("require authEngine")
-	}
-
 	if se, ok = o.Get("signalingEngine").Inter().(signaling.Engine); !ok {
 		return nil, fmt.Errorf("require signalingEngine")
 	}
 
+	if pubk, ok = o.Get("ed25519PublicKey").Inter().(ed25519.PublicKey); !ok {
+		return nil, fmt.Errorf("require ed25519PublicKey")
+	}
+
+	if prik, ok = o.Get("ed25519PrivateKey").Inter().(ed25519.PrivateKey); !ok {
+		return nil, fmt.Errorf("require ed25519PrivateKey")
+	}
+
 	mp := &Meepo{
 		rtc:                      rtc,
-		ae:                       ae,
 		se:                       se,
+		pubk:                     pubk,
+		prik:                     prik,
+		id:                       Ed25519PublicKeyToMeepoID(pubk),
 		transports:               make(map[string]transport.Transport),
 		teleportationSources:     make(map[string]*teleportation.TeleportationSource),
 		teleportationSinks:       make(map[string]*teleportation.TeleportationSink),

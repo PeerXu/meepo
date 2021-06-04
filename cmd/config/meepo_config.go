@@ -1,34 +1,34 @@
 package config
 
 type MeepoConfig struct {
-	ID          string           `yaml:"id"`
-	Daemon      bool             `yaml:"daemon"`
-	AsSignaling bool             `yaml:"asSignaling"`
-	Log         *LogConfig       `yaml:"log"`
-	Proxy       *ProxyConfig     `yaml:"proxy"`
-	Auth        *AuthConfig      `yaml:"auth"`
-	AuthI       interface{}      `yaml:"-"`
-	Transport   *TransportConfig `yaml:"transport"`
-	TransportI  interface{}      `yaml:"-"`
-	Signaling   *SignalingConfig `yaml:"signaling"`
-	SignalingI  interface{}      `yaml:"-"`
-	Api         *ApiConfig       `yaml:"api"`
-	ApiI        interface{}      `yaml:"-"`
+	IdentityFile string           `yaml:"identityFile"`
+	Daemon       bool             `yaml:"daemon"`
+	AsSignaling  bool             `yaml:"asSignaling"`
+	Log          *LogConfig       `yaml:"log"`
+	Proxy        *ProxyConfig     `yaml:"proxy"`
+	Auth         *AuthConfig      `yaml:"auth"`
+	AuthI        interface{}      `yaml:"-"`
+	Transport    *TransportConfig `yaml:"transport"`
+	TransportI   interface{}      `yaml:"-"`
+	Signaling    *SignalingConfig `yaml:"signaling"`
+	SignalingI   interface{}      `yaml:"-"`
+	Api          *ApiConfig       `yaml:"api"`
+	ApiI         interface{}      `yaml:"-"`
 }
 
 func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var err error
 
 	var fmc struct {
-		ID          string           `yaml:"id"`
-		Daemon      bool             `yaml:"daemon"`
-		AsSignaling bool             `yaml:"asSignaling"`
-		Log         *LogConfig       `yaml:"log"`
-		Proxy       *ProxyConfig     `yaml:"proxy"`
-		Auth        *AuthConfig      `yaml:"auth"`
-		Transport   *TransportConfig `yaml:"transport"`
-		Signaling   *SignalingConfig `yaml:"signaling"`
-		Api         *ApiConfig       `yaml:"api"`
+		IdentityFile string           `yaml:"identityFile"`
+		Daemon       bool             `yaml:"daemon"`
+		AsSignaling  bool             `yaml:"asSignaling"`
+		Log          *LogConfig       `yaml:"log"`
+		Proxy        *ProxyConfig     `yaml:"proxy"`
+		Auth         *AuthConfig      `yaml:"auth"`
+		Transport    *TransportConfig `yaml:"transport"`
+		Signaling    *SignalingConfig `yaml:"signaling"`
+		Api          *ApiConfig       `yaml:"api"`
 	}
 
 	if err = unmarshal(&fmc); err != nil {
@@ -63,7 +63,7 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		}
 	}
 
-	mc.ID = fmc.ID
+	mc.IdentityFile = fmc.IdentityFile
 	mc.Daemon = fmc.Daemon
 	mc.AsSignaling = fmc.AsSignaling
 	mc.Log = fmc.Log
@@ -74,25 +74,25 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 func (mc *MeepoConfig) MarshalYAML() (interface{}, error) {
 	_mc := struct {
-		ID          string       `yaml:"id"`
-		Daemon      bool         `yaml:"daemon"`
-		AsSignaling bool         `yaml:"asSignaling"`
-		Log         *LogConfig   `yaml:"log"`
-		Proxy       *ProxyConfig `yaml:"proxy"`
-		Auth        interface{}  `yaml:"auth"`
-		Transport   interface{}  `yaml:"transport"`
-		Signaling   interface{}  `yaml:"signaling"`
-		Api         interface{}  `yaml:"api"`
+		IdentityFile string       `yaml:"identityFile"`
+		Daemon       bool         `yaml:"daemon"`
+		AsSignaling  bool         `yaml:"asSignaling"`
+		Log          *LogConfig   `yaml:"log"`
+		Proxy        *ProxyConfig `yaml:"proxy"`
+		Auth         interface{}  `yaml:"auth"`
+		Transport    interface{}  `yaml:"transport"`
+		Signaling    interface{}  `yaml:"signaling"`
+		Api          interface{}  `yaml:"api"`
 	}{
-		ID:          mc.ID,
-		Daemon:      mc.Daemon,
-		AsSignaling: mc.AsSignaling,
-		Log:         mc.Log,
-		Proxy:       mc.Proxy,
-		Auth:        mc.AuthI,
-		Transport:   mc.TransportI,
-		Signaling:   mc.SignalingI,
-		Api:         mc.ApiI,
+		IdentityFile: mc.IdentityFile,
+		Daemon:       mc.Daemon,
+		AsSignaling:  mc.AsSignaling,
+		Log:          mc.Log,
+		Proxy:        mc.Proxy,
+		Auth:         mc.AuthI,
+		Transport:    mc.TransportI,
+		Signaling:    mc.SignalingI,
+		Api:          mc.ApiI,
 	}
 
 	return &_mc, nil
