@@ -18,7 +18,7 @@ import (
 type TeleportationSource struct {
 	opt    objx.Map
 	logger logrus.FieldLogger
-	idx    int64
+	idx    int32
 	closed int32
 
 	name         string
@@ -99,7 +99,7 @@ func (ts *TeleportationSource) onDial(dr *DialRequest) {
 
 	tp := ts.Transport()
 
-	idx := atomic.AddInt64(&ts.idx, 1)
+	idx := atomic.AddInt32(&ts.idx, 1)
 	label := fmt.Sprintf("%s:%d", ts.Name(), idx)
 
 	if err := ts.doTeleportFunc(label); err != nil {
