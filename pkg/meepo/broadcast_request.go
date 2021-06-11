@@ -153,11 +153,14 @@ func (mp *Meepo) handleBroadcastRequest(dc transport.DataChannel, in interface{}
 	})
 
 	bid := b.Identifier()
-	if _, ok := mp.broadcastCache.Get(bid); ok {
-		logger.Debugf("handled broadcast request, drop it")
-		return
+
+	if mp.opt.Get("asSignaling").Bool() {
+		if _, ok := mp.broadcastCache.Get(bid); ok {
+			logger.Debugf("handled broadcast request, drop it")
+			return
+		}
+		mp.broadcastCache.Add(bid, nil)
 	}
-	mp.broadcastCache.Add(bid, nil)
 
 	handler, err := mp.getBroadcastRequestHandler(m.Method)
 	if err != nil {
