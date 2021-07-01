@@ -113,8 +113,26 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 		meepo.WithED25519KeyPair(pubk, prik),
 		meepo.WithICEServers(cfg.Meepo.TransportI.(*config.WebrtcTransportConfig).ICEServers),
 	}
+
 	if cfg.Meepo.AsSignaling {
 		newMeepoOptions = append(newMeepoOptions, meepo.WithAsSignaling(true))
+	}
+
+	switch cfg.Meepo.Auth.Name {
+	case "secret":
+		sa := cfg.Meepo.AuthI.(*config.SecretAuthConfig)
+		newMeepoOptions = append(
+			newMeepoOptions,
+			meepo.WithAuthorizationName("secret"),
+			meepo.WithAuthorizationSecret(sa.Secret),
+		)
+	case "dummy":
+		fallthrough
+	default:
+		newMeepoOptions = append(
+			newMeepoOptions,
+			meepo.WithAuthorizationName("dummy"),
+		)
 	}
 
 	mp, err := meepo.NewMeepo(newMeepoOptions...)

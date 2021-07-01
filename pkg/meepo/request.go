@@ -1,9 +1,7 @@
 package meepo
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -11,43 +9,35 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
 
+	"github.com/PeerXu/meepo/pkg/meepo/packet"
 	"github.com/PeerXu/meepo/pkg/transport"
 )
 
-type Request interface {
-	MessageGetter
-}
-
-type Response interface {
-	MessageGetter
-	Copier
-}
-
 type RequestHandler interface {
-	Handle(dc transport.DataChannel, in interface{})
+	Handle(transport.DataChannel, packet.Packet)
 }
 
-type MeepoRequestHandler func(transport.DataChannel, interface{})
+type MeepoRequestHandler func(transport.DataChannel, packet.Packet)
 
-func (h MeepoRequestHandler) Handle(dc transport.DataChannel, in interface{}) {
+func (h MeepoRequestHandler) Handle(dc transport.DataChannel, in packet.Packet) {
 	h(dc, in)
 }
 
 type BroadcastRequestHandler interface {
-	Handle(dc transport.DataChannel, in interface{})
-	HandleBroadcast(dc transport.DataChannel, in interface{})
+	Handle(transport.DataChannel, packet.BroadcastPacket)
+	HandleBroadcast(transport.DataChannel, packet.BroadcastPacket)
 }
 
 type MeepoBroadcastRequestHandler struct {
-	handle          func(transport.DataChannel, interface{})
-	handleBroadcast func(transport.DataChannel, interface{})
+	handle          func(transport.DataChannel, packet.BroadcastPacket)
+	handleBroadcast func(transport.DataChannel, packet.BroadcastPacket)
 }
 
-func (h *MeepoBroadcastRequestHandler) Handle(dc transport.DataChannel, in interface{}) {
+func (h *MeepoBroadcastRequestHandler) Handle(dc transport.DataChannel, in packet.BroadcastPacket) {
 	h.handle(dc, in)
 }
 
-func (h *MeepoBroadcastRequestHandler) HandleBroadcast(dc transport.DataChannel, in interface{}) {
+func (h *MeepoBroadcastRequestHandler) HandleBroadcast(dc transport.DataChannel, in packet.BroadcastPacket) {
 	h.handleBroadcast(dc, in)
 }
 
@@ -56,38 +46,38 @@ func (mp *Meepo) initHandlers() {
 	mp.initBroadcastRequestHandlers()
 }
 
-func (mp *Meepo) registerRequestHandleFunc(name string, h func(transport.DataChannel, interface{})) {
-	mp.registerRequestHandler(name, MeepoRequestHandler(h))
+func (mp *Meepo) registerRequestHandleFunc(m Method, h func(transport.DataChannel, packet.Packet)) {
+	mp.registerRequestHandler(m, MeepoRequestHandler(h))
 }
 
-func (mp *Meepo) registerRequestHandler(name string, h RequestHandler) {
+func (mp *Meepo) registerRequestHandler(m Method, h RequestHandler) {
 	mp.requestHandlersMtx.Lock()
-	mp.requestHandlers[name] = h
+	mp.requestHandlers[m] = h
 	mp.requestHandlersMtx.Unlock()
 }
 
-func (mp *Meepo) getRequestHandler(name string) (RequestHandler, error) {
+func (mp *Meepo) getRequestHandler(m Method) (RequestHandler, error) {
 	mp.requestHandlersMtx.Lock()
-	handler, ok := mp.requestHandlers[name]
+	handler, ok := mp.requestHandlers[m]
 	mp.requestHandlersMtx.Unlock()
 	if !ok {
-		return nil, UnsupportedRequestHandlerError
+		return nil, ErrUnsupportedMethod
 	}
 	return handler, nil
 }
 
-func (mp *Meepo) registerBroadcastRequestHandler(name string, h BroadcastRequestHandler) {
+func (mp *Meepo) registerBroadcastRequestHandler(m Method, h BroadcastRequestHandler) {
 	mp.broadcastRequestHandlersMtx.Lock()
-	mp.broadcastRequestHandlers[name] = h
+	mp.broadcastRequestHandlers[m] = h
 	mp.broadcastRequestHandlersMtx.Unlock()
 }
 
-func (mp *Meepo) getBroadcastRequestHandler(name string) (BroadcastRequestHandler, error) {
+func (mp *Meepo) getBroadcastRequestHandler(m Method) (BroadcastRequestHandler, error) {
 	mp.broadcastRequestHandlersMtx.Lock()
-	handler, ok := mp.broadcastRequestHandlers[name]
+	handler, ok := mp.broadcastRequestHandlers[m]
 	mp.broadcastRequestHandlersMtx.Unlock()
 	if !ok {
-		return nil, UnsupportedRequestHandlerError
+		return nil, ErrUnsupportedMethod
 	}
 	return handler, nil
 }
@@ -115,7 +105,7 @@ func (mp *Meepo) sysDataChannelLoop(dc transport.DataChannel) {
 	}
 }
 
-func (mp *Meepo) onSysDataChannelMessage(dc transport.DataChannel, buf []byte) {
+func (mp *Meepo) onSysDataChannelMessage(dc transport.DataChannel, b []byte) {
 	var err error
 
 	logger := mp.getLogger().WithFields(logrus.Fields{
@@ -123,41 +113,43 @@ func (mp *Meepo) onSysDataChannelMessage(dc transport.DataChannel, buf []byte) {
 		"label":   dc.Label(),
 	})
 
-	var in interface{}
-	in, err = DecodeMessage(buf)
+	in, err := packet.UnmarshalPacket(b)
 	if err != nil {
-		logger.WithError(err).Debugf("failed to decode message")
+		logger.WithError(err).Debugf("failed to unmarshal buffer")
 		return
 	}
 
-	switch in.(MessageGetter).GetMessage().Type {
-	case MESSAGE_TYPE_REQUEST:
+	switch in.Header().Type() {
+	case packet.Request:
 		mp.handleRequest(dc, in)
-	case MESSAGE_TYPE_BROADCAST_REQUEST:
+	case packet.Response:
+		mp.handleResponse(dc, in)
+	case packet.BroadcastRequest:
 		mp.handleBroadcastRequest(dc, in)
-	case MESSAGE_TYPE_RESPONSE:
-		if err = mp.handleResponse(dc, in); err != nil {
-			logger.WithError(err).Debugf("failed to handle response")
-		}
+	case packet.BroadcastResponse:
+		mp.handleBroadcastResponse(dc, in)
 	}
 }
 
-func (mp *Meepo) recoverHandleRequest(m *Message) {
-	logger := mp.getLogger().WithFields(logrus.Fields{
-		"#method": "recoverHandleRequest",
-		"method":  m.Method,
-		"session": m.Session,
-	})
-
+func (mp *Meepo) recoverHandleRequest(p packet.Packet) {
 	recovered := recover()
 	if recovered == nil {
 		return
 	}
 
+	hdr := p.Header()
+	logger := mp.getLogger().WithFields(logrus.Fields{
+		"#method":     "recoverHandleRequest",
+		"method":      hdr.Method(),
+		"session":     hdr.Session(),
+		"source":      hdr.Source(),
+		"destination": hdr.Destination(),
+	})
+
 	switch recovered.(type) {
-	case sendMessageError:
-		err := recovered.(sendMessageError)
-		logger.WithError(err).Warningf("send message error")
+	case errSendPacket:
+		err := recovered.(errSendPacket)
+		logger.WithError(err).Warningf("send packet error")
 	case error:
 		err := recovered.(error)
 		logger.WithError(err).Debugf("failed to handle request")
@@ -165,26 +157,35 @@ func (mp *Meepo) recoverHandleRequest(m *Message) {
 }
 
 func (mp *Meepo) initRequestHandlers() {
-	mp.registerRequestHandleFunc("ping", mp.onPing)
-	mp.registerRequestHandleFunc("newTeleportation", mp.onNewTeleportation)
-	mp.registerRequestHandleFunc("closeTeleportation", mp.onCloseTeleportation)
-	mp.registerRequestHandleFunc("doTeleport", mp.onDoTeleport)
+	mp.registerRequestHandleFunc(METHOD_PING, mp.onPing)
+	mp.registerRequestHandleFunc(METHOD_NEW_TELEPORTATION, mp.onNewTeleportation)
+	mp.registerRequestHandleFunc(METHOD_CLOSE_TELEPORTATION, mp.onCloseTeleportation)
+	mp.registerRequestHandleFunc(METHOD_DO_TELEORT, mp.onDoTeleport)
 }
 
-func (mp *Meepo) handleRequest(dc transport.DataChannel, in interface{}) {
-	m := in.(MessageGetter).GetMessage()
+func (mp *Meepo) handleRequest(dc transport.DataChannel, in packet.Packet) {
+	hdr := in.Header()
 
-	defer mp.recoverHandleRequest(m)
+	defer mp.recoverHandleRequest(in)
 
 	logger := mp.getLogger().WithFields(logrus.Fields{
-		"#method": "handleRequest",
-		"method":  m.Method,
-		"session": m.Session,
+		"#method":     "handleRequest",
+		"method":      hdr.Method(),
+		"session":     hdr.Session(),
+		"source":      hdr.Source(),
+		"destination": hdr.Destination(),
 	})
 
-	handler, err := mp.getRequestHandler(m.Method)
+	if err := mp.authenticatePacket(in); err != nil {
+		logger.WithError(err).Debugf("unauthenticated request")
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
+		return
+	}
+
+	handler, err := mp.getRequestHandler(Method(hdr.Method()))
 	if err != nil {
 		logger.WithError(err).Debugf("failed to get request handler")
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
 		return
 	}
 
@@ -192,39 +193,36 @@ func (mp *Meepo) handleRequest(dc transport.DataChannel, in interface{}) {
 	logger.Tracef("done")
 }
 
-func (mp *Meepo) handleResponse(dc transport.DataChannel, in interface{}) error {
-	m := in.(MessageGetter).GetMessage()
-
+func (mp *Meepo) handleResponse(dc transport.DataChannel, in packet.Packet) {
+	hdr := in.Header()
 	logger := mp.getLogger().WithFields(logrus.Fields{
-		"#method": "handleResponse",
-		"method":  m.Method,
-		"session": m.Session,
+		"#method":     "handleResponse",
+		"source":      hdr.Source(),
+		"destination": hdr.Destination(),
+		"method":      hdr.Method(),
+		"session":     hdr.Session(),
 	})
 
-	ch, unlock, err := mp.channelLocker.GetWithUnlock(m.Session)
+	ch, unlock, err := mp.channelLocker.GetWithUnlock(hdr.Session())
 	if err != nil {
 		logger.WithError(err).Debugf("failed to get session channel")
-		return err
+		return
 	}
 	defer unlock()
 
 	ch <- in
 	logger.Tracef("send response to session channel")
-
-	return nil
 }
 
-func (mp *Meepo) sendRequest(id string, req interface{}) error {
-	msg := req.(MessageGetter).GetMessage()
-
+func (mp *Meepo) sendRequest(in packet.Packet) error {
 	logger := mp.getLogger().WithFields(logrus.Fields{
-		"#method": "sendRequest",
-		"id":      id,
-		"session": msg.Session,
-		"method":  msg.Method,
+		"#method":     "sendRequest",
+		"destination": in.Header().Destination(),
+		"session":     in.Header().Session(),
+		"method":      in.Header().Method(),
 	})
 
-	tp, err := mp.getTransport(id)
+	tp, err := mp.getTransport(in.Header().Destination())
 	// TODO(Peer): handle transport not found
 	if err != nil {
 		logger.WithError(err).Debugf("failed to get transport")
@@ -237,47 +235,43 @@ func (mp *Meepo) sendRequest(id string, req interface{}) error {
 		return err
 	}
 
-	mp.sendMessage(dc, req)
+	mp.sendPacket(dc, in)
 
 	return nil
 }
 
-func (mp *Meepo) sendMessage(dc transport.DataChannel, msg interface{}) {
-	buf, err := json.Marshal(msg)
+func (mp *Meepo) sendPacket(dc transport.DataChannel, p packet.Packet) {
+	buf, err := packet.MarshalPacket(p)
 	if err != nil {
-		panic(SendMessageError(err))
+		panic(ErrSendPacket(err))
 	}
 
 	if _, err = dc.Write(buf); err != nil {
-		panic(SendMessageError(err))
+		panic(ErrSendPacket(err))
 	}
 }
 
-func (mp *Meepo) waitResponse(session int32) (interface{}, error) {
+func (mp *Meepo) waitResponse(session int32) (packet.Packet, error) {
 	ch, err := mp.channelLocker.Get(session)
 	if err != nil {
 		return nil, err
 	}
 
 	select {
-	case res, ok := <-ch:
+	case out, ok := <-ch:
 		if !ok {
 			return nil, SessionChannelClosedError(session)
 		}
 
-		msgGetter, ok := res.(MessageGetter)
-		if !ok {
-			return nil, UnexpectedMessageError
-		}
+		res := out.(packet.Packet)
 
-		msg := msgGetter.GetMessage()
-		if msg.Error != "" {
-			return nil, fmt.Errorf(msg.Error)
+		if err = res.Err(); err != nil {
+			return nil, err
 		}
 
 		return res, nil
 	case <-time.After(cast.ToDuration(mp.opt.Get("waitResponseTimeout").Inter())):
-		return nil, WaitResponseTimeoutError
+		return nil, ErrWaitResponseTimeout
 	}
 }
 
@@ -319,50 +313,65 @@ func (mp *Meepo) getOrCreateSysDataChannel(tp transport.Transport) (transport.Da
 	return dc, nil
 }
 
-func (mp *Meepo) doRequest(id string, req interface{}) (interface{}, error) {
+func (mp *Meepo) doRequest(in packet.Packet) (packet.Packet, error) {
 	var err error
 
+	hdr := in.Header()
+	dst := hdr.Destination()
+	sess := hdr.Session()
+	meth := hdr.Method()
+
 	logger := mp.getLogger().WithFields(logrus.Fields{
-		"#method": "doRequest",
-		"peerID":  id,
+		"#method":     "doRequest",
+		"destination": dst,
+		"session":     sess,
+		"method":      meth,
 	})
 
-	msgGetter, ok := req.(MessageGetter)
-	if !ok {
-		logger.WithError(err).Debugf("failed to convert request to MessageGetter")
-		return nil, UnexpectedMessageError
+	if in, err = mp.signPacket(in); err != nil {
+		logger.WithError(err).Debugf("failed to sign message")
+		return nil, err
 	}
 
-	msg := msgGetter.GetMessage()
-	logger = logger.WithFields(logrus.Fields{
-		"method":  msg.Method,
-		"session": msg.Session,
-	})
-
-	if err = mp.channelLocker.Acquire(msg.Session); err != nil {
+	if err = mp.channelLocker.Acquire(in.Header().Session()); err != nil {
 		logger.WithError(err).Debugf("failed to acquire session channel")
 		return nil, err
 	}
 	defer func() {
-		mp.channelLocker.Release(msg.Session)
+		mp.channelLocker.Release(sess)
 		logger.Tracef("release session channel")
 	}()
 	logger.Tracef("acquire session channel")
 
-	if err = mp.sendRequest(id, req); err != nil {
+	if err = mp.sendRequest(in); err != nil {
 		logger.WithError(err).Debugf("failed to send request")
 		return nil, err
 	}
 	logger.Tracef("send request")
 
-	res, err := mp.waitResponse(msg.Session)
+	out, err := mp.waitResponse(sess)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to wait response")
 		return nil, err
 	}
 	logger.Tracef("receive response")
 
+	if err = mp.authenticatePacket(out, WithSubject(dst)); err != nil {
+		logger.WithError(err).Debugf("unauthenticated response")
+		return nil, err
+	}
+
 	logger.Tracef("done")
 
-	return res, nil
+	return out, nil
+}
+
+func (mp *Meepo) sendResponse(dc transport.DataChannel, out packet.Packet) {
+	var err error
+
+	if out, err = mp.signPacket(out); err != nil {
+		panic(err)
+	}
+
+	mp.sendPacket(dc, out)
 }

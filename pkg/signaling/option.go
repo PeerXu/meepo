@@ -3,9 +3,11 @@ package signaling
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/objx"
+
+	"github.com/PeerXu/meepo/pkg/ofn"
 )
 
-type NewEngineOption func(objx.Map)
+type NewEngineOption = ofn.OFN
 
 func WithID(id string) NewEngineOption {
 	return func(o objx.Map) {

@@ -18,6 +18,7 @@ type NewTeleportationRequest struct {
 	Name          string `json:"name,omitempty"`
 	LocalNetwork  string `json:"localNetwork,omitempty"`
 	LocalAddress  string `json:"localAddress,omitempty"`
+	Secret        string `json:"secret,omitempty"`
 }
 
 type NewTeleportationResponse struct {
@@ -53,6 +54,10 @@ func (s *HttpServer) NewTeleportation(c *gin.Context) {
 		}
 
 		opts = append(opts, meepo.WithLocalAddress(local))
+	}
+
+	if req.Secret != "" {
+		opts = append(opts, meepo.WithSecret(req.Secret))
 	}
 
 	if tp, err = s.meepo.NewTeleportation(req.PeerID, remote, opts...); err != nil {

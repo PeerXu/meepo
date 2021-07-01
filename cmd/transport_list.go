@@ -11,7 +11,7 @@ var (
 	transportListCmd = &cobra.Command{
 		Use:     "list",
 		Short:   "List transports",
-		Aliases: []string{"ls"},
+		Aliases: []string{"ls", "l"},
 		RunE:    meepoTransportList,
 	}
 )

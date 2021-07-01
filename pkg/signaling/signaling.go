@@ -7,8 +7,8 @@ import (
 type UserData = map[string]interface{}
 
 type Descriptor struct {
-	ID       string   `json:"id"`
-	UserData UserData `json:"userData,omitempty"`
+	ID       string
+	UserData UserData
 }
 
 type WireHandler func(*Descriptor) (*Descriptor, error)

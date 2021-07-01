@@ -150,7 +150,7 @@ func NewDefaultConfig() *Config {
 		Meepo: &MeepoConfig{
 			IdentityFile: "",
 			Daemon:       true,
-			AsSignaling:  false,
+			AsSignaling:  true,
 			Log: &LogConfig{
 				Level: "error",
 			},

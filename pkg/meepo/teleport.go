@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/objx"
 
+	"github.com/PeerXu/meepo/pkg/teleportation"
 	"github.com/PeerXu/meepo/pkg/transport"
 )
 
@@ -17,6 +18,7 @@ func newTeleportOptions() objx.Map {
 func (mp *Meepo) Teleport(peerID string, remote net.Addr, opts ...TeleportOption) (net.Addr, error) {
 	var local net.Addr
 	var name string
+	var secret string
 	var tp transport.Transport
 	var err error
 	var ok bool
@@ -29,7 +31,7 @@ func (mp *Meepo) Teleport(peerID string, remote net.Addr, opts ...TeleportOption
 
 	tp, err = mp.getTransport(peerID)
 	if err != nil {
-		if !errors.Is(err, TransportNotExistError) {
+		if !errors.Is(err, ErrTransportNotExist) {
 			return nil, err
 		}
 
@@ -59,7 +61,8 @@ func (mp *Meepo) Teleport(peerID string, remote net.Addr, opts ...TeleportOption
 
 	for _, ts := range tss {
 		sink := ts.Sink()
-		if sink.Network() == remote.Network() &&
+		if ts.Portal() == teleportation.PortalSource &&
+			sink.Network() == remote.Network() &&
 			sink.String() == remote.String() {
 			return ts.Source(), nil
 		}
@@ -72,6 +75,10 @@ func (mp *Meepo) Teleport(peerID string, remote net.Addr, opts ...TeleportOption
 
 	if name, ok = o.Get("name").Inter().(string); ok {
 		ntOpts = append(ntOpts, WithName(name))
+	}
+
+	if secret, ok = o.Get("secret").Inter().(string); ok {
+		ntOpts = append(ntOpts, WithSecret(secret))
 	}
 
 	ts, err := mp.NewTeleportation(peerID, remote, ntOpts...)

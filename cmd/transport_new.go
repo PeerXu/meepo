@@ -8,10 +8,11 @@ import (
 
 var (
 	transportNewCmd = &cobra.Command{
-		Use:   "new <id>",
-		Short: "New transport",
-		RunE:  meepoTransportNew,
-		Args:  cobra.ExactArgs(1),
+		Use:     "new <id>",
+		Short:   "New transport",
+		Aliases: []string{"n"},
+		RunE:    meepoTransportNew,
+		Args:    cobra.ExactArgs(1),
 	}
 )
 

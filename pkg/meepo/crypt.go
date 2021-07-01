@@ -6,25 +6,28 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/json"
 	"io"
 
+	"github.com/pion/webrtc/v3"
+	"golang.org/x/crypto/bcrypt"
+
+	"github.com/PeerXu/meepo/pkg/meepo/packet"
 	"github.com/PeerXu/meepo/pkg/signaling"
 	"github.com/PeerXu/meepo/pkg/util/base36"
 	mcrypt "github.com/PeerXu/meepo/pkg/util/crypt"
-	"github.com/pion/webrtc/v3"
+	"github.com/PeerXu/meepo/pkg/util/msgpack"
 )
 
 func b64DecodeStringFromMap(k string, m map[string]interface{}) (r []byte, err error) {
 	v, ok := m[k]
 	if !ok {
-		err = NotFoundError
+		err = ErrNotFound
 		return
 	}
 
 	s, ok := v.(string)
 	if !ok {
-		err = UnexpectedTypeError
+		err = ErrUnexpectedType
 		return
 	}
 
@@ -55,11 +58,11 @@ func Ed25519PublicKeyToMeepoID(pubk ed25519.PublicKey) string {
 func MeepoIDToEd25519PublicKey(peerID string) (pubk ed25519.PublicKey, err error) {
 	buf := base36.Decode(peerID)
 	if len(buf) == 0 {
-		return nil, InvalidPeerIDError
+		return nil, ErrInvalidPeerID
 	}
 
 	if buf[0] != MEEPO_ID_MAGIC_CODE {
-		return nil, InvalidPeerIDError
+		return nil, ErrInvalidPeerID
 	}
 
 	return ed25519.PublicKey(buf[1:]), nil
@@ -75,7 +78,7 @@ func (mp *Meepo) newGCM(secret []byte) (cipher.AEAD, error) {
 }
 
 func (mp *Meepo) signDescriptor(d *signaling.Descriptor) error {
-	buf, err := json.Marshal(d)
+	buf, err := msgpack.Marshal(d)
 	if err != nil {
 		return err
 	}
@@ -99,13 +102,13 @@ func (mp *Meepo) verifyDescriptor(peerID string, d *signaling.Descriptor) (err e
 
 	delete(d.UserData, "sig")
 
-	buf, err := json.Marshal(d)
+	buf, err := msgpack.Marshal(d)
 	if err != nil {
 		return
 	}
 
 	if !ed25519.Verify(peerPubk, buf, sig) {
-		return IncorrectSignatureError
+		return ErrIncorrectSignature
 	}
 
 	return nil
@@ -126,7 +129,7 @@ func (mp *Meepo) marshalRequestDescriptor(peerID string, offer *webrtc.SessionDe
 		return
 	}
 
-	plaintext, err := json.Marshal(offer)
+	plaintext, err := msgpack.Marshal(offer)
 	if err != nil {
 		return
 	}
@@ -165,7 +168,7 @@ func (mp *Meepo) unmarshalResponseDescriptor(res *signaling.Descriptor, gcm ciph
 		return
 	}
 
-	if err = json.Unmarshal(plaintext, &answer); err != nil {
+	if err = msgpack.Unmarshal(plaintext, &answer); err != nil {
 		return
 	}
 
@@ -204,7 +207,7 @@ func (mp *Meepo) unmarshalRequestDescriptor(req *signaling.Descriptor) (offer *w
 		return
 	}
 
-	if err = json.Unmarshal(plaintext, &offer); err != nil {
+	if err = msgpack.Unmarshal(plaintext, &offer); err != nil {
 		return
 	}
 
@@ -212,7 +215,7 @@ func (mp *Meepo) unmarshalRequestDescriptor(req *signaling.Descriptor) (offer *w
 }
 
 func (mp *Meepo) marshalResponseDescriptor(answer *webrtc.SessionDescription, gcm cipher.AEAD, nonce []byte) (res *signaling.Descriptor, err error) {
-	plaintext, err := json.Marshal(answer)
+	plaintext, err := msgpack.Marshal(answer)
 	if err != nil {
 		return
 	}
@@ -231,4 +234,41 @@ func (mp *Meepo) marshalResponseDescriptor(answer *webrtc.SessionDescription, gc
 	}
 
 	return
+}
+
+func (mp *Meepo) signPacket(in packet.Packet) (out packet.Packet, err error) {
+	var buf []byte
+	if buf, err = packet.MarshalPacket(in); err != nil {
+		return
+	}
+
+	out = in.SetSignature(ed25519.Sign(mp.prik, buf))
+
+	return
+}
+
+func (mp *Meepo) verifyPacket(p packet.Packet) error {
+	pubk, err := MeepoIDToEd25519PublicKey(p.Header().Source())
+	if err != nil {
+		return err
+	}
+
+	sig := p.Header().Signature()
+	pp := p.UnsetSignature()
+	buf, err := packet.MarshalPacket(pp)
+
+	if !ed25519.Verify(pubk, buf, sig) {
+		return ErrIncorrectSignature
+	}
+
+	return nil
+}
+
+func hashSecret(secret string) (string, error) {
+	bHashedSecret, err := bcrypt.GenerateFromPassword([]byte(secret), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(bHashedSecret), nil
 }

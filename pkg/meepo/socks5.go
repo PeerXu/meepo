@@ -148,7 +148,7 @@ func (s *socks5Server) getOrCreateTransport(r *socks5.Request) (transport.Transp
 	peerID := s.mustGetTransportID(r)
 	tp, err := s.meepo.getTransport(peerID)
 	if err != nil {
-		if !errors.Is(err, TransportNotExistError) {
+		if !errors.Is(err, ErrTransportNotExist) {
 			return nil, err
 		}
 
@@ -207,7 +207,6 @@ func (s *socks5Server) teleport(r *socks5.Request) (chan *teleportation.DialRequ
 	})
 
 	req := &NewTeleportationRequest{
-		Message:       s.meepo.createRequest("newTeleportation"),
 		Name:          tpName,
 		LocalNetwork:  local.Network(),
 		LocalAddress:  local.String(),
@@ -215,15 +214,21 @@ func (s *socks5Server) teleport(r *socks5.Request) (chan *teleportation.DialRequ
 		RemoteAddress: remote.String(),
 	}
 
-	out, err := s.meepo.doRequest(id, req)
+	if r.AuthContext.Method == statute.MethodUserPassAuth {
+		if req.HashedSecret, err = hashSecret(r.AuthContext.Payload["password"]); err != nil {
+			logger.WithError(err).Debugf("failed to hash secret")
+			return nil, err
+		}
+	}
+
+	in := s.meepo.createRequest(id, METHOD_NEW_TELEPORTATION, req)
+	out, err := s.meepo.doRequest(in)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to do request")
 		return nil, err
 	}
 
-	res := out.(*NewTeleportationResponse)
-	if res.Error != "" {
-		err = fmt.Errorf(res.Error)
+	if err = out.Err(); err != nil {
 		logger.WithError(err).Debugf("failed to new teleportation by peer")
 		return nil, err
 	}
@@ -250,20 +255,17 @@ func (s *socks5Server) teleport(r *socks5.Request) (chan *teleportation.DialRequ
 			innerLogger := logger.WithField("#method", "doTeleportFunc")
 
 			req := &DoTeleportRequest{
-				Message: s.meepo.createRequest("doTeleport"),
-				Name:    tpName,
-				Label:   label,
+				Name:  tpName,
+				Label: label,
 			}
-
-			out, err := s.meepo.doRequest(id, req)
+			in := s.meepo.createRequest(id, METHOD_DO_TELEORT, req)
+			out, err := s.meepo.doRequest(in)
 			if err != nil {
 				innerLogger.WithError(err).Debugf("failed to do request")
 				return err
 			}
 
-			res := out.(*DoTeleportResponse)
-			if res.Error != "" {
-				err = fmt.Errorf(res.Error)
+			if err = out.Err(); err != nil {
 				innerLogger.WithError(err).Debugf("failed to do teleport by peer")
 				return err
 			}
@@ -336,7 +338,20 @@ func (s *socks5Server) unsupportedCommandHandler(ctx context.Context, w io.Write
 
 	logger.Warningf("Unsupported command")
 
-	return UnsupportedSocks5CommandError
+	return ErrUnsupportedSocks5Command
+}
+
+type credentialStore func(password string) bool
+
+func (fn credentialStore) Valid(user, password, userAddr string) bool {
+	return fn(password)
+}
+
+func (s *socks5Server) asCredentialStore() socks5.CredentialStore {
+	secret := cast.ToString(s.meepo.opt.Get("authorizationSecret").Inter())
+	return credentialStore(func(password string) bool {
+		return secret == password
+	})
 }
 
 func (s *socks5Server) Start(ctx context.Context) error {
@@ -345,12 +360,19 @@ func (s *socks5Server) Start(ctx context.Context) error {
 	host := cast.ToString(s.opt.Get("host").Inter())
 	port := cast.ToString(s.opt.Get("port").Inter())
 
-	s.socks5 = socks5.NewServer(
+	opts := []socks5.Option{
 		socks5.WithResolver(&socks5NameResolver{suffix: s.domainSuffix}),
 		socks5.WithConnectHandle(s.handleConnect),
 		socks5.WithBindHandle(s.unsupportedCommandHandler),
 		socks5.WithAssociateHandle(s.unsupportedCommandHandler),
-	)
+	}
+
+	switch s.meepo.GetAuthorizationName() {
+	case "secret":
+		opts = append(opts, socks5.WithCredential(s.asCredentialStore()))
+	}
+
+	s.socks5 = socks5.NewServer(opts...)
 
 	s.lisMtx.Lock()
 	s.lis, err = net.Listen("tcp", net.JoinHostPort(host, port))
@@ -390,7 +412,7 @@ func (s *socks5Server) handleConnect(ctx context.Context, w io.Writer, r *socks5
 	logger := s.getLogger().WithField("#mehtod", "handleConnect")
 
 	if !s.isAvaiableTransportID(r) {
-		err = NetworkUnreachableError
+		err = ErrNetworkUnreachable
 		logger.WithError(err).WithField("fqdn", r.RawDestAddr.FQDN).Errorf("unsupported domain")
 		if er := socks5.SendReply(w, statute.RepNetworkUnreachable, nil); er != nil {
 			logger.WithError(er).Debugf("failed to send reply")

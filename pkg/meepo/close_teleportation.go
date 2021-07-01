@@ -1,21 +1,22 @@
 package meepo
 
 import (
-	"fmt"
-
+	"github.com/PeerXu/meepo/pkg/meepo/packet"
 	"github.com/PeerXu/meepo/pkg/transport"
 	"github.com/sirupsen/logrus"
 )
 
-type CloseTeleportationRequest struct {
-	*Message
+const (
+	METHOD_CLOSE_TELEPORTATION Method = "closeTeleportation"
+)
 
-	Name string `json:"name"`
-}
+type (
+	CloseTeleportationRequest struct {
+		Name string
+	}
 
-type CloseTeleportationResponse struct {
-	*Message
-}
+	CloseTeleportationResponse struct{}
+)
 
 func (mp *Meepo) CloseTeleportation(name string) error {
 	var err error
@@ -31,19 +32,15 @@ func (mp *Meepo) CloseTeleportation(name string) error {
 		return err
 	}
 
-	req := &CloseTeleportationRequest{
-		Message: mp.createRequest("closeTeleportation"),
-		Name:    name,
-	}
+	in := mp.createRequest(tp.Transport().PeerID(), METHOD_CLOSE_TELEPORTATION, &CloseTeleportationRequest{Name: name})
 
-	out, err := mp.doRequest(tp.Transport().PeerID(), req)
+	out, err := mp.doRequest(in)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to do request")
 		return err
 	}
-	res := out.(*CloseTeleportationResponse)
-	if res.Error != "" {
-		err = fmt.Errorf(res.Error)
+
+	if err = out.Err(); err != nil {
 		logger.WithError(err).Errorf("failed to close teleportation by peer")
 		return err
 	}
@@ -61,21 +58,26 @@ func (mp *Meepo) CloseTeleportation(name string) error {
 	return nil
 }
 
-func (mp *Meepo) onCloseTeleportation(dc transport.DataChannel, in interface{}) {
+func (mp *Meepo) onCloseTeleportation(dc transport.DataChannel, in packet.Packet) {
 	var err error
+	var req CloseTeleportationRequest
 
-	req := in.(*CloseTeleportationRequest)
+	logger := mp.getLogger().WithFields(logrus.Fields{
+		"#method": "onCloseTeleportation",
+	})
 
-	logger := mp.getLogger().WithFields(
-		logrus.Fields{
-			"#method": "onCloseTeleportation",
-			"name":    req.Name,
-		})
+	if err = in.Data(&req); err != nil {
+		logger.WithError(err).Errorf("failed to unmarshal request data")
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
+		return
+	}
+
+	logger = logger.WithField("name", req.Name)
 
 	ts, err := mp.GetTeleportation(req.Name, WithSinkFirst())
 	if err != nil {
 		logger.WithError(err).Errorf("failed to get teleportation")
-		mp.sendMessage(dc, mp.invertMessageWithError(req, err))
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
 		return
 	}
 
@@ -87,15 +89,6 @@ func (mp *Meepo) onCloseTeleportation(dc transport.DataChannel, in interface{}) 
 		logger.Infof("teleportation closed")
 	}()
 
-	res := CloseTeleportationResponse{
-		Message: mp.invertMessage(req),
-	}
-	mp.sendMessage(dc, &res)
-
+	mp.sendResponse(dc, mp.createResponse(in, &CloseTeleportationResponse{}))
 	logger.Debugf("teleportation closing")
-}
-
-func init() {
-	registerDecodeMessageHelper(MESSAGE_TYPE_REQUEST, "closeTeleportation", func() interface{} { return &CloseTeleportationRequest{} })
-	registerDecodeMessageHelper(MESSAGE_TYPE_RESPONSE, "closeTeleportation", func() interface{} { return &CloseTeleportationResponse{} })
 }

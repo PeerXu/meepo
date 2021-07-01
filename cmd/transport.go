@@ -4,8 +4,9 @@ import "github.com/spf13/cobra"
 
 var (
 	transportCmd = &cobra.Command{
-		Use:   "transport",
-		Short: "Meepo transport subcommand",
+		Use:     "transport",
+		Aliases: []string{"t"},
+		Short:   "Meepo transport subcommand",
 	}
 )
 

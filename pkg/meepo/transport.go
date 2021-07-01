@@ -20,7 +20,7 @@ func (mp *Meepo) getTransport(peerID string) (transport.Transport, error) {
 func (mp *Meepo) getTransportNL(peerID string) (transport.Transport, error) {
 	transport, ok := mp.transports[peerID]
 	if !ok {
-		return nil, TransportNotExistError
+		return nil, ErrTransportNotExist
 	}
 
 	return transport, nil
@@ -33,7 +33,7 @@ func (mp *Meepo) getConnectedTransport(peerID string) (transport.Transport, erro
 	}
 
 	if tp.TransportState() != transport.TransportStateConnected {
-		return nil, TransportNotExistError
+		return nil, ErrTransportNotExist
 	}
 
 	return tp, nil

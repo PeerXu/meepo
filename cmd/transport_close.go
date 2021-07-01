@@ -8,10 +8,11 @@ import (
 
 var (
 	transportCloseCmd = &cobra.Command{
-		Use:   "close <name>",
-		Short: "Close transport",
-		RunE:  meepoTransportClose,
-		Args:  cobra.ExactArgs(1),
+		Use:     "close <name>",
+		Short:   "Close transport",
+		Aliases: []string{"c"},
+		RunE:    meepoTransportClose,
+		Args:    cobra.ExactArgs(1),
 	}
 )
 

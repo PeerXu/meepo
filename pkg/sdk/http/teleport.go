@@ -14,12 +14,18 @@ func (t *MeepoSDK) Teleport(peerID string, remote net.Addr, opt *sdk.TeleportOpt
 		RemoteNetwork: remote.Network(),
 		RemoteAddress: remote.String(),
 	}
+
 	if opt.Local != nil {
 		req.LocalNetwork = opt.Local.Network()
 		req.LocalAddress = opt.Local.String()
 	}
+
 	if opt.Name != "" {
 		req.Name = opt.Name
+	}
+
+	if opt.Secret != "" {
+		req.Secret = opt.Secret
 	}
 
 	var res http_api.TeleportResponse

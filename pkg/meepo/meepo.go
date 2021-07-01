@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/cast"
 	"github.com/stretchr/objx"
 
+	"github.com/PeerXu/meepo/pkg/meepo/auth"
+	"github.com/PeerXu/meepo/pkg/meepo/packet"
 	"github.com/PeerXu/meepo/pkg/signaling"
 	chain_signaling "github.com/PeerXu/meepo/pkg/signaling/chain"
 	"github.com/PeerXu/meepo/pkg/teleportation"
@@ -48,11 +50,14 @@ type Meepo struct {
 
 	broadcastCache *lru.ARCCache
 
-	requestHandlers    map[string]RequestHandler
+	requestHandlers    map[Method]RequestHandler
 	requestHandlersMtx msync.Locker
 
-	broadcastRequestHandlers    map[string]BroadcastRequestHandler
+	broadcastRequestHandlers    map[Method]BroadcastRequestHandler
 	broadcastRequestHandlersMtx msync.Locker
+
+	authentication auth.Authentication
+	authorization  auth.Authorization
 }
 
 func (mp *Meepo) getRawLogger() logrus.FieldLogger {
@@ -66,9 +71,9 @@ func (mp *Meepo) getLogger() logrus.FieldLogger {
 	})
 }
 
-func (m *Message) GetMessage() *Message {
-	return m
-}
+// func (m *Message) GetMessage() *Message {
+// 	return m
+// }
 
 func (mp *Meepo) GetID() string {
 	return mp.id
@@ -92,97 +97,62 @@ func (mp *Meepo) getWebrtcConfiguration() webrtc.Configuration {
 	}
 }
 
-func (mp *Meepo) invertMessage(m MessageGetter) *Message {
-	return InvertMessage(m.GetMessage(), mp.GetID())
+func (mp *Meepo) createRequest(dst string, meth Method, in interface{}) (out packet.Packet) {
+	out, _ = packet.NewPacket(
+		packet.NewHeader(generateSession(), mp.GetID(), dst, packet.Request, string(meth)),
+		packet.WithData(in),
+	)
+	return
 }
 
-func (mp *Meepo) invertMessageWithError(x MessageGetter, err error) *Message {
-	y := InvertMessage(x.GetMessage(), mp.GetID())
-	y.Error = err.Error()
-	return y
+func (mp *Meepo) createBroadcastRequest(dst string, in packet.Packet) (out packet.BroadcastPacket) {
+	hdr := packet.NewBroadcastHeader(generateSession(), mp.GetID(), dst, packet.BroadcastRequest, in.Header().Method(), MAX_HOP_LIMITED)
+	out, _ = packet.NewBroadcastPacket(hdr, packet.WithPacket(in))
+	return
 }
 
-func (mp *Meepo) invertBroadcast(b BroadcastGetter) *Broadcast {
-	return InvertBroadcast(b.GetBroadcast(), mp.GetID())
+func (mp *Meepo) createResponse(p packet.Packet, in interface{}) (out packet.Packet) {
+	out, _ = packet.NewPacket(packet.InvertHeader(p.Header()), packet.WithData(in))
+	return
 }
 
-type createRequestOption struct {
-	Type string
+func (mp *Meepo) createResponseWithError(in packet.Packet, err error) (out packet.Packet) {
+	out, _ = packet.NewPacket(packet.InvertHeader(in.Header()), packet.WithError(err))
+	return
 }
 
-func (mp *Meepo) createRequest(meth string, opts ...*createRequestOption) *Message {
-	var opt *createRequestOption
-	if len(opts) > 0 {
-		opt = opts[0]
-	} else {
-		opt = &createRequestOption{
-			Type: MESSAGE_TYPE_REQUEST,
-		}
+func (mp *Meepo) createBroadcastResponse(p packet.BroadcastPacket, in packet.Packet) (out packet.BroadcastPacket) {
+	hdr := packet.InvertBroadcastHeader(p.Header())
+	out, _ = packet.NewBroadcastPacket(hdr, packet.WithPacket(in))
+	return
+}
+
+func (mp *Meepo) createBroadcastResponseWithError(p packet.BroadcastPacket, err error) (bout packet.BroadcastPacket) {
+
+	out, _ := packet.NewPacket(
+		packet.NewHeader(p.Packet().Header().Session(), mp.GetID(), p.Packet().Header().Source(), packet.Response, p.Packet().Header().Method()),
+		packet.WithError(err),
+	)
+	bout = mp.createBroadcastResponse(p, out)
+	return
+}
+
+func (mp *Meepo) repackBroadcastRequest(dst string, p packet.BroadcastPacket) (out packet.BroadcastPacket) {
+	hop := p.Header().Hop() - 1
+	if hop < 0 {
+		hop = 0
 	}
 
-	return &Message{
-		PeerID:  mp.GetID(),
-		Type:    opt.Type,
-		Session: generateSession(),
-		Method:  meth,
-	}
+	hdr := packet.NewBroadcastHeader(generateSession(), mp.GetID(), dst, packet.BroadcastRequest, p.Header().Method(), hop)
+	out, _ = packet.NewBroadcastPacket(hdr, packet.WithPacket(p.Packet()))
+	return
 }
 
-type createBroadcastOption struct {
-	DetectNextHop bool
-}
-
-func (mp *Meepo) createBroadcast(destinationID string, opts ...*createBroadcastOption) *Broadcast {
-	var opt *createBroadcastOption
-	if len(opts) > 0 {
-		opt = opts[0]
-	} else {
-		opt = &createBroadcastOption{
-			DetectNextHop: true,
-		}
-	}
-
-	return &Broadcast{
-		SourceID:         mp.GetID(),
-		DestinationID:    destinationID,
-		BroadcastSession: generateSession(),
-		Hop:              MAX_HOP_LIMITED,
-		DetectNextHop:    opt.DetectNextHop,
-	}
-}
-
-func (mp *Meepo) createNextHopBroadcastRequest(x BroadcastRequest) BroadcastRequest {
-	y := x.Copy().(BroadcastRequest)
-
-	m := y.GetMessage()
-	m.PeerID = mp.GetID()
-	m.Session = generateSession()
-
-	b := y.GetBroadcast()
-	if b.Hop > MAX_HOP_LIMITED {
-		b.Hop = MAX_HOP_LIMITED
-	}
-	b.Hop -= 1
-
-	return y
-}
-
-func (mp *Meepo) createBroadcastResponse(out interface{}, x BroadcastRequest) Response {
-	res := out.(Response).Copy().(Response)
-	inverted := mp.invertMessage(x.GetMessage())
-	res.GetMessage().PeerID = inverted.PeerID
-	res.GetMessage().Type = inverted.Type
-	res.GetMessage().Session = inverted.Session
-	res.GetMessage().Method = inverted.Method
-
-	return res
-}
-
-func (mp *Meepo) createBroadcastResponseWithError(err error, x BroadcastRequest) *BroadcastResponse {
-	return &BroadcastResponse{
-		Message:   mp.invertMessageWithError(x.GetMessage(), err),
-		Broadcast: mp.invertBroadcast(x.GetBroadcast()),
-	}
+func (mp *Meepo) repackBroadcastResponse(x packet.BroadcastPacket, y packet.BroadcastPacket) (out packet.BroadcastPacket) {
+	xhdr := x.Header()
+	hdr := packet.NewBroadcastHeader(xhdr.Session(), mp.GetID(), xhdr.Source(), packet.BroadcastResponse, xhdr.Method(), y.Header().Hop())
+	out, _ = packet.NewBroadcastPacket(hdr, packet.WithPacket(y.Packet()))
+	return
 }
 
 func (mp *Meepo) addTransport(id string, tp transport.Transport) {
@@ -255,6 +225,11 @@ func NewMeepo(opts ...NewMeepoOption) (*Meepo, error) {
 		return nil, fmt.Errorf("require ed25519PrivateKey")
 	}
 
+	broadcastCache, err := lru.NewARC(512)
+	if err != nil {
+		return nil, err
+	}
+
 	mp := &Meepo{
 		rtc:                      rtc,
 		se:                       se,
@@ -264,8 +239,9 @@ func NewMeepo(opts ...NewMeepoOption) (*Meepo, error) {
 		transports:               make(map[string]transport.Transport),
 		teleportationSources:     make(map[string]*teleportation.TeleportationSource),
 		teleportationSinks:       make(map[string]*teleportation.TeleportationSink),
-		requestHandlers:          make(map[string]RequestHandler),
-		broadcastRequestHandlers: make(map[string]BroadcastRequestHandler),
+		requestHandlers:          make(map[Method]RequestHandler),
+		broadcastRequestHandlers: make(map[Method]BroadcastRequestHandler),
+		broadcastCache:           broadcastCache,
 		channelLocker:            msync.NewChannelLocker(),
 		opt:                      o,
 		logger:                   logger,
@@ -276,6 +252,9 @@ func NewMeepo(opts ...NewMeepoOption) (*Meepo, error) {
 		requestHandlersMtx:          msync.NewLock(),
 		broadcastRequestHandlersMtx: msync.NewLock(),
 	}
+
+	mp.authentication = mp
+	mp.authorization = mp
 
 	if o.Get("asSignaling").Bool() {
 		mpse := &SignalingEngineWrapper{mp}

@@ -40,7 +40,7 @@ func (mp *Meepo) NewTransport(peerID string) (transport.Transport, error) {
 	defer tlck.Unlock()
 
 	if _, err = mp.getTransport(peerID); err == nil {
-		err = TransportExistError
+		err = ErrTransportExist
 		logger.WithError(err).Errorf("transport already exists")
 		return nil, err
 	}
@@ -126,7 +126,7 @@ func (mp *Meepo) onNewTransport(req *signaling.Descriptor) (*signaling.Descripto
 	defer tlck.Unlock()
 
 	if _, err = mp.getTransport(peerID); err == nil {
-		err = TransportExistError
+		err = ErrTransportExist
 		logger.WithError(err).Errorf("transport already exists")
 		return nil, err
 	}
