@@ -3,12 +3,12 @@ package cmd
 import (
 	"crypto/ed25519"
 	"crypto/rand"
-	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"os"
 
+	"github.com/mikesmitty/edkey"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 
@@ -60,10 +60,9 @@ func meepoKeygen(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	pkcs, err := x509.MarshalPKCS8PrivateKey(prik)
 	buf := pem.EncodeToMemory(&pem.Block{
-		Type:  "PRIVATE KEY",
-		Bytes: pkcs,
+		Type:  "OPENSSH PRIVATE KEY",
+		Bytes: edkey.MarshalED25519PrivateKey(prik),
 	})
 
 	if overwrite && existed {
@@ -72,7 +71,7 @@ func meepoKeygen(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if err = ioutil.WriteFile(filename, buf, 0400); err != nil {
+	if err = ioutil.WriteFile(filename, buf, 0600); err != nil {
 		return err
 	}
 

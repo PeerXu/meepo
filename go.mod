@@ -9,6 +9,7 @@ require (
 	github.com/go-resty/resty/v2 v2.6.0
 	github.com/hashicorp/golang-lru v0.5.4
 	github.com/martinlindhe/base36 v1.1.0
+	github.com/mikesmitty/edkey v0.0.0-20170222072505-3356ea4e686a
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pion/datachannel v1.4.21
