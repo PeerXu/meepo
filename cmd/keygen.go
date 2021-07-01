@@ -29,14 +29,12 @@ func meepoKeygen(cmd *cobra.Command, args []string) error {
 	filename, _ := fs.GetString("filename")
 	overwrite, _ := fs.GetBool("overwrite")
 	typ, _ := fs.GetString("type")
-	existed := false
 
 	_, err := os.Stat(filename)
 	if err == nil {
 		if !overwrite {
 			return os.ErrExist
 		}
-		existed = true
 	} else if !os.IsNotExist(err) {
 		return err
 	}
@@ -64,12 +62,6 @@ func meepoKeygen(cmd *cobra.Command, args []string) error {
 		Type:  "OPENSSH PRIVATE KEY",
 		Bytes: edkey.MarshalED25519PrivateKey(prik),
 	})
-
-	if overwrite && existed {
-		if err = os.Remove(filename); err != nil {
-			return err
-		}
-	}
 
 	if err = ioutil.WriteFile(filename, buf, 0600); err != nil {
 		return err
