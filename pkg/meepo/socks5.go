@@ -9,11 +9,13 @@ import (
 	"strings"
 	"sync"
 
+	// TODO: back to upstream github.com/thinkgos/go-socks5 after pr merged
+	"github.com/PeerXu/go-socks5"
+	"github.com/PeerXu/go-socks5/statute"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
 	"github.com/stretchr/objx"
-	"github.com/thinkgos/go-socks5"
-	"github.com/thinkgos/go-socks5/statute"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/PeerXu/meepo/pkg/teleportation"
@@ -347,11 +349,11 @@ func (fn credentialStore) Valid(user, password, userAddr string) bool {
 	return fn(password)
 }
 
-func (s *socks5Server) asCredentialStore() socks5.CredentialStore {
-	secret := cast.ToString(s.meepo.opt.Get("authorizationSecret").Inter())
-	return credentialStore(func(password string) bool {
-		return secret == password
-	})
+func (s *socks5Server) asAuthenticator() socks5.Authenticator {
+	return socks5.UserPassAuthenticator{
+		// TODO: verify socks password
+		Credentials: credentialStore(func(password string) bool { return true }),
+	}
 }
 
 func (s *socks5Server) Start(ctx context.Context) error {
@@ -365,11 +367,10 @@ func (s *socks5Server) Start(ctx context.Context) error {
 		socks5.WithConnectHandle(s.handleConnect),
 		socks5.WithBindHandle(s.unsupportedCommandHandler),
 		socks5.WithAssociateHandle(s.unsupportedCommandHandler),
-	}
-
-	switch s.meepo.GetAuthorizationName() {
-	case "secret":
-		opts = append(opts, socks5.WithCredential(s.asCredentialStore()))
+		socks5.WithAuthMethods([]socks5.Authenticator{
+			s.asAuthenticator(),
+			&socks5.NoAuthAuthenticator{},
+		}),
 	}
 
 	s.socks5 = socks5.NewServer(opts...)

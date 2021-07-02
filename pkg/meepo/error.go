@@ -23,6 +23,7 @@ var (
 	ErrUnauthenticated          = fmt.Errorf("unauthenticated")
 	ErrUnauthorized             = fmt.Errorf("unauthorized")
 	ErrIncorrectSignature       = fmt.Errorf("incorrect signature")
+	ErrIncorrectPassword        = fmt.Errorf("incorrect password")
 )
 
 func SessionChannelExistError(session int32) error {
