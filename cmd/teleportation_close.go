@@ -30,7 +30,7 @@ func meepoTeleportationClose(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("Teleportation closing\n")
+	fmt.Printf("Teleportation is closing\n")
 
 	return nil
 }

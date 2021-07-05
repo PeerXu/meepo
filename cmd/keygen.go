@@ -75,7 +75,7 @@ func meepoKeygen(cmd *cobra.Command, args []string) error {
 func init() {
 	rootCmd.AddCommand(keygenCmd)
 
-	keygenCmd.PersistentFlags().StringP("type", "t", "ed25519", "Specifies the type of key to create [ ed25519 ]")
+	keygenCmd.PersistentFlags().StringP("type", "t", "ed25519", "Specifies the type of key to create")
 	keygenCmd.PersistentFlags().StringP("filename", "f", "meepo.pem", "Specifies the filename of the key file")
 	keygenCmd.PersistentFlags().Bool("overwrite", false, "Overwrite an exists key file")
 }
