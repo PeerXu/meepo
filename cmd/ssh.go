@@ -49,6 +49,7 @@ func meepoSsh(cmd *cobra.Command, args []string) error {
 	ra, _ := fs.GetString("raddr")
 	rh, rp, _ := net.SplitHostPort(ra)
 	strict, _ := fs.GetBool("strict")
+	secret, _ := fs.GetString("secret")
 
 	if len(args) > 0 {
 		for i := 0; i < len(args); i++ {
@@ -77,6 +78,9 @@ func meepoSsh(cmd *cobra.Command, args []string) error {
 	}
 	if la != "" {
 		tpOpt.Local = MustResolveTCPAddr("", la)
+	}
+	if secret != "" {
+		tpOpt.Secret = secret
 	}
 	local, err := sdk.Teleport(id, remote, tpOpt)
 	if err != nil {
@@ -112,4 +116,5 @@ func init() {
 	sshCmd.PersistentFlags().String("laddr", "127.0.0.1:0", "Local listen address, if not set, random port will be listen")
 	sshCmd.PersistentFlags().String("raddr", "127.0.0.1:22", "Remote ssh server address, port overwrite by rest option(-p)")
 	sshCmd.PersistentFlags().Bool("strict", false, "Check host key and write to known hosts file")
+	sshCmd.PersistentFlags().String("secret", "", "New teleportation with secret")
 }

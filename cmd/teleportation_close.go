@@ -8,10 +8,11 @@ import (
 
 var (
 	teleportationCloseCmd = &cobra.Command{
-		Use:   "close <name>",
-		Short: "Close teleportation",
-		RunE:  meepoTeleportationClose,
-		Args:  cobra.ExactArgs(1),
+		Use:     "close <name>",
+		Short:   "Close teleportation",
+		Aliases: []string{"c"},
+		RunE:    meepoTeleportationClose,
+		Args:    cobra.ExactArgs(1),
 	}
 )
 
@@ -29,7 +30,7 @@ func meepoTeleportationClose(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("Teleportation closing\n")
+	fmt.Printf("Teleportation is closing\n")
 
 	return nil
 }

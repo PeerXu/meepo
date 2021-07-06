@@ -3,12 +3,13 @@ package config
 import (
 	"io/ioutil"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cast"
 	"gopkg.in/yaml.v3"
+
+	mfs "github.com/PeerXu/meepo/pkg/util/fs"
 )
 
 type Config struct {
@@ -17,8 +18,8 @@ type Config struct {
 
 func (c *Config) Get(key string) (string, error) {
 	switch key {
-	case "id":
-		return c.Meepo.ID, nil
+	case "identityFile":
+		return c.Meepo.IdentityFile, nil
 	case "log.level":
 		return c.Meepo.Log.Level, nil
 	case "signaling.url":
@@ -42,8 +43,8 @@ func (c *Config) Set(key, val string) error {
 	var err error
 
 	switch key {
-	case "id":
-		c.Meepo.ID = val
+	case "identityFile":
+		c.Meepo.IdentityFile = val
 	case "log.level":
 		c.Meepo.Log.Level = val
 	case "signaling.url":
@@ -97,7 +98,7 @@ func (c *Config) Dump(p string) error {
 		return err
 	}
 
-	if err = os.MkdirAll(path.Dir(p), 0755); err != nil {
+	if err = mfs.EnsureDirectoryExist(p); err != nil {
 		return err
 	}
 
@@ -147,9 +148,9 @@ func Load(p string) (config *Config, loaded bool, err error) {
 func NewDefaultConfig() *Config {
 	return &Config{
 		Meepo: &MeepoConfig{
-			ID:          "",
-			Daemon:      true,
-			AsSignaling: false,
+			IdentityFile: "",
+			Daemon:       true,
+			AsSignaling:  true,
 			Log: &LogConfig{
 				Level: "error",
 			},

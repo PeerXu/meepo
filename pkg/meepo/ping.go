@@ -5,36 +5,46 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/PeerXu/meepo/pkg/meepo/packet"
 	"github.com/PeerXu/meepo/pkg/transport"
 )
 
-type PingRequest struct {
-	*Message
+const (
+	METHOD_PING Method = "ping"
+)
 
-	Payload string `json:"payload"`
-}
+type (
+	PingRequest struct {
+		Payload string
+	}
 
-type PongResponse = PingRequest
+	PongResponse struct {
+		Payload string
+	}
+)
 
 func (mp *Meepo) Ping(id string, payload string) error {
+	var pong PongResponse
+
 	logger := mp.getLogger().WithFields(logrus.Fields{
 		"#method": "Ping",
 		"peerID":  id,
 	})
 
-	req := &PingRequest{
-		Message: mp.createRequest("ping"),
-		Payload: payload,
-	}
+	in := mp.createRequest(id, METHOD_PING, &PingRequest{Payload: payload})
 
-	out, err := mp.doRequest(id, req)
+	out, err := mp.doRequest(in)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to do request")
 		return err
 	}
 
-	res := out.(*PongResponse)
-	if res.Payload != payload {
+	if err = out.Data(&pong); err != nil {
+		logger.WithError(err).Errorf("failed to unmarshal response data")
+		return err
+	}
+
+	if pong.Payload != payload {
 		err = fmt.Errorf("Unmatched pong payload")
 		logger.WithError(err).Errorf("failed to ping")
 		return err
@@ -45,25 +55,25 @@ func (mp *Meepo) Ping(id string, payload string) error {
 	return nil
 }
 
-func (mp *Meepo) onPing(dc transport.DataChannel, in interface{}) {
-	req := in.(*PingRequest)
+func (mp *Meepo) onPing(dc transport.DataChannel, in packet.Packet) {
+	var ping PingRequest
+
+	hdr := in.Header()
 	logger := mp.getLogger().WithFields(logrus.Fields{
 		"#method": "onPing",
-		"peerID":  req.PeerID,
-		"session": req.Session,
+		"peerID":  hdr.Source(),
+		"session": hdr.Session(),
 	})
 
-	res := &PongResponse{
-		Message: mp.invertMessage(req.Message),
-		Payload: req.Payload,
+	if err := in.Data(&ping); err != nil {
+		logger.WithError(err).Errorf("failed to unmarshal request data")
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
+		return
 	}
 
-	mp.sendMessage(dc, res)
+	out := mp.createResponse(in, &PongResponse{Payload: ping.Payload})
+
+	mp.sendResponse(dc, out)
 
 	logger.Infof("pong")
-}
-
-func init() {
-	registerDecodeMessageHelper(MESSAGE_TYPE_REQUEST, "ping", func() interface{} { return &PingRequest{} })
-	registerDecodeMessageHelper(MESSAGE_TYPE_RESPONSE, "ping", func() interface{} { return &PongResponse{} })
 }

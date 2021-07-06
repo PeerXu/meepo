@@ -4,9 +4,8 @@ import (
 	"net"
 	"sync"
 
-	"github.com/stretchr/objx"
-
 	encoding_api "github.com/PeerXu/meepo/pkg/api/encoding"
+	"github.com/PeerXu/meepo/pkg/ofn"
 )
 
 type Version = encoding_api.Version
@@ -14,8 +13,9 @@ type Transport = encoding_api.Transport
 type Teleportation = encoding_api.Teleportation
 
 type TeleportOption struct {
-	Name  string
-	Local net.Addr
+	Name   string
+	Local  net.Addr
+	Secret string
 }
 
 type MeepoSDK interface {
@@ -39,6 +39,7 @@ type TransportSDK interface {
 type NewTeleportationOption struct {
 	Name   string
 	Source net.Addr
+	Secret string
 }
 
 type TeleportationSDK interface {
@@ -48,7 +49,7 @@ type TeleportationSDK interface {
 	GetTeleportation(name string) (*Teleportation, error)
 }
 
-type NewMeepoSDKOption func(objx.Map)
+type NewMeepoSDKOption = ofn.OFN
 
 type NewMeepoSDKFunc func(opts ...NewMeepoSDKOption) (MeepoSDK, error)
 

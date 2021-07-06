@@ -27,6 +27,10 @@ func (t *MeepoSDK) NewTeleportation(peerID string, remote net.Addr, opt *sdk.New
 		req.LocalAddress = source.String()
 	}
 
+	if opt.Secret != "" {
+		req.Secret = opt.Secret
+	}
+
 	var res http_api.NewTeleportationResponse
 
 	if err := t.doRequest("/v1/actions/new_teleportation", req, &res, http.StatusCreated); err != nil {

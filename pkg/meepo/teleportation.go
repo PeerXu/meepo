@@ -50,7 +50,7 @@ func (mp *Meepo) getTeleportationNL(name string, opts ...GetTeleportationOption)
 		}
 	}
 
-	return nil, TeleportationNotExistError
+	return nil, ErrTeleportationNotExist
 }
 
 func (mp *Meepo) addTeleportationSource(name string, ts *teleportation.TeleportationSource) {

@@ -3,9 +3,11 @@ package transport
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/objx"
+
+	"github.com/PeerXu/meepo/pkg/ofn"
 )
 
-type NewTransportOption func(objx.Map)
+type NewTransportOption = ofn.OFN
 
 func WithID(id string) NewTransportOption {
 	return func(o objx.Map) {
@@ -27,7 +29,7 @@ func WithLogger(logger logrus.FieldLogger) NewTransportOption {
 
 type OnDataChannelCreateHandler func(DataChannel)
 
-type CreateDataChannelOption func(objx.Map)
+type CreateDataChannelOption = ofn.OFN
 
 func WithOrdered(ordered bool) CreateDataChannelOption {
 	return func(o objx.Map) {

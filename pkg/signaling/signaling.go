@@ -2,16 +2,13 @@ package signaling
 
 import (
 	"sync"
-
-	"github.com/pion/webrtc/v3"
 )
 
 type UserData = map[string]interface{}
 
 type Descriptor struct {
-	ID                 string                     `json:"id"`
-	SessionDescription *webrtc.SessionDescription `json:"sessionDescription"`
-	UserData           UserData                   `json:"userData,omitempty"`
+	ID       string
+	UserData UserData
 }
 
 type WireHandler func(*Descriptor) (*Descriptor, error)

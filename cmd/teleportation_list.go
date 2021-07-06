@@ -12,7 +12,7 @@ var (
 	teleportationListCmd = &cobra.Command{
 		Use:     "list",
 		Short:   "List teleportations",
-		Aliases: []string{"ls"},
+		Aliases: []string{"ls", "l"},
 		RunE:    meepoTeleportationList,
 	}
 )

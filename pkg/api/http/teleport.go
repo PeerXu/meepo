@@ -11,11 +11,12 @@ import (
 
 type TeleportRequest struct {
 	ID            string `json:"id" binding:"required"`
-	Name          string `json:"name"`
+	Name          string `json:"name,omitempty"`
 	RemoteNetwork string `json:"remoteNetwork"`
 	RemoteAddress string `json:"remoteAddress" binding:"required"`
-	LocalNetwork  string `json:"localNetwork"`
-	LocalAddress  string `json:"localAddress"`
+	LocalNetwork  string `json:"localNetwork,omitempty"`
+	LocalAddress  string `json:"localAddress,omitempty"`
+	Secret        string `json:"secret,omitempty"`
 }
 
 type TeleportResponse struct {
@@ -52,6 +53,10 @@ func (s *HttpServer) Teleport(c *gin.Context) {
 
 	if req.Name != "" {
 		opts = append(opts, meepo.WithName(req.Name))
+	}
+
+	if req.Secret != "" {
+		opts = append(opts, meepo.WithSecret(req.Secret))
 	}
 
 	if local, err = s.meepo.Teleport(req.ID, remote, opts...); err != nil {

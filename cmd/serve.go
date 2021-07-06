@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"crypto/ed25519"
 	"os"
 	"os/signal"
 
@@ -13,12 +14,11 @@ import (
 	"github.com/PeerXu/meepo/pkg/api"
 	http_api "github.com/PeerXu/meepo/pkg/api/http"
 	"github.com/PeerXu/meepo/pkg/meepo"
-	"github.com/PeerXu/meepo/pkg/meepo/auth"
 	"github.com/PeerXu/meepo/pkg/signaling"
 	redis_signaling "github.com/PeerXu/meepo/pkg/signaling/redis"
+	mcrypt "github.com/PeerXu/meepo/pkg/util/crypt"
 	mdaemon "github.com/PeerXu/meepo/pkg/util/daemon"
 	meg "github.com/PeerXu/meepo/pkg/util/group"
-	mrand "github.com/PeerXu/meepo/pkg/util/random"
 )
 
 var (
@@ -55,15 +55,11 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	logger.SetLevel(logLevel)
 
 	switch logLevel {
-	case logrus.PanicLevel:
-		fallthrough
-	case logrus.FatalLevel:
-		fallthrough
-	case logrus.ErrorLevel:
-		fallthrough
-	case logrus.WarnLevel:
-		fallthrough
-	case logrus.InfoLevel:
+	case logrus.PanicLevel,
+		logrus.FatalLevel,
+		logrus.ErrorLevel,
+		logrus.WarnLevel,
+		logrus.InfoLevel:
 		gin.SetMode(gin.ReleaseMode)
 	case logrus.DebugLevel:
 	case logrus.TraceLevel:
@@ -77,13 +73,23 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 		logger.Warningf("Config file not found, load default config")
 	}
 
-	id := cfg.Meepo.ID
-	if id == "" {
-		id = mrand.SillyName()
+	if fs.Lookup("identity-file").Changed {
+		cfg.Meepo.IdentityFile, _ = fs.GetString("identity-file")
+	}
+
+	var pubk ed25519.PublicKey
+	var prik ed25519.PrivateKey
+	if cfg.Meepo.IdentityFile != "" {
+		pubk, prik, err = mcrypt.LoadEd25519Key(cfg.Meepo.IdentityFile)
+		if err != nil {
+			return err
+		}
+	} else {
+		pubk, prik = mcrypt.Ed25519GenerateKey()
 	}
 
 	signalingEngineOptions := []signaling.NewEngineOption{
-		signaling.WithID(id),
+		signaling.WithID(meepo.Ed25519PublicKeyToMeepoID(pubk)),
 		signaling.WithLogger(logger),
 	}
 
@@ -101,33 +107,32 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var authEngineOptions []auth.NewEngineOption
-	switch cfg.Meepo.Auth.Name {
-	case "dummy":
-	case "secret":
-		sa := cfg.Meepo.AuthI.(*config.SecretAuthConfig)
-		authEngineOptions = append(authEngineOptions, auth.WithSecret(sa.Secret))
-		if sa.HashAlgorithm != "" {
-			authEngineOptions = append(authEngineOptions, auth.WithHashAlgorithm(sa.HashAlgorithm))
-		}
-		if sa.Template != "" {
-			authEngineOptions = append(authEngineOptions, auth.WithTemplate(sa.Template))
-		}
-	}
-	authEngine, err := auth.NewEngine(cfg.Meepo.Auth.Name, authEngineOptions...)
-	if err != nil {
-		return err
-	}
-
 	newMeepoOptions := []meepo.NewMeepoOption{
 		meepo.WithSignalingEngine(signalingEngine),
-		meepo.WithAuthEngine(authEngine),
 		meepo.WithLogger(logger),
-		meepo.WithID(id),
+		meepo.WithED25519KeyPair(pubk, prik),
 		meepo.WithICEServers(cfg.Meepo.TransportI.(*config.WebrtcTransportConfig).ICEServers),
 	}
+
 	if cfg.Meepo.AsSignaling {
 		newMeepoOptions = append(newMeepoOptions, meepo.WithAsSignaling(true))
+	}
+
+	switch cfg.Meepo.Auth.Name {
+	case "secret":
+		sa := cfg.Meepo.AuthI.(*config.SecretAuthConfig)
+		newMeepoOptions = append(
+			newMeepoOptions,
+			meepo.WithAuthorizationName("secret"),
+			meepo.WithAuthorizationSecret(sa.Secret),
+		)
+	case "dummy":
+		fallthrough
+	default:
+		newMeepoOptions = append(
+			newMeepoOptions,
+			meepo.WithAuthorizationName("dummy"),
+		)
 	}
 
 	mp, err := meepo.NewMeepo(newMeepoOptions...)
@@ -217,4 +222,5 @@ func init() {
 
 	serveCmd.PersistentFlags().StringP("config", "c", config.GetDefaultConfigPath(), "Location of meepo config file")
 	serveCmd.PersistentFlags().BoolP("daemon", "d", true, "Run as daemon")
+	serveCmd.PersistentFlags().StringP("identity-file", "i", "", "Select a file from which the identity for Meepo to read")
 }

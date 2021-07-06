@@ -9,10 +9,8 @@ type DummyAuthConfig struct {
 }
 
 type SecretAuthConfig struct {
-	Name          string `yaml:"name"`
-	Secret        string `yaml:"secret"`
-	HashAlgorithm string `yaml:"hashAlgorithm,omitempty"`
-	Template      string `yaml:"template,omitempty"`
+	Name   string `yaml:"name"`
+	Secret string `yaml:"secret"`
 }
 
 func init() {

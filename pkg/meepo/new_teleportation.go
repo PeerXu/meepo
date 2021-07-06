@@ -9,34 +9,36 @@ import (
 	"github.com/spf13/cast"
 	"github.com/stretchr/objx"
 
+	"github.com/PeerXu/meepo/pkg/meepo/auth"
+	"github.com/PeerXu/meepo/pkg/meepo/packet"
 	"github.com/PeerXu/meepo/pkg/teleportation"
 	"github.com/PeerXu/meepo/pkg/transport"
 )
 
-type NewTeleportationRequest struct {
-	*Message
+const (
+	METHOD_NEW_TELEPORTATION Method = "newTeleportation"
+	METHOD_DO_TELEORT        Method = "doTeleport"
+)
 
-	Name          string `json:"name"`
-	LocalNetwork  string `json:"localNetwork"`
-	LocalAddress  string `json:"localAddress"`
-	RemoteNetwork string `json:"remoteNetwork"`
-	RemoteAddress string `json:"remoteAddress"`
-}
+type (
+	NewTeleportationRequest struct {
+		Name          string
+		LocalNetwork  string
+		LocalAddress  string
+		RemoteNetwork string
+		RemoteAddress string
+		HashedSecret  string
+	}
 
-type NewTeleportationResponse struct {
-	*Message
-}
+	NewTeleportationResponse struct{}
 
-type DoTeleportRequest struct {
-	*Message
+	DoTeleportRequest struct {
+		Name  string
+		Label string
+	}
 
-	Name  string `json:"name"`
-	Label string `json:"label"`
-}
-
-type DoTeleportResponse struct {
-	*Message
-}
+	DoTeleportResponse struct{}
+)
 
 func newNewTeleportationOption() objx.Map {
 	return objx.New(map[string]interface{}{})
@@ -76,10 +78,10 @@ func (mp *Meepo) NewTeleportation(id string, remote net.Addr, opts ...NewTelepor
 		o.Set("name", fmt.Sprintf("%s:%s", remote.Network(), remote.String()))
 	}
 	name = cast.ToString(o.Get("name").Inter())
+
 	logger = logger.WithField("name", name)
 
 	req := &NewTeleportationRequest{
-		Message:       mp.createRequest("newTeleportation"),
 		Name:          name,
 		LocalNetwork:  local.Network(),
 		LocalAddress:  local.String(),
@@ -87,15 +89,24 @@ func (mp *Meepo) NewTeleportation(id string, remote net.Addr, opts ...NewTelepor
 		RemoteAddress: remote.String(),
 	}
 
-	out, err := mp.doRequest(id, req)
+	secret := cast.ToString(o.Get("secret").Inter())
+	if secret != "" {
+		req.HashedSecret, err = hashSecret(secret)
+		if err != nil {
+			logger.WithError(err).Errorf("failed to hash secret")
+			return nil, err
+		}
+	}
+
+	in := mp.createRequest(id, METHOD_NEW_TELEPORTATION, req)
+
+	out, err := mp.doRequest(in)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to do request")
 		return nil, err
 	}
 
-	res := out.(*NewTeleportationResponse)
-	if res.Error != "" {
-		err = fmt.Errorf(res.Error)
+	if err = out.Err(); err != nil {
 		logger.WithError(err).Errorf("failed to new teleportation by peer")
 		return nil, err
 	}
@@ -152,20 +163,19 @@ func (mp *Meepo) NewTeleportation(id string, remote net.Addr, opts ...NewTelepor
 			})
 
 			req := &DoTeleportRequest{
-				Message: mp.createRequest("doTeleport"),
-				Name:    name,
-				Label:   label,
+				Name:  name,
+				Label: label,
 			}
 
-			out, err := mp.doRequest(id, req)
+			in := mp.createRequest(id, METHOD_DO_TELEORT, req)
+
+			out, err := mp.doRequest(in)
 			if err != nil {
 				innerLogger.WithError(err).Errorf("failed to do request")
 				return err
 			}
 
-			res := out.(*DoTeleportResponse)
-			if res.Error != "" {
-				err = fmt.Errorf(res.Error)
+			if err = out.Err(); err != nil {
 				innerLogger.WithError(err).Errorf("failed to do teleport by peer")
 				return err
 			}
@@ -205,37 +215,66 @@ func (mp *Meepo) NewTeleportation(id string, remote net.Addr, opts ...NewTelepor
 	return ts, nil
 }
 
-func (mp *Meepo) onNewTeleportation(dc transport.DataChannel, in interface{}) {
+func (mp *Meepo) onNewTeleportation(dc transport.DataChannel, in packet.Packet) {
 	var ts *teleportation.TeleportationSink
-
-	req := in.(*NewTeleportationRequest)
+	var req NewTeleportationRequest
+	var err error
 
 	logger := mp.getLogger().WithFields(logrus.Fields{
 		"#method": "onNewTeleportation",
-		"peerID":  req.PeerID,
-		"name":    req.Name,
-		"laddr":   req.LocalAddress,
-		"raddr":   req.RemoteAddress,
+		"peerID":  in.Header().Source(),
 	})
 
-	tp, err := mp.getTransport(req.PeerID)
+	if err = in.Data(&req); err != nil {
+		logger.WithError(err).Errorf("failed to unmarshal request data")
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
+		return
+	}
+
+	logger = logger.WithFields(logrus.Fields{
+		"name":  req.Name,
+		"laddr": req.LocalAddress,
+		"raddr": req.RemoteAddress,
+	})
+
+	var authOpts []auth.AuthorizeOption
+	if req.HashedSecret == "" {
+		authOpts = append(
+			authOpts,
+			WithAuthorizationName("dummy"),
+		)
+	} else {
+		authOpts = append(
+			authOpts,
+			WithAuthorizationName("secret"),
+			WithAuthorizationSecret(req.HashedSecret),
+		)
+	}
+
+	if err = mp.authorization.Authorize(in.Header().Source(), mp.GetID(), string(METHOD_NEW_TELEPORTATION), authOpts...); err != nil {
+		logger.WithError(err).Debugf("unauthorized request")
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
+		return
+	}
+
+	tp, err := mp.getTransport(in.Header().Source())
 	if err != nil {
 		logger.WithError(err).Debugf("failed to get transport")
-		mp.sendMessage(dc, mp.invertMessageWithError(req, err))
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
 		return
 	}
 
 	source, err := mp.resolveTeleportationSourceAddr(req.LocalNetwork, req.LocalAddress)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to resolve source addr")
-		mp.sendMessage(dc, mp.invertMessageWithError(req, err))
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
 		return
 	}
 
 	sink, err := mp.resolveTeleportationSinkAddr(req.RemoteNetwork, req.RemoteAddress)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to resolve sink addr")
-		mp.sendMessage(dc, mp.invertMessageWithError(req, err))
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
 		return
 	}
 
@@ -256,7 +295,7 @@ func (mp *Meepo) onNewTeleportation(dc transport.DataChannel, in interface{}) {
 	)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to new teleportation sink")
-		mp.sendMessage(dc, mp.invertMessageWithError(req, err))
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
 		return
 	}
 	tp.OnTransportState(transport.TransportStateFailed, func(hid transport.HandleID) {
@@ -268,51 +307,41 @@ func (mp *Meepo) onNewTeleportation(dc transport.DataChannel, in interface{}) {
 	mp.addTeleportationSink(ts.Name(), ts)
 	logger.Tracef("add teleportation sink")
 
-	res := &NewTeleportationResponse{
-		Message: mp.invertMessage(req.Message),
-	}
-	mp.sendMessage(dc, res)
-
+	mp.sendResponse(dc, mp.createResponse(in, &NewTeleportationResponse{}))
 	logger.Tracef("done")
 }
 
-func (mp *Meepo) onDoTeleport(dc transport.DataChannel, in interface{}) {
+func (mp *Meepo) onDoTeleport(dc transport.DataChannel, in packet.Packet) {
 	var err error
-
-	req := in.(*DoTeleportRequest)
+	var req DoTeleportRequest
 
 	logger := mp.getLogger().WithFields(logrus.Fields{
 		"#method": "onDoTeleport",
-		"peerID":  req.PeerID,
+		"peerID":  in.Header().Source(),
 		"name":    req.Name,
 	})
 
+	if err = in.Data(&req); err != nil {
+		logger.WithError(err).Errorf("failed to unmarshal request data")
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
+		return
+	}
+
 	ts, ok := mp.getTeleportationSink(req.Name)
 	if !ok {
-		err = TeleportationNotExistError
+		err = ErrTeleportationNotExist
 		logger.WithError(err).Errorf("failed to get teleportation sink")
-		mp.sendMessage(dc, mp.invertMessageWithError(req, err))
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
 		return
 	}
 
 	if err = ts.OnDoTeleport(req.Label); err != nil {
 		logger.WithError(err).Errorf("failed to do teleport")
-		mp.sendMessage(dc, mp.invertMessageWithError(req, err))
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
 		return
 	}
 	logger.Tracef("do teleport")
 
-	res := &DoTeleportResponse{
-		Message: mp.invertMessage(req.Message),
-	}
-	mp.sendMessage(dc, res)
-
+	mp.sendResponse(dc, mp.createResponse(in, &DoTeleportResponse{}))
 	logger.Debugf("done")
-}
-
-func init() {
-	registerDecodeMessageHelper(MESSAGE_TYPE_REQUEST, "newTeleportation", func() interface{} { return &NewTeleportationRequest{} })
-	registerDecodeMessageHelper(MESSAGE_TYPE_RESPONSE, "newTeleportation", func() interface{} { return &NewTeleportationResponse{} })
-	registerDecodeMessageHelper(MESSAGE_TYPE_REQUEST, "doTeleport", func() interface{} { return &DoTeleportRequest{} })
-	registerDecodeMessageHelper(MESSAGE_TYPE_RESPONSE, "doTeleport", func() interface{} { return &DoTeleportResponse{} })
 }

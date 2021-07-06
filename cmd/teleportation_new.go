@@ -11,10 +11,11 @@ import (
 
 var (
 	teleportationNewCmd = &cobra.Command{
-		Use:   "new [-n name] [-l local-address] <id> <remote-address>",
-		Short: "New teleportation",
-		RunE:  meepoTeleportationNew,
-		Args:  cobra.ExactArgs(2),
+		Use:     "new [-n name] [-l local-address] [-s secret] <id> <remote-address>",
+		Short:   "New teleportation",
+		Aliases: []string{"n"},
+		RunE:    meepoTeleportationNew,
+		Args:    cobra.ExactArgs(2),
 	}
 )
 
@@ -24,6 +25,7 @@ func meepoTeleportationNew(cmd *cobra.Command, args []string) error {
 	fs := cmd.Flags()
 	name, _ := fs.GetString("name")
 	localAddress, _ := fs.GetString("local-address")
+	secret, _ := fs.GetString("secret")
 
 	id := args[0]
 	remoteAddress := args[1]
@@ -54,6 +56,10 @@ func meepoTeleportationNew(cmd *cobra.Command, args []string) error {
 		opt.Source = local
 	}
 
+	if secret != "" {
+		opt.Secret = secret
+	}
+
 	_, err = sdk.NewTeleportation(id, remote, opt)
 	if err != nil {
 		return err
@@ -69,4 +75,5 @@ func init() {
 
 	teleportationNewCmd.PersistentFlags().StringP("name", "n", "", "Teleportation name")
 	teleportationNewCmd.PersistentFlags().StringP("local-address", "l", "", "Local listen address, if not set, random port will be listen")
+	teleportationNewCmd.PersistentFlags().StringP("secret", "s", "", "New teleportation with secret")
 }

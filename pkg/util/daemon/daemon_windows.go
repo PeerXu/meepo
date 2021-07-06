@@ -2,8 +2,12 @@
 
 package daemon
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
+// TODO: Support daemon mode on Windows.
 func Daemon() {
-	panic(fmt.Errorf("Unsupported daemon on windows"))
+	fmt.Fprintf(os.Stderr, "Windows not support daemon now, ignore daemon flag")
 }

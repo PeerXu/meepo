@@ -5,18 +5,25 @@ import (
 )
 
 var (
-	UnsupportedRequestHandlerError = fmt.Errorf("Unsupported request method")
-	TransportNotExistError         = fmt.Errorf("Transport not exists")
-	TransportExistError            = fmt.Errorf("Transport already exists")
-	TeleportationNotExistError     = fmt.Errorf("Teleportation not exists")
-	UnexpectedMessageError         = fmt.Errorf("Unexpected message")
-	WaitResponseTimeoutError       = fmt.Errorf("Wait response timeout")
-	NotWirableError                = fmt.Errorf("Not wirable")
-	HopIsZeroError                 = fmt.Errorf("Hop is zero")
-	ReachTransportEdgeError        = fmt.Errorf("Reach transport edge")
-	UnsupportedSocks5CommandError  = fmt.Errorf("Unsupported socks5 command")
-	NetworkUnreachableError        = fmt.Errorf("Network unreachable")
-	UnsupportedNetworkTypeError    = fmt.Errorf("Unsupported network type")
+	ErrInvalidPeerID            = fmt.Errorf("invalid peer id")
+	ErrTransportExist           = fmt.Errorf("transport exists")
+	ErrTeleportationNotExist    = fmt.Errorf("teleportation not exists")
+	ErrWaitResponseTimeout      = fmt.Errorf("wait response timeout")
+	ErrNotWirable               = fmt.Errorf("not wirable")
+	ErrUnsupportedSocks5Command = fmt.Errorf("unsupported socks5 command")
+	ErrNetworkUnreachable       = fmt.Errorf("network unreachable")
+	ErrUnsupportedNetworkType   = fmt.Errorf("unsupported network type")
+	ErrNotBroadcastPacket       = fmt.Errorf("not braoadcast packet")
+	ErrOutOfEdge                = fmt.Errorf("out of edge")
+	ErrTransportNotExist        = fmt.Errorf("transport not exists")
+	ErrUnexpectedMessage        = fmt.Errorf("unexpected message")
+	ErrUnsupportedMethod        = fmt.Errorf("unsupported method")
+	ErrUnexpectedType           = fmt.Errorf("unexpected type")
+	ErrNotFound                 = fmt.Errorf("not found")
+	ErrUnauthenticated          = fmt.Errorf("unauthenticated")
+	ErrUnauthorized             = fmt.Errorf("unauthorized")
+	ErrIncorrectSignature       = fmt.Errorf("incorrect signature")
+	ErrIncorrectPassword        = fmt.Errorf("incorrect password")
 )
 
 func SessionChannelExistError(session int32) error {
@@ -45,4 +52,16 @@ func (t sendMessageError) Error() string {
 
 func SendMessageError(err error) sendMessageError {
 	return SendMessageError(err)
+}
+
+type errSendPacket struct {
+	err error
+}
+
+func (t errSendPacket) Error() string {
+	return t.err.Error()
+}
+
+func ErrSendPacket(err error) errSendPacket {
+	return ErrSendPacket(err)
 }

@@ -33,7 +33,7 @@ func (mp *Meepo) resolveTeleportationSourceAddr(network, address string) (net.Ad
 	case "tcp":
 		return net.ResolveTCPAddr(network, address)
 	default:
-		return nil, UnsupportedNetworkTypeError
+		return nil, ErrUnsupportedNetworkType
 	}
 }
 
@@ -42,6 +42,6 @@ func (mp *Meepo) resolveTeleportationSinkAddr(network, address string) (net.Addr
 	case "tcp":
 		return net.ResolveTCPAddr(network, address)
 	default:
-		return nil, UnsupportedNetworkTypeError
+		return nil, ErrUnsupportedNetworkType
 	}
 }

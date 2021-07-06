@@ -4,8 +4,9 @@ import "github.com/spf13/cobra"
 
 var (
 	teleportationCmd = &cobra.Command{
-		Use:   "teleportation",
-		Short: "Meepo teleportation subcommand",
+		Use:     "teleportation",
+		Aliases: []string{"tp"},
+		Short:   "Meepo teleportation subcommand",
 	}
 )
 
