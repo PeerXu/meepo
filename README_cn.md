@@ -58,11 +58,13 @@ $ meepo shutdown
 Meepo shutting down
 ```
 
-由于未指定身份标识文件, `meepo serve`运行时, 会生成`随机身份`, 方便将要启动的`Meepo服务`能够正常接入`Meepo网络`.
+由于未指定`身份标识文件`, `meepo serve`运行时, 会生成`随机身份`, 方便将要启动的`Meepo服务`能够正常接入`Meepo网络`.
 
-可以通过`meepo keygen`或`ssh-keygen`生成身份标识文件.
+可以通过`meepo keygen`或`ssh-keygen`生成`身份标识文件`.
 
-采用`ssh-keygen`生成身份识别文件会同时产生私钥和公钥文件, 忽略公钥文件即可.
+采用`ssh-keygen`生成`身份识别文件`会同时产生私钥和公钥文件, 忽略公钥文件即可.
+
+暂时不支持带`passphrase`的`OpenSSH私钥`.
 
 ```bash
 $ meepo keygen -f meepo.pem
@@ -70,7 +72,7 @@ $ meepo keygen -f meepo.pem
 $ ssh-keygen -t ed25519 -f meepo.pem
 ```
 
-生成身份识别文件成功之后, 启动`Meepo服务`指定身份标识文件.
+`生成身份识别文件`成功之后, 启动`Meepo服务`指定`身份标识文件`.
 
 ```bash
 $ meepo serve -f meepo.pem
@@ -91,7 +93,6 @@ $ meepo whoami
 先来实现一个简单的`HelloWorld服务`.
 
 ```bash
-
 # alice:terminal:1
 alice$ cat << EOF > index.html
 <h1>Hello World!</h1>
@@ -120,7 +121,7 @@ alice: meepo whoami
 63eql8p54qpe1jfp1fmuumzge8y6y4ar5uml7nrrf8amqzmutey
 ```
 
-这时候, 就只剩下把`MeepoID`通过其他方式, 分享给需要访问的人(`bob`),  整个发布流程就完成了.
+这时候, 已经完成整个发布流程.
 
 
 ### 访问已经发布到`Meepo网络`的服务
@@ -198,7 +199,7 @@ alice --- Default Signaling Server --- eve
 启用自组网后, 交换`Signaling`示意图:
 
 ```
-bob --- alice(Signaling Server) --- eve
+alice --- bob(Signaling Server) --- eve
 ```
 
 默认参数下, 已经启动自组网功能.
@@ -223,9 +224,7 @@ bob --- alice(Signaling Server) --- eve
 
 在`alice`上, 发布两个服务, 分别是`SSH服务`(22端口)和`HTTP服务`(80端口).
 
-在`bob`上, 通过`SOCKS5`代理访问`alice`发布的`SSH服务`和`HTTP服务`.
-
-在`bob`上, 通过`SOCKS5代理`访问`alice` 发布的`HTTP服务`.
+在`bob`上, 通过`SOCKS5代理`访问`alice`发布的`SSH服务`和`HTTP服务`.
 
 下面用`curl`举例子.
 
@@ -240,7 +239,7 @@ bob$ curl -x socks5h://127.0.0.1:12341 http://63eql8p54qpe1jfp1fmuumzge8y6y4ar5u
 bob$ ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:12341 %h %p' bob@63eql8p54qpe1jfp1fmuumzge8y6y4ar5uml7nrrf8amqzmutey.mpo
 ```
 
-Socks5配置请参考各个系统的配置方法.
+SOCKS5配置请参考各个系统的配置方法.
 
 
 ## 安全
@@ -318,6 +317,10 @@ bob$ ssh -o ProxyCommand='meepo ncat --proxy-type socks5 --proxy 127.0.0.1:12341
 由于`Transport`是采用`WebRTC协议`, 所以在创建`Transport`会受到[`WebRTC`条件限制](https://webrtcforthecurious.com/zh/docs/03-connecting/#nat%e6%98%a0%e5%b0%84).
 
 所以暂时有些网络情况是无法正常使用`Meepo服务`. 后期会提供其他解决方案来解决这个问题.
+
+### `Windows平台`下, `Daemon模式`无法正常工作
+
+`Windows平台`暂时不支持`Daemon模式`. `--daemon`参数会被忽略.
 
 
 ## 为Meepo做贡献
