@@ -1,18 +1,18 @@
 package config
 
 type MeepoConfig struct {
-	IdentityFile string           `yaml:"identityFile"`
-	Daemon       bool             `yaml:"daemon"`
-	AsSignaling  bool             `yaml:"asSignaling"`
-	Log          *LogConfig       `yaml:"log"`
-	Proxy        *ProxyConfig     `yaml:"proxy"`
-	Auth         *AuthConfig      `yaml:"auth"`
+	IdentityFile string           `yaml:"identityFile,omitempty"`
+	Daemon       bool             `yaml:"daemon,omitempty"`
+	AsSignaling  bool             `yaml:"asSignaling,omitempty"`
+	Log          *LogConfig       `yaml:"log,omitempty"`
+	Proxy        *ProxyConfig     `yaml:"proxy,omitempty"`
+	Auth         *AuthConfig      `yaml:"auth,omitempty"`
 	AuthI        interface{}      `yaml:"-"`
-	Transport    *TransportConfig `yaml:"transport"`
+	Transport    *TransportConfig `yaml:"transport,omitempty"`
 	TransportI   interface{}      `yaml:"-"`
-	Signaling    *SignalingConfig `yaml:"signaling"`
+	Signaling    *SignalingConfig `yaml:"signaling,omitempty"`
 	SignalingI   interface{}      `yaml:"-"`
-	Api          *ApiConfig       `yaml:"api"`
+	Api          *ApiConfig       `yaml:"api,omitempty"`
 	ApiI         interface{}      `yaml:"-"`
 }
 
@@ -35,24 +35,30 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 
-	mc.Auth = fmc.Auth
 	if fmc.Auth != nil {
-		if mc.AuthI, err = unmarshalConfig("meepo.auth", fmc.Auth.Name, unmarshal); err != nil {
-			return err
+		mc.Auth = fmc.Auth
+		if fmc.Auth != nil {
+			if mc.AuthI, err = unmarshalConfig("meepo.auth", fmc.Auth.Name, unmarshal); err != nil {
+				return err
+			}
 		}
 	}
 
-	mc.Transport = fmc.Transport
 	if fmc.Transport != nil {
-		if mc.TransportI, err = unmarshalConfig("meepo.transport", fmc.Transport.Name, unmarshal); err != nil {
-			return err
+		mc.Transport = fmc.Transport
+		if fmc.Transport != nil {
+			if mc.TransportI, err = unmarshalConfig("meepo.transport", fmc.Transport.Name, unmarshal); err != nil {
+				return err
+			}
 		}
 	}
 
-	mc.Signaling = fmc.Signaling
 	if fmc.Signaling != nil {
-		if mc.SignalingI, err = unmarshalConfig("meepo.signaling", fmc.Signaling.Name, unmarshal); err != nil {
-			return err
+		mc.Signaling = fmc.Signaling
+		if fmc.Signaling != nil {
+			if mc.SignalingI, err = unmarshalConfig("meepo.signaling", fmc.Signaling.Name, unmarshal); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -63,11 +69,17 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		}
 	}
 
+	if fmc.Log != nil {
+		mc.Log = fmc.Log
+	}
+
+	if fmc.Proxy != nil {
+		mc.Proxy = fmc.Proxy
+	}
+
 	mc.IdentityFile = fmc.IdentityFile
 	mc.Daemon = fmc.Daemon
 	mc.AsSignaling = fmc.AsSignaling
-	mc.Log = fmc.Log
-	mc.Proxy = fmc.Proxy
 
 	return nil
 }
