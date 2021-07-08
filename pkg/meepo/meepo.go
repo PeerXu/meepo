@@ -40,7 +40,6 @@ type Meepo struct {
 	opt    objx.Map
 	logger logrus.FieldLogger
 
-	// Options
 	pubk       ed25519.PublicKey
 	prik       ed25519.PrivateKey
 	id         string
@@ -58,6 +57,7 @@ type Meepo struct {
 
 	authentication auth.Authentication
 	authorization  auth.Authorization
+	acl            Acl
 }
 
 func (mp *Meepo) getRawLogger() logrus.FieldLogger {
@@ -70,10 +70,6 @@ func (mp *Meepo) getLogger() logrus.FieldLogger {
 		"id":        mp.GetID(),
 	})
 }
-
-// func (m *Message) GetMessage() *Message {
-// 	return m
-// }
 
 func (mp *Meepo) GetID() string {
 	return mp.id
@@ -194,6 +190,7 @@ func NewMeepo(opts ...NewMeepoOption) (*Meepo, error) {
 	var se signaling.Engine
 	var pubk ed25519.PublicKey
 	var prik ed25519.PrivateKey
+	var acl Acl
 	var ok bool
 	var err error
 
@@ -225,6 +222,10 @@ func NewMeepo(opts ...NewMeepoOption) (*Meepo, error) {
 		return nil, fmt.Errorf("require ed25519PrivateKey")
 	}
 
+	if acl, ok = o.Get("acl").Inter().(Acl); !ok {
+		return nil, fmt.Errorf("require acl")
+	}
+
 	broadcastCache, err := lru.NewARC(512)
 	if err != nil {
 		return nil, err
@@ -236,6 +237,7 @@ func NewMeepo(opts ...NewMeepoOption) (*Meepo, error) {
 		pubk:                     pubk,
 		prik:                     prik,
 		id:                       Ed25519PublicKeyToMeepoID(pubk),
+		acl:                      acl,
 		transports:               make(map[string]transport.Transport),
 		teleportationSources:     make(map[string]*teleportation.TeleportationSource),
 		teleportationSinks:       make(map[string]*teleportation.TeleportationSink),

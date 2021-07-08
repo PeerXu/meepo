@@ -24,6 +24,8 @@ var (
 	ErrUnauthorized             = fmt.Errorf("unauthorized")
 	ErrIncorrectSignature       = fmt.Errorf("incorrect signature")
 	ErrIncorrectPassword        = fmt.Errorf("incorrect password")
+	ErrAclNotAllowed            = fmt.Errorf("acl: not allowed")
+	ErrInvalidAclPolicyString   = fmt.Errorf("invalid acl policy string")
 )
 
 func SessionChannelExistError(session int32) error {

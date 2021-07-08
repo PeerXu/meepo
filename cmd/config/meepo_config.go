@@ -14,6 +14,7 @@ type MeepoConfig struct {
 	SignalingI   interface{}      `yaml:"-"`
 	Api          *ApiConfig       `yaml:"api,omitempty"`
 	ApiI         interface{}      `yaml:"-"`
+	Acl          *AclConfig       `yaml:"acl,omitempty"`
 }
 
 func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -29,6 +30,7 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		Transport    *TransportConfig `yaml:"transport"`
 		Signaling    *SignalingConfig `yaml:"signaling"`
 		Api          *ApiConfig       `yaml:"api"`
+		Acl          *AclConfig       `yaml:"acl"`
 	}
 
 	if err = unmarshal(&fmc); err != nil {
@@ -77,6 +79,10 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		mc.Proxy = fmc.Proxy
 	}
 
+	if fmc.Acl != nil {
+		mc.Acl = fmc.Acl
+	}
+
 	mc.IdentityFile = fmc.IdentityFile
 	mc.Daemon = fmc.Daemon
 	mc.AsSignaling = fmc.AsSignaling
@@ -95,6 +101,7 @@ func (mc *MeepoConfig) MarshalYAML() (interface{}, error) {
 		Transport    interface{}  `yaml:"transport"`
 		Signaling    interface{}  `yaml:"signaling"`
 		Api          interface{}  `yaml:"api"`
+		Acl          *AclConfig   `yaml:"acl"`
 	}{
 		IdentityFile: mc.IdentityFile,
 		Daemon:       mc.Daemon,
@@ -105,6 +112,7 @@ func (mc *MeepoConfig) MarshalYAML() (interface{}, error) {
 		Transport:    mc.TransportI,
 		Signaling:    mc.SignalingI,
 		Api:          mc.ApiI,
+		Acl:          mc.Acl,
 	}
 
 	return &_mc, nil

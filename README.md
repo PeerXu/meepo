@@ -237,6 +237,8 @@ bob$ ssh -o ProxyCommand='nc -X 5 -x 127.0.0.1:12341 %h %p' bob@63eql8p54qpe1jfp
 
 ## Security
 
+### Authorization
+
 In default parameters, create a `Teleportation` between `Meepo Service` without `authorization`.
 
 Everyone can access the service without `authorization`.
@@ -306,6 +308,69 @@ bob$ curl -X socks5h://meepo:AliceAndBob@127.0.0.1:12341 http://63eql8p54qpe1jfp
 bob$ ssh -o ProxyCommand='meepo ncat --proxy-type socks5 --proxy 127.0.0.1:12341 --proxy-auth meepo:AliceAndBob %h %p' bob@63eql8p54qpe1jfp1fmuumzge8y6y4ar5uml7nrrf8amqzmutey.mpo
 ```
 
+### Access Control List
+
+`Meepo` is using `ACL` to control other `Meepo Service` to call `NewTeleportation`.
+
+We can setup `ACL` on config file.
+
+```bash
+$ cat meepo.yaml
+meepo:
+  acl:
+    allows:
+    - "127.0.0.1:*"
+    blocks:
+    - "127.0.0.1:22"
+```
+
+This acl configuration means we can create `Teleportation` on `127.0.0.1` with any port exclude port 22.
+
+`ACL` configure has two fields, `allows` and `blocks`.
+
+`allows` is a list of `AclPolicy`, which allow matched challenge to create `Teleportation`.
+
+`blocks` is a list of `AclPolicy`, which not allow matched challenge to create `Teleportation`.
+
+`ACL` fllow the rules to run.
+
+1. If challenge triggered `block policies`, then not allow to create `Teleportation`.
+2. If challenge triggered `allow policies`, then allow to create `Teleportation`.
+3. Not allow to create `Teleportation`.
+
+Let's discuss about `AclPolicy`.
+
+`AclPolicy` format is `source-acl-entity,destination-acl-entity`.
+
+In commons, `source-acl-entity` is `ANY` implicitly if not presents.
+
+`source-acl-entity` and `destination-acl-entity` is `AclEntity`.
+
+`AclEntity` format is `<meepo-id>:<addr-network>:<addr-host>:<addr-port>`.
+
+`addr-network` support `tcp`, `socks5` and `*`.
+
+`addr-host` support `IP Address in IPv4`, `CIDR in IPv4` and `*`.
+
+`addr-port` support network ports and `*`.
+
+Examples:
+
+1. `*` => `*:*:*:*,*:*:*:*`
+
+Match all `Challenge`.
+
+2. `127.0.0.1:22` => `*:*:*:*,*:*:127.0.0.1:22`
+
+Match `Destination.Host` is `127.0.0.1`, `Destination.Port` is `22`.
+
+3. `*:socks5:*:*,*` => `*:socks5:*:*,*:*:*:*`
+
+Match `Source.Network` is `socks5`.
+
+4. `192.168.1.0/24:*` => `*:*:*:*,*:*:192.168.1.0/24:*`
+
+Match `Destination.Host` is `192.168.1.0/24`.
 
 ## FAQ
 
