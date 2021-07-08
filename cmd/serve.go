@@ -135,6 +135,20 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 		)
 	}
 
+	var allows, blocks []meepo.AclPolicy
+	if cfg.Meepo.Acl != nil {
+		if allows, err = meepo.ParseAclPolicies(cfg.Meepo.Acl.Allows); err != nil {
+			return err
+		}
+		if blocks, err = meepo.ParseAclPolicies(cfg.Meepo.Acl.Blocks); err != nil {
+			return err
+		}
+	}
+	newMeepoOptions = append(
+		newMeepoOptions,
+		meepo.WithAcl(meepo.NewAcl(meepo.WithAllowPolicies(allows), meepo.WithBlockPolicies(blocks))),
+	)
+
 	mp, err := meepo.NewMeepo(newMeepoOptions...)
 	if err != nil {
 		return err

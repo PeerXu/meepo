@@ -95,6 +95,12 @@ func WithAuthorizationSecret(secret string) ofn.OFN {
 	}
 }
 
+func WithAcl(acl Acl) ofn.OFN {
+	return func(o objx.Map) {
+		o["acl"] = acl
+	}
+}
+
 type TeleportOption = ofn.OFN
 
 func WithLocalAddress(local net.Addr) ofn.OFN {

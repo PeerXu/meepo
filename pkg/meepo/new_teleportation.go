@@ -278,6 +278,14 @@ func (mp *Meepo) onNewTeleportation(dc transport.DataChannel, in packet.Packet) 
 		return
 	}
 
+	challenge := NewAclChallenge(NewAclEntity(in.Header().Source(), source), NewAclEntity(mp.GetID(), sink))
+	logger = logger.WithField("challenge", challenge)
+	if err = mp.acl.Allowed(challenge); err != nil {
+		logger.WithError(err).Debugf("not allowed by acl")
+		mp.sendResponse(dc, mp.createResponseWithError(in, err))
+		return
+	}
+
 	ts, err = teleportation.NewTeleportationSink(
 		teleportation.WithLogger(mp.getRawLogger()),
 		teleportation.WithName(req.Name),

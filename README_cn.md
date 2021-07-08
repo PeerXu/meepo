@@ -244,6 +244,8 @@ SOCKS5配置请参考各个系统的配置方法.
 
 ## 安全
 
+### 认证
+
 在默认配置下, `Meepo服务`之间创建`Teleportation`是不需要认证的. 这样带来了一定的便捷性, 同时也引入了安全问题.
 
 所以`Meepo`支持以密钥(`secret`)的形式增加安全认证机制.
@@ -309,6 +311,73 @@ bob$ curl -X socks5h://meepo:AliceAndBob@127.0.0.1:12341 http://63eql8p54qpe1jfp
 bob$ ssh -o ProxyCommand='meepo ncat --proxy-type socks5 --proxy 127.0.0.1:12341 --proxy-auth meepo:AliceAndBob %h %p' bob@63eql8p54qpe1jfp1fmuumzge8y6y4ar5uml7nrrf8amqzmutey.mpo
 ```
 
+### 访问控制列表
+
+[`ACL`](https://en.wikipedia.org/wiki/Access-control_list)是一种常用的控制访问权限的手段.
+
+`Meepo`使用`ACL`控制其他`Meepo Service`调用`NewTeleportation`的权限.
+
+配置的`meepo.acl`项可以控制`ACL`的行为.
+
+```bash
+$ cat meepo.yaml
+meepo:
+  acl:
+    allows:
+    - "127.0.0.1:*"
+    blocks:
+    - "127.0.0.1:22"
+```
+
+例如上面这个配置, 意思是除了端口22之外, 可以在`127.0.0.1`上面任意端口创建`Teleportation`.
+
+`ACL`行为由两个列表影响, `allows`和`blocks`.
+
+`allows`是允许通过的规则(`AclPolicy`).
+
+`blocks`是不允许通过的规则.
+
+`ACL`运行逻辑顺序如下:
+
+1. 如果触发`blocks`规则, 则不允许创建`Teleportation`.
+2. 如果触发`allows`规则, 则允许创建`Teleportation`.
+3. 不允许创建`Teleportation`.
+
+下面我们来讨论一下规则.
+
+`AclPolicy`的格式是`source-acl-entity,destination-acl-entity`.
+
+通常情况下, `source-acl-entity`是可以省略的.
+
+`source-acl-entity`和`destination-acl-entity`都是`AclEntity`.
+
+`AclEntity`的格式是`<meepo-id>:<addr-network>:<addr-host>:<addr-port>`.
+
+`addr-network`暂时只支持`tcp`, `socks5`和`*`. 
+
+通常情况下`source-acl-entity.addr-network`可选`tcp`, `socks5`和`*`, `destination-acl-entity.addr-network`可选`tcp`和`*`.
+
+`addr-host`暂时只支持`IPv4格式的IP和CIDR`和`*`.
+
+`addr-port`支持正常网络支持的端口和`*`.
+
+例子:
+
+1. `*` => `*:*:*:*,*:*:*:*`
+
+匹配所有`Challenge`.
+
+2. `127.0.0.1:22` => `*:*:*:*,*:*:127.0.0.1:22`
+
+匹配`Destination.Host`为`127.0.0.1`, `Destination.Port`为`22`.
+
+3. `*:socks5:*:*,*` => `*:socks5:*:*,*:*:*:*`
+
+匹配`Source.Network`为`socks5`.
+
+4. `192.168.1.0/24:*` => `*:*:*:*,*:*:192.168.1.0/24:*`
+
+匹配`Destination.Host`为`192.168.1.0/24`.
 
 ## 常见问题
 
