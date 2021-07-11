@@ -9,13 +9,11 @@ import (
 	"strings"
 	"sync"
 
-	// TODO: back to upstream github.com/thinkgos/go-socks5 after pr merged
-	"github.com/PeerXu/go-socks5"
-	"github.com/PeerXu/go-socks5/statute"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
 	"github.com/stretchr/objx"
+	"github.com/things-go/go-socks5"
+	"github.com/things-go/go-socks5/statute"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/PeerXu/meepo/pkg/teleportation"
