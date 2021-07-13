@@ -73,7 +73,7 @@ $ ssh-keygen -t ed25519 -f meepo.pem
 After generated a `Identity File`, start `Meepo Service` with `Identity File`.
 
 ```bash
-$ meepo serve -f meepo.pem
+$ meepo serve -i meepo.pem
 ```
 
 When `Meepo Service` was started, use `meepo whoami` to get `MeepoID`.

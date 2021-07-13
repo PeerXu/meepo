@@ -75,7 +75,7 @@ $ ssh-keygen -t ed25519 -f meepo.pem
 `生成身份识别文件`成功之后, 启动`Meepo服务`指定`身份标识文件`.
 
 ```bash
-$ meepo serve -f meepo.pem
+$ meepo serve -i meepo.pem
 ```
 
 `Meepo服务`启动成功后, 再通过`meepo whoami`获取当前的`MeepoID`.
