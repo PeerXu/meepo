@@ -70,7 +70,7 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	}
 
 	if !loaded {
-		logger.Warningf("Config file not found, load default config")
+		logger.Warningf("Config file not found, load default config\n")
 	}
 
 	if fs.Lookup("identity-file").Changed {

@@ -9,5 +9,5 @@ import (
 
 // TODO: Support daemon mode on Windows.
 func Daemon() {
-	fmt.Fprintf(os.Stderr, "Windows not support daemon now, ignore daemon flag")
+	fmt.Fprintf(os.Stderr, "Windows not support daemon now, ignore daemon flag\n")
 }
