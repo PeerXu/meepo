@@ -1,16 +1,16 @@
 package chain_signaling
 
 import (
+	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/signaling"
-	"github.com/stretchr/objx"
 )
 
-func DefaultEngineOption() objx.Map {
-	return objx.New(map[string]interface{}{})
+func DefaultEngineOption() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{})
 }
 
 func WithEngine(engines ...signaling.Engine) signaling.NewEngineOption {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		var enginesSlice []signaling.Engine
 		var ok bool
 

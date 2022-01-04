@@ -9,15 +9,13 @@ import (
 	"strings"
 	"sync"
 
-	// TODO: back to upstream github.com/thinkgos/go-socks5 after pr merged
-	"github.com/PeerXu/go-socks5"
-	"github.com/PeerXu/go-socks5/statute"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
-	"github.com/stretchr/objx"
+	"github.com/things-go/go-socks5"
+	"github.com/things-go/go-socks5/statute"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/teleportation"
 	"github.com/PeerXu/meepo/pkg/transport"
 	mconn "github.com/PeerXu/meepo/pkg/util/conn"
@@ -58,8 +56,8 @@ func (*socks5Addr) String() string {
 
 var SOCKS5ADDR = new(socks5Addr)
 
-func newNewSocks5ServerOption() objx.Map {
-	return objx.New(new(map[string]interface{}))
+func newNewSocks5ServerOption() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{})
 }
 
 type Socks5Server interface {
@@ -69,7 +67,7 @@ type Socks5Server interface {
 }
 
 type socks5Server struct {
-	opt    objx.Map
+	opt    ofn.Option
 	logger logrus.FieldLogger
 	lis    net.Listener
 	eg     errgroup.Group

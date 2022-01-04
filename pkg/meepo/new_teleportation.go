@@ -7,10 +7,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
-	"github.com/stretchr/objx"
 
 	"github.com/PeerXu/meepo/pkg/meepo/auth"
 	"github.com/PeerXu/meepo/pkg/meepo/packet"
+	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/teleportation"
 	"github.com/PeerXu/meepo/pkg/transport"
 )
@@ -40,8 +40,8 @@ type (
 	DoTeleportResponse struct{}
 )
 
-func newNewTeleportationOption() objx.Map {
-	return objx.New(map[string]interface{}{})
+func newNewTeleportationOption() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{})
 }
 
 func (mp *Meepo) NewTeleportation(id string, remote net.Addr, opts ...NewTeleportationOption) (teleportation.Teleportation, error) {

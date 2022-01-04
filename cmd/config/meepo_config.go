@@ -21,9 +21,9 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var err error
 
 	var fmc struct {
-		IdentityFile string           `yaml:"identityFile"`
-		Daemon       bool             `yaml:"daemon"`
-		AsSignaling  bool             `yaml:"asSignaling"`
+		IdentityFile *string          `yaml:"identityFile"`
+		Daemon       *bool            `yaml:"daemon"`
+		AsSignaling  *bool            `yaml:"asSignaling"`
 		Log          *LogConfig       `yaml:"log"`
 		Proxy        *ProxyConfig     `yaml:"proxy"`
 		Auth         *AuthConfig      `yaml:"auth"`
@@ -83,9 +83,17 @@ func (mc *MeepoConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		mc.Acl = fmc.Acl
 	}
 
-	mc.IdentityFile = fmc.IdentityFile
-	mc.Daemon = fmc.Daemon
-	mc.AsSignaling = fmc.AsSignaling
+	if fmc.IdentityFile != nil {
+		mc.IdentityFile = *fmc.IdentityFile
+	}
+
+	if fmc.Daemon != nil {
+		mc.Daemon = *fmc.Daemon
+	}
+
+	if fmc.AsSignaling != nil {
+		mc.AsSignaling = *fmc.AsSignaling
+	}
 
 	return nil
 }

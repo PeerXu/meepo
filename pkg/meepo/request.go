@@ -161,6 +161,7 @@ func (mp *Meepo) initRequestHandlers() {
 	mp.registerRequestHandleFunc(METHOD_NEW_TELEPORTATION, mp.onNewTeleportation)
 	mp.registerRequestHandleFunc(METHOD_CLOSE_TELEPORTATION, mp.onCloseTeleportation)
 	mp.registerRequestHandleFunc(METHOD_DO_TELEORT, mp.onDoTeleport)
+	mp.registerRequestHandleFunc(METHOD_CLOSE_TRANSPORT, mp.onCloseTransport)
 }
 
 func (mp *Meepo) handleRequest(dc transport.DataChannel, in packet.Packet) {

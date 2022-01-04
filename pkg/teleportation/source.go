@@ -8,15 +8,15 @@ import (
 	"sync/atomic"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/objx"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/transport"
 	mgroup "github.com/PeerXu/meepo/pkg/util/group"
 )
 
 type TeleportationSource struct {
-	opt    objx.Map
+	opt    ofn.Option
 	logger logrus.FieldLogger
 	idx    int32
 	closed int32
@@ -214,8 +214,8 @@ func (ts *TeleportationSource) Close() error {
 	return ts.close()
 }
 
-func newNewteleportationSourceOptions() objx.Map {
-	return objx.New(map[string]interface{}{})
+func newNewteleportationSourceOptions() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{})
 }
 
 func NewTeleportationSource(opts ...NewTeleportationSourceOption) (*TeleportationSource, error) {

@@ -1,9 +1,10 @@
 package meepo
 
 import (
-	"github.com/PeerXu/meepo/pkg/teleportation"
 	"github.com/spf13/cast"
-	"github.com/stretchr/objx"
+
+	"github.com/PeerXu/meepo/pkg/ofn"
+	"github.com/PeerXu/meepo/pkg/teleportation"
 )
 
 type GetTeleportationFunc func(string) (teleportation.Teleportation, bool)
@@ -15,8 +16,8 @@ func (mp *Meepo) GetTeleportation(name string, opts ...GetTeleportationOption) (
 	return mp.getTeleportationNL(name, opts...)
 }
 
-func newGetTeleportationOption() objx.Map {
-	return objx.New(map[string]interface{}{})
+func newGetTeleportationOption() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{})
 }
 
 func (mp *Meepo) getTeleportationNL(name string, opts ...GetTeleportationOption) (teleportation.Teleportation, error) {

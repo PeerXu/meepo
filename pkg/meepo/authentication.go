@@ -2,7 +2,6 @@ package meepo
 
 import (
 	"github.com/spf13/cast"
-	"github.com/stretchr/objx"
 
 	"github.com/PeerXu/meepo/pkg/meepo/auth"
 	"github.com/PeerXu/meepo/pkg/meepo/packet"
@@ -10,7 +9,7 @@ import (
 )
 
 func WithPacket(p packet.Packet) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["packet"] = p
 	}
 }
@@ -18,7 +17,7 @@ func WithPacket(p packet.Packet) ofn.OFN {
 func (mp *Meepo) Authenticate(subject string, opts ...auth.AuthenticateOption) (err error) {
 	logger := mp.getLogger().WithField("#method", "Authenticate")
 
-	o := objx.New(map[string]interface{}{})
+	o := ofn.NewOption(map[string]interface{}{})
 
 	for _, opt := range opts {
 		opt(o)
@@ -44,7 +43,7 @@ func (mp *Meepo) Authenticate(subject string, opts ...auth.AuthenticateOption) (
 }
 
 func WithSubject(sub string) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["subject"] = sub
 	}
 }
@@ -52,7 +51,7 @@ func WithSubject(sub string) ofn.OFN {
 type authenticatePacketOption = ofn.OFN
 
 func (mp *Meepo) authenticatePacket(p packet.Packet, opts ...authenticatePacketOption) error {
-	o := objx.New(map[string]interface{}{})
+	o := ofn.NewOption(map[string]interface{}{})
 	for _, opt := range opts {
 		opt(o)
 	}

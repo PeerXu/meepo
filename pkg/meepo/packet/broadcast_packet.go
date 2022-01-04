@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 
 	"github.com/PeerXu/meepo/pkg/ofn"
-	"github.com/stretchr/objx"
 )
 
 type BroadcastPacket interface {
@@ -44,13 +43,13 @@ func (p *broadcastPacket) SetPacket(t Packet) BroadcastPacket {
 type NewBroadcastPacketOption = ofn.OFN
 
 func WithPacket(p Packet) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["packet"] = p
 	}
 }
 
 func NewBroadcastPacket(h BroadcastHeader, opts ...NewBroadcastPacketOption) (BroadcastPacket, error) {
-	o := objx.New(map[string]interface{}{})
+	o := ofn.NewOption(map[string]interface{}{})
 	for _, opt := range opts {
 		opt(o)
 	}

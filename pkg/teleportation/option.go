@@ -4,7 +4,6 @@ import (
 	"net"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/objx"
 
 	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/transport"
@@ -14,31 +13,31 @@ type NewTeleportationSourceOption = ofn.OFN
 type NewTeleportationSinkOption = ofn.OFN
 
 func WithLogger(logger logrus.FieldLogger) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["logger"] = logger
 	}
 }
 
 func WithName(name string) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["name"] = name
 	}
 }
 
 func WithSource(addr net.Addr) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["source"] = addr
 	}
 }
 
 func WithSink(addr net.Addr) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["sink"] = addr
 	}
 }
 
 func WithTransport(t transport.Transport) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["transport"] = t
 	}
 }
@@ -46,7 +45,7 @@ func WithTransport(t transport.Transport) ofn.OFN {
 type NewDial func(network, address string) (net.Conn, error)
 
 func WithNewDial(f NewDial) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["newDial"] = f
 	}
 }
@@ -54,7 +53,7 @@ func WithNewDial(f NewDial) ofn.OFN {
 type DoTeleportFunc func(label string) error
 
 func WithDoTeleportFunc(f DoTeleportFunc) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["doTeleportFunc"] = f
 	}
 }
@@ -62,7 +61,7 @@ func WithDoTeleportFunc(f DoTeleportFunc) ofn.OFN {
 type OnDoTeleportFunc func() error
 
 func WithOnDoTeleportFunc(f OnDoTeleportFunc) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["onDoTeleportFunc"] = f
 	}
 }
@@ -70,7 +69,7 @@ func WithOnDoTeleportFunc(f OnDoTeleportFunc) ofn.OFN {
 type OnCloseHandler func()
 
 func WithOnCloseHandler(h OnCloseHandler) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["onCloseHandler"] = h
 	}
 }
@@ -78,7 +77,7 @@ func WithOnCloseHandler(h OnCloseHandler) ofn.OFN {
 type OnErrorHandler func(error)
 
 func WithOnErrorHandler(h OnErrorHandler) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["onErrorHandler"] = h
 	}
 }
@@ -97,7 +96,7 @@ func NewDialRequestWithQuit(conn net.Conn, quit chan struct{}) *DialRequest {
 }
 
 func SetDialRequestChannel(c chan *DialRequest) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["dialRequestChannel"] = c
 	}
 }
