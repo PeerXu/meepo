@@ -9,26 +9,26 @@ import (
 	"github.com/pion/webrtc/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
-	"github.com/stretchr/objx"
 
+	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/transport"
 )
 
 type AnswerHook func(*webrtc.SessionDescription, error)
 type OfferHook func(*webrtc.SessionDescription) (*webrtc.SessionDescription, error)
 
-func newNewWebrtcTransportOptions() objx.Map {
-	return objx.New(map[string]interface{}{
+func newNewWebrtcTransportOptions() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{
 		"gatherTimeout": 17 * time.Second,
 	})
 }
 
-func newCreateDataChannelOptions() objx.Map {
-	return objx.New(map[string]interface{}{})
+func newCreateDataChannelOptions() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{})
 }
 
 type WebrtcTransport struct {
-	opt       objx.Map
+	opt       ofn.Option
 	logger    logrus.FieldLogger
 	peerID    string
 	handleIdx transport.HandleID

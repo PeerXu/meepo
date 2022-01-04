@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/PeerXu/meepo/pkg/ofn"
-	"github.com/stretchr/objx"
 )
 
 var (
@@ -318,19 +317,19 @@ func (l *blockList) Allowd(c AclChallenge) error {
 type NewAclOption = ofn.OFN
 
 func WithAllowPolicies(ps []AclPolicy) NewAclOption {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["allowPolicies"] = append(o["allowPolicies"].([]AclPolicy), ps...)
 	}
 }
 
 func WithBlockPolicies(ps []AclPolicy) NewAclOption {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["blockPolicies"] = append(o["blockPolicies"].([]AclPolicy), ps...)
 	}
 }
 
-func defaultNewAclOption() objx.Map {
-	return objx.New(map[string]interface{}{
+func defaultNewAclOption() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{
 		"allowPolicies": []AclPolicy{},
 		"blockPolicies": []AclPolicy{},
 	})

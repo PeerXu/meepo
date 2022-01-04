@@ -7,14 +7,13 @@ import (
 
 	"github.com/pion/webrtc/v3"
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/objx"
 
 	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/signaling"
 )
 
-func newNewMeepoOption() objx.Map {
-	return objx.New(map[string]interface{}{
+func newNewMeepoOption() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{
 		"iceServers": []string{
 			"stun:stun.xten.com:3478",
 			"stun:stun.voipbuster.com:3478",
@@ -41,62 +40,62 @@ func newNewMeepoOption() objx.Map {
 type NewMeepoOption = ofn.OFN
 
 func WithSignalingEngine(se signaling.Engine) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["signalingEngine"] = se
 	}
 }
 
 func WithWebrtcAPI(webrtcAPI *webrtc.API) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["webrtcAPI"] = webrtcAPI
 	}
 }
 
 func WithICEServers(iceServers []string) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["iceServers"] = iceServers
 	}
 }
 
 func WithED25519KeyPair(pubk ed25519.PublicKey, prik ed25519.PrivateKey) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["ed25519PublicKey"] = pubk
 		o["ed25519PrivateKey"] = prik
 	}
 }
 
 func WithLogger(logger logrus.FieldLogger) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["logger"] = logger
 	}
 }
 
 func WithGatherTimeout(d time.Duration) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["gatherTimeout"] = d
 	}
 }
 
 func WithAsSignaling(b bool) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["asSignaling"] = b
 	}
 }
 
 func WithAuthorizationName(name string) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["authorizationName"] = name
 	}
 }
 
 func WithAuthorizationSecret(secret string) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["authorizationSecret"] = secret
 	}
 }
 
 func WithAcl(acl Acl) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["acl"] = acl
 	}
 }
@@ -104,13 +103,13 @@ func WithAcl(acl Acl) ofn.OFN {
 type TeleportOption = ofn.OFN
 
 func WithLocalAddress(local net.Addr) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["local"] = local
 	}
 }
 
 func WithSecret(secret string) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["secret"] = secret
 	}
 }
@@ -118,7 +117,7 @@ func WithSecret(secret string) ofn.OFN {
 type NewTeleportationOption = ofn.OFN
 
 func WithName(name string) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["name"] = name
 	}
 }
@@ -126,13 +125,13 @@ func WithName(name string) ofn.OFN {
 type GetTeleportationOption = ofn.OFN
 
 func WithSourceFirst() ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["getFirst"] = "source"
 	}
 }
 
 func WithSinkFirst() ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["getFirst"] = "sink"
 	}
 }
@@ -142,19 +141,29 @@ func WithSinkFirst() ofn.OFN {
 type NewSocks5ServerOption = ofn.OFN
 
 func WithMeepo(mp *Meepo) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["meepo"] = mp
 	}
 }
 
 func WithHost(host string) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["host"] = host
 	}
 }
 
 func WithPort(port int32) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["port"] = port
+	}
+}
+
+// Close Transport
+
+type CloseTransportOption = ofn.OFN
+
+func WithGracePeriod(s string) ofn.OFN {
+	return func(o ofn.Option) {
+		o["gracePeriod"] = s
 	}
 }

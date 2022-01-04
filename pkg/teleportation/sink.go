@@ -7,15 +7,15 @@ import (
 	"sync"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/objx"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/transport"
 	mgroup "github.com/PeerXu/meepo/pkg/util/group"
 )
 
 type TeleportationSink struct {
-	opt    objx.Map
+	opt    ofn.Option
 	logger logrus.FieldLogger
 
 	name         string
@@ -169,8 +169,8 @@ func (ts *TeleportationSink) Close() error {
 	return ts.close()
 }
 
-func newNewTeleportationSinkOptions() objx.Map {
-	return objx.New(map[string]interface{}{})
+func newNewTeleportationSinkOptions() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{})
 }
 
 func NewTeleportationSink(opts ...NewTeleportationSinkOption) (*TeleportationSink, error) {

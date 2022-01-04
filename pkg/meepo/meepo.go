@@ -9,10 +9,10 @@ import (
 	"github.com/pion/webrtc/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
-	"github.com/stretchr/objx"
 
 	"github.com/PeerXu/meepo/pkg/meepo/auth"
 	"github.com/PeerXu/meepo/pkg/meepo/packet"
+	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/signaling"
 	chain_signaling "github.com/PeerXu/meepo/pkg/signaling/chain"
 	"github.com/PeerXu/meepo/pkg/teleportation"
@@ -37,7 +37,7 @@ type Meepo struct {
 	wireHandler    signaling.WireHandler
 	wireHandlerMtx msync.Locker
 
-	opt    objx.Map
+	opt    ofn.Option
 	logger logrus.FieldLogger
 
 	pubk       ed25519.PublicKey

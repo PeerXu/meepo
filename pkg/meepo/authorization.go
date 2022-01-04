@@ -6,10 +6,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
-	"github.com/stretchr/objx"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/PeerXu/meepo/pkg/meepo/auth"
+	"github.com/PeerXu/meepo/pkg/ofn"
 )
 
 func (mp *Meepo) GetAuthorizationName() string {
@@ -36,7 +36,7 @@ func (mp *Meepo) secretAuthorize(subject, object, action string, opts ...auth.Au
 		"action":  action,
 	})
 
-	o := objx.New(map[string]interface{}{})
+	o := ofn.NewOption(map[string]interface{}{})
 	for _, opt := range opts {
 		opt(o)
 	}

@@ -7,18 +7,18 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
-	"github.com/stretchr/objx"
 
+	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/transport"
 	msync "github.com/PeerXu/meepo/pkg/util/sync"
 )
 
-func newNewLoopbackTransportOptions() objx.Map {
-	return objx.New(map[string]interface{}{})
+func newNewLoopbackTransportOptions() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{})
 }
 
 type LoopbackTransport struct {
-	opt       objx.Map
+	opt       ofn.Option
 	logger    logrus.FieldLogger
 	peerID    string
 	handleIdx transport.HandleID

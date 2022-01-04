@@ -5,13 +5,13 @@ import (
 	"sync"
 
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/objx"
 
+	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/signaling"
 )
 
 type ChainEngine struct {
-	opt    objx.Map
+	opt    ofn.Option
 	logger logrus.FieldLogger
 
 	engines []signaling.Engine

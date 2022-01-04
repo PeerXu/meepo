@@ -7,22 +7,22 @@ import (
 	"net/http"
 
 	"github.com/spf13/cast"
-	"github.com/stretchr/objx"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/PeerXu/meepo/pkg/api"
 	"github.com/PeerXu/meepo/pkg/meepo"
+	"github.com/PeerXu/meepo/pkg/ofn"
 )
 
-func NewHttpServerOption() objx.Map {
-	return objx.New(map[string]interface{}{
+func NewHttpServerOption() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{
 		"host": "127.0.0.1",
 		"port": 12345,
 	})
 }
 
 type HttpServer struct {
-	opt objx.Map
+	opt ofn.Option
 
 	httpd *http.Server
 	eg    errgroup.Group
