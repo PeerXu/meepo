@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/spf13/cast"
-	"github.com/stretchr/objx"
 
 	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/util/msgpack"
@@ -25,13 +24,13 @@ type Packet interface {
 type NewPacketOption = ofn.OFN
 
 func WithError(err error) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["error"] = err
 	}
 }
 
 func WithData(v interface{}) ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["data"] = v
 	}
 }
@@ -41,7 +40,7 @@ func NewPacket(h Header, opts ...NewPacketOption) (Packet, error) {
 		header: h,
 	}
 
-	o := objx.New(map[string]interface{}{})
+	o := ofn.NewOption(map[string]interface{}{})
 
 	for _, opt := range opts {
 		opt(o)

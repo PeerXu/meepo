@@ -16,9 +16,9 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
-	"github.com/stretchr/objx"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/signaling"
 	mrand "github.com/PeerXu/meepo/pkg/util/random"
 	msync "github.com/PeerXu/meepo/pkg/util/sync"
@@ -136,7 +136,7 @@ func NewErrorEventWithSession(session int32, err error) *Event {
 }
 
 type RedisEngine struct {
-	opt             objx.Map
+	opt             ofn.Option
 	logger          logrus.FieldLogger
 	redisOption     *redis.Options
 	redisClientMap  sync.Map

@@ -6,7 +6,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
-	"github.com/stretchr/objx"
 
 	"github.com/PeerXu/meepo/pkg/meepo/packet"
 	"github.com/PeerXu/meepo/pkg/ofn"
@@ -363,13 +362,13 @@ func (mp *Meepo) newBroadcastHandleFunc(opt *newBroadcastHandleFuncOption) func(
 type sendBroadcastResponseOption = ofn.OFN
 
 func SkipPacketSigning() ofn.OFN {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["skipPacketSigning"] = true
 	}
 }
 
-func defaultSendBroadcastResponseOption() objx.Map {
-	return objx.New(map[string]interface{}{
+func defaultSendBroadcastResponseOption() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{
 		"skipPacketSigning": false,
 	})
 }

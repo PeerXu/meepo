@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/objx"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/signaling"
 	redis_signaling "github.com/PeerXu/meepo/pkg/signaling/redis"
 )
@@ -35,7 +36,7 @@ func (s *RedisEngineTestSuite) TestRedisEngine() {
 	defer ea.Close()
 
 	ea.OnWire(func(in *signaling.Descriptor) (*signaling.Descriptor, error) {
-		ud := objx.New(in.UserData)
+		ud := ofn.NewOption(in.UserData)
 		s.Equal(1, cast.ToInt(ud.Get("a").Inter()))
 
 		return in, nil

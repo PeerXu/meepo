@@ -7,13 +7,13 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/spf13/cast"
-	"github.com/stretchr/objx"
 
+	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/sdk"
 )
 
 func WithHost(host string) sdk.NewMeepoSDKOption {
-	return func(o objx.Map) {
+	return func(o ofn.Option) {
 		o["host"] = host
 	}
 }
@@ -21,7 +21,7 @@ func WithHost(host string) sdk.NewMeepoSDKOption {
 type MeepoSDK struct {
 	sdk.BaseMeepoSDK
 
-	opt    objx.Map
+	opt    ofn.Option
 	client *resty.Client
 
 	host string
@@ -62,8 +62,8 @@ func (t *MeepoSDK) doRequest(path string, req interface{}, res interface{}, expe
 	return nil
 }
 
-func newNewMeepoSDKOption() objx.Map {
-	return objx.New(map[string]interface{}{
+func newNewMeepoSDKOption() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{
 		"host": "http://localhost:12345",
 	})
 }

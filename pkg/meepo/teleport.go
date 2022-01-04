@@ -5,14 +5,13 @@ import (
 	"net"
 	"sync"
 
-	"github.com/stretchr/objx"
-
+	"github.com/PeerXu/meepo/pkg/ofn"
 	"github.com/PeerXu/meepo/pkg/teleportation"
 	"github.com/PeerXu/meepo/pkg/transport"
 )
 
-func newTeleportOptions() objx.Map {
-	return objx.New(map[string]interface{}{})
+func newTeleportOptions() ofn.Option {
+	return ofn.NewOption(map[string]interface{}{})
 }
 
 func (mp *Meepo) Teleport(peerID string, remote net.Addr, opts ...TeleportOption) (net.Addr, error) {
