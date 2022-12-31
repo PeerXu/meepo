@@ -2,7 +2,8 @@ env:
 - GO111MODULE=on
 before:
   hooks:
-  - go mod tidy -compat=1.18
+  - go mod tidy
+  - go mod vendor
 builds:
 - env:
   - CGO_ENABLED=0
