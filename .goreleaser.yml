@@ -20,10 +20,10 @@ builds:
   - -trimpath
   ldflags:
   - -s -w
-  - -X "github.com/PeerXu/meepo/pkg/util/version.Version={{ .Version }}"
-  - -X "github.com/PeerXu/meepo/pkg/util/version.GoVersion={{ .Env.GOVERSION }}"
-  - -X "github.com/PeerXu/meepo/pkg/util/version.GitHash={{ .Commit }}"
-  - -X "github.com/PeerXu/meepo/pkg/util/version.Built={{ .CommitDate }}"
+  - -X "github.com/PeerXu/meepo/pkg/lib/version.Version={{ .Version }}"
+  - -X "github.com/PeerXu/meepo/pkg/lib/version.GoVersion={{ .Env.GOVERSION }}"
+  - -X "github.com/PeerXu/meepo/pkg/lib/version.GitHash={{ .Commit }}"
+  - -X "github.com/PeerXu/meepo/pkg/lib/version.Built={{ .CommitDate }}"
 checksum:
   name_template: 'checksums.txt'
 archives:
@@ -47,27 +47,11 @@ snapcrafts:
   description: |
     Meepo help you to build your private network over Internet in easy way.
   grade: stable
-  confinement: strict
+  confinement: classic
   publish: true
-  extra_files:
-  - source: bin/meepod.wrapper
-    destination: meepod.wrapper
-    mode: 0755
-  layout:
-    /etc/meepo:
-      bind: $SNAP_DATA/etc
   apps:
-    meepod:
-      daemon: simple
-      command: meepod.wrapper
-      plugs:
-      - network
-      - network-bind
     meepo:
       command: meepo
-      plugs:
-      - network
-      - network-bind
 brews:
 - description: |
     Meepo help you to build your private network over Internet in easy way.

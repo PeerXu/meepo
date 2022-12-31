@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-$SNAP/meepo serve --daemon=false
