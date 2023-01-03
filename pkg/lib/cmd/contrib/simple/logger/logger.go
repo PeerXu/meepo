@@ -1,7 +1,7 @@
 package simple_logger
 
 import (
-	logging "github.com/PeerXu/meepo/pkg/internal/logging"
+	logging "github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/config"
 )
 

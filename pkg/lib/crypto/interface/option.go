@@ -1,6 +1,6 @@
 package crypto_interface
 
-import "github.com/PeerXu/meepo/pkg/internal/option"
+import "github.com/PeerXu/meepo/pkg/lib/option"
 
 type EncryptOption = option.ApplyOption
 

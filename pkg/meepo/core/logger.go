@@ -1,6 +1,6 @@
 package meepo_core
 
-import "github.com/PeerXu/meepo/pkg/internal/logging"
+import "github.com/PeerXu/meepo/pkg/lib/logging"
 
 func (mp *Meepo) GetLogger() logging.Logger {
 	return mp.logger.WithFields(logging.Fields{

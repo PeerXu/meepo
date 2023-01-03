@@ -3,7 +3,7 @@ package transport_webrtc
 import (
 	"fmt"
 
-	"github.com/PeerXu/meepo/pkg/internal/errors"
+	"github.com/PeerXu/meepo/pkg/lib/errors"
 )
 
 var (

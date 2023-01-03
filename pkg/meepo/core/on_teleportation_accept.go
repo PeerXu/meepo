@@ -1,10 +1,10 @@
 package meepo_core
 
 import (
-	mio "github.com/PeerXu/meepo/pkg/internal/io"
-	listenerer_interface "github.com/PeerXu/meepo/pkg/internal/listenerer/interface"
-	"github.com/PeerXu/meepo/pkg/internal/logging"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	mio "github.com/PeerXu/meepo/pkg/lib/io"
+	listenerer_interface "github.com/PeerXu/meepo/pkg/lib/listenerer/interface"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 )
 
 func (mp *Meepo) onTeleportationAccept(tp Teleportation, conn listenerer_interface.Conn) {

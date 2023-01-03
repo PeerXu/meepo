@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
-	meepo_testing "github.com/PeerXu/meepo/pkg/internal/testing"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+	meepo_testing "github.com/PeerXu/meepo/pkg/lib/testing"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
 	crypto_core "github.com/PeerXu/meepo/pkg/lib/crypto/core"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"

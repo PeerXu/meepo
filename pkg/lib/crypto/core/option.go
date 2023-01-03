@@ -1,7 +1,7 @@
 package crypto_core
 
 import (
-	"github.com/PeerXu/meepo/pkg/internal/option"
+	"github.com/PeerXu/meepo/pkg/lib/option"
 	crypto_interface "github.com/PeerXu/meepo/pkg/lib/crypto/interface"
 )
 

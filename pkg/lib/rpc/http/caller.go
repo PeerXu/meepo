@@ -3,9 +3,9 @@ package rpc_http
 import (
 	"net/http"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
-	"github.com/PeerXu/meepo/pkg/internal/option"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+	"github.com/PeerXu/meepo/pkg/lib/option"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	crypto_core "github.com/PeerXu/meepo/pkg/lib/crypto/core"
 	crypto_interface "github.com/PeerXu/meepo/pkg/lib/crypto/interface"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"

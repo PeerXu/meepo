@@ -15,6 +15,7 @@ func (mp *Meepo) onAddWebrtcTransportNL(t Transport) (err error) {
 	t.Handle("sys/getCandidates", transport_core.WrapHandleFunc(mp.newOnGetCandidatesRequest, mp.hdrOnGetCandidates))
 
 	t.Handle("ping", transport_core.WrapHandleFunc(mp.newOnPingRequest, mp.hdrOnPing))
+	t.Handle("permit", transport_core.WrapHandleFunc(mp.newOnPermitRequest, mp.hdrOnPermit))
 
 	mp.transports[t.Addr()] = t
 
@@ -23,6 +24,7 @@ func (mp *Meepo) onAddWebrtcTransportNL(t Transport) (err error) {
 
 func (mp *Meepo) onAddPipeTransportNL(t Transport) error {
 	t.Handle("ping", transport_core.WrapHandleFunc(mp.newOnPingRequest, mp.hdrOnPing))
+	t.Handle("permit", transport_core.WrapHandleFunc(mp.newOnPermitRequest, mp.hdrOnPermit))
 
 	mp.transports[t.Addr()] = t
 	return nil

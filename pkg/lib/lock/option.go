@@ -1,5 +1,5 @@
 package lock
 
-import "github.com/PeerXu/meepo/pkg/internal/option"
+import "github.com/PeerXu/meepo/pkg/lib/option"
 
 type NewLockOption = option.ApplyOption

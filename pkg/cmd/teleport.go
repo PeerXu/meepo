@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 
-	C "github.com/PeerXu/meepo/pkg/internal/constant"
-	"github.com/PeerXu/meepo/pkg/internal/dialer"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	C "github.com/PeerXu/meepo/pkg/lib/constant"
+	"github.com/PeerXu/meepo/pkg/lib/dialer"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
 	simple_sdk "github.com/PeerXu/meepo/pkg/lib/cmd/contrib/simple/sdk"
 	"github.com/PeerXu/meepo/pkg/lib/config"

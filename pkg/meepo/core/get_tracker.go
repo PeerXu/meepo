@@ -1,8 +1,8 @@
 package meepo_core
 
 import (
-	"github.com/PeerXu/meepo/pkg/internal/logging"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
 func (mp *Meepo) getTracker(target addr.Addr) (Tracker, error) {

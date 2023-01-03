@@ -1,6 +1,6 @@
 package meepo_routing_table_interface
 
-import "github.com/PeerXu/meepo/pkg/internal/routing_table"
+import "github.com/PeerXu/meepo/pkg/lib/routing_table"
 
 type HealthLevel string
 

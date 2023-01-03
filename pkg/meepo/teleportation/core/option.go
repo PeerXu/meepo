@@ -3,8 +3,8 @@ package teleportation_core
 import (
 	"net"
 
-	listenerer_interface "github.com/PeerXu/meepo/pkg/internal/listenerer/interface"
-	"github.com/PeerXu/meepo/pkg/internal/option"
+	listenerer_interface "github.com/PeerXu/meepo/pkg/lib/listenerer/interface"
+	"github.com/PeerXu/meepo/pkg/lib/option"
 )
 
 const (

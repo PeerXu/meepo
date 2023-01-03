@@ -1,6 +1,6 @@
 package acl
 
-import "github.com/PeerXu/meepo/pkg/internal/option"
+import "github.com/PeerXu/meepo/pkg/lib/option"
 
 const (
 	OPTION_ACL = "acl"

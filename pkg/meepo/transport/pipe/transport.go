@@ -3,10 +3,10 @@ package transport_pipe
 import (
 	"sync/atomic"
 
-	"github.com/PeerXu/meepo/pkg/internal/dialer"
-	"github.com/PeerXu/meepo/pkg/internal/logging"
-	"github.com/PeerXu/meepo/pkg/internal/option"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	"github.com/PeerXu/meepo/pkg/lib/dialer"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+	"github.com/PeerXu/meepo/pkg/lib/option"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/lock"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	marshaler_interface "github.com/PeerXu/meepo/pkg/lib/marshaler/interface"

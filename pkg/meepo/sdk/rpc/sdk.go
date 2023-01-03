@@ -1,7 +1,7 @@
 package sdk_rpc
 
 import (
-	"github.com/PeerXu/meepo/pkg/internal/option"
+	"github.com/PeerXu/meepo/pkg/lib/option"
 	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
 	sdk_core "github.com/PeerXu/meepo/pkg/meepo/sdk/core"
 )

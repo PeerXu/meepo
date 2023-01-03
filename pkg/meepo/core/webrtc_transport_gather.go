@@ -3,7 +3,7 @@ package meepo_core
 import (
 	"github.com/pion/webrtc/v3"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
 	transport_webrtc "github.com/PeerXu/meepo/pkg/meepo/transport/webrtc"
 )

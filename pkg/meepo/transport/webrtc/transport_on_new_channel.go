@@ -3,8 +3,8 @@ package transport_webrtc
 import (
 	"context"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 )
 
 type NewChannelRequest struct {
@@ -55,6 +55,7 @@ func (t *WebrtcTransport) onNewChannel(ctx context.Context, _req any) (res any, 
 		"channelID": req.ChannelID,
 		"network":   req.Network,
 		"address":   req.Address,
+		"mode":      req.Mode,
 	})
 
 	t.tempDataChannelsMtx.Lock()

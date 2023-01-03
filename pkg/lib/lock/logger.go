@@ -1,6 +1,6 @@
 package lock
 
-import "github.com/PeerXu/meepo/pkg/internal/logging"
+import "github.com/PeerXu/meepo/pkg/lib/logging"
 
 func (x *tracedLock) GetLogger() logging.Logger {
 	return x.logger.WithFields(logging.Fields{

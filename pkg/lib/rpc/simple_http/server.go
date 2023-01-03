@@ -4,9 +4,9 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
-	"github.com/PeerXu/meepo/pkg/internal/option"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+	"github.com/PeerXu/meepo/pkg/lib/option"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	marshaler_interface "github.com/PeerXu/meepo/pkg/lib/marshaler/interface"
 	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"

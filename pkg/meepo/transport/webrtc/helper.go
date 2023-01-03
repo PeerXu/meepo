@@ -15,9 +15,9 @@ import (
 	"github.com/xtaci/smux"
 	"golang.org/x/crypto/pbkdf2"
 
-	"github.com/PeerXu/meepo/pkg/internal/dialer"
-	dialer_interface "github.com/PeerXu/meepo/pkg/internal/dialer/interface"
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	"github.com/PeerXu/meepo/pkg/lib/dialer"
+	dialer_interface "github.com/PeerXu/meepo/pkg/lib/dialer/interface"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
 func (t *WebrtcTransport) nextChannelID() uint16 {

@@ -1,7 +1,7 @@
 package rpc_interface
 
 import (
-	"github.com/PeerXu/meepo/pkg/internal/option"
+	"github.com/PeerXu/meepo/pkg/lib/option"
 )
 
 type CallOption = option.ApplyOption

@@ -3,11 +3,12 @@ package meepo_core
 import (
 	"context"
 
-	"github.com/PeerXu/meepo/pkg/internal/dialer"
-	"github.com/PeerXu/meepo/pkg/internal/listenerer"
-	"github.com/PeerXu/meepo/pkg/internal/logging"
-	"github.com/PeerXu/meepo/pkg/internal/option"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	"github.com/PeerXu/meepo/pkg/lib/dialer"
+	"github.com/PeerXu/meepo/pkg/lib/listenerer"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+	"github.com/PeerXu/meepo/pkg/lib/option"
+	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	teleportation_core "github.com/PeerXu/meepo/pkg/meepo/teleportation/core"
 )
 
@@ -37,6 +38,15 @@ func (mp *Meepo) NewTeleportation(ctx context.Context, target Addr, sourceNetwor
 	t, err := mp.GetTransport(ctx, target)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to get transport")
+		return nil, err
+	}
+
+	err = t.Call(ctx, "permit", &PermitRequest{
+		Network: sinkNetwork,
+		Address: sinkAddress,
+	}, rpc_core.NO_CONTENT())
+	if err != nil {
+		logger.WithError(err).Debugf("failed to permit")
 		return nil, err
 	}
 

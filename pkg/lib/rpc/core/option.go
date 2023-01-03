@@ -1,7 +1,7 @@
 package rpc_core
 
 import (
-	"github.com/PeerXu/meepo/pkg/internal/option"
+	"github.com/PeerXu/meepo/pkg/lib/option"
 	rpc_interface "github.com/PeerXu/meepo/pkg/lib/rpc/interface"
 )
 

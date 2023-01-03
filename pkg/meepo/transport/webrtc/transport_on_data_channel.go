@@ -10,8 +10,8 @@ import (
 	"github.com/pion/webrtc/v3"
 	"github.com/xtaci/smux"
 
-	mio "github.com/PeerXu/meepo/pkg/internal/io"
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	mio "github.com/PeerXu/meepo/pkg/lib/io"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
 type tempDataChannel struct {

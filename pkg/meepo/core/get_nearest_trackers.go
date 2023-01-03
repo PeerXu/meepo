@@ -1,7 +1,7 @@
 package meepo_core
 
 import (
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
 func (mp *Meepo) getNearestTrackers(target Addr, count int, excludes []Addr) (tks []Tracker, found bool, err error) {

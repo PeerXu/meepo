@@ -5,11 +5,11 @@ import (
 
 	"github.com/pion/webrtc/v3"
 
-	"github.com/PeerXu/meepo/pkg/internal/dialer"
-	dialer_interface "github.com/PeerXu/meepo/pkg/internal/dialer/interface"
-	"github.com/PeerXu/meepo/pkg/internal/logging"
-	"github.com/PeerXu/meepo/pkg/internal/option"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	"github.com/PeerXu/meepo/pkg/lib/dialer"
+	dialer_interface "github.com/PeerXu/meepo/pkg/lib/dialer/interface"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+	"github.com/PeerXu/meepo/pkg/lib/option"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 )
 
@@ -96,17 +96,7 @@ func (t *WebrtcTransport) NewChannel(ctx context.Context, network string, addres
 	// TODO: channel done
 	switch mode {
 	case CHANNEL_MODE_RAW:
-		dc.OnOpen(func() {
-			t.csMtx.Lock()
-			defer t.csMtx.Unlock()
-			t.cs[channelID] = c
-
-			if c.conn, err = dc.Detach(); err != nil {
-				panic(err)
-			}
-
-			c.readyOnce.Do(func() { close(c.ready) })
-		})
+		t.afterRawSourceChannelCreate(dc, c)
 	case CHANNEL_MODE_MUX:
 		t.csMtx.Lock()
 		defer t.csMtx.Unlock()

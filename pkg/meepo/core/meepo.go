@@ -7,16 +7,16 @@ import (
 
 	"github.com/pion/webrtc/v3"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
-	"github.com/PeerXu/meepo/pkg/internal/option"
-	"github.com/PeerXu/meepo/pkg/internal/routing_table"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/acl"
 	crypto_core "github.com/PeerXu/meepo/pkg/lib/crypto/core"
 	crypto_interface "github.com/PeerXu/meepo/pkg/lib/crypto/interface"
 	"github.com/PeerXu/meepo/pkg/lib/lock"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	marshaler_interface "github.com/PeerXu/meepo/pkg/lib/marshaler/interface"
+	"github.com/PeerXu/meepo/pkg/lib/option"
+	"github.com/PeerXu/meepo/pkg/lib/routing_table"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	meepo_routing_table_core "github.com/PeerXu/meepo/pkg/meepo/routing_table/core"
 	meepo_routing_table_interface "github.com/PeerXu/meepo/pkg/meepo/routing_table/interface"
@@ -57,7 +57,6 @@ type Meepo struct {
 	muxVer       int
 	muxBuf       int
 	muxStreamBuf int
-	muxKeepalive int
 	muxNocomp    bool
 
 	enableKcp      bool
@@ -174,14 +173,11 @@ func NewMeepo(opts ...NewMeepoOption) (meepo_interface.Meepo, error) {
 		return nil, err
 	}
 
-	webrtRecvBufSize, err := well_known_option.GetWebrtcReceiveBufferSize(o)
+	se, err := newWebrtcSettingEngine(o)
 	if err != nil {
 		return nil, err
 	}
 
-	var se webrtc.SettingEngine
-	se.DetachDataChannels()
-	se.SetSCTPMaxReceiveBufferSize(webrtRecvBufSize)
 	webrtcAPI := webrtc.NewAPI(webrtc.WithSettingEngine(se))
 
 	mp := &Meepo{

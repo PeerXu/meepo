@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/PeerXu/meepo/pkg/internal/routing_table"
+	"github.com/PeerXu/meepo/pkg/lib/routing_table"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )

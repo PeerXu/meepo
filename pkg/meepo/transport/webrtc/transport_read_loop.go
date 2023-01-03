@@ -4,7 +4,7 @@ import (
 	"math"
 	"sync"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
 const (

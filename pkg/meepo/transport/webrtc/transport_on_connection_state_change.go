@@ -5,7 +5,7 @@ import (
 
 	"github.com/pion/webrtc/v3"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/lock"
 )
 

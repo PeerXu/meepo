@@ -3,11 +3,11 @@ package teleportation_core
 import (
 	"net"
 
-	"github.com/PeerXu/meepo/pkg/internal/listenerer"
-	listenerer_interface "github.com/PeerXu/meepo/pkg/internal/listenerer/interface"
-	"github.com/PeerXu/meepo/pkg/internal/logging"
-	"github.com/PeerXu/meepo/pkg/internal/option"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	"github.com/PeerXu/meepo/pkg/lib/listenerer"
+	listenerer_interface "github.com/PeerXu/meepo/pkg/lib/listenerer/interface"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+	"github.com/PeerXu/meepo/pkg/lib/option"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 )

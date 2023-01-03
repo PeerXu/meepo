@@ -3,7 +3,7 @@ package rpc_simple_http
 import (
 	"context"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
 func (s *SimpleHttpServer) Serve(context.Context) <-chan error {

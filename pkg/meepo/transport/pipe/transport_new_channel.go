@@ -3,9 +3,9 @@ package transport_pipe
 import (
 	"context"
 
-	"github.com/PeerXu/meepo/pkg/internal/dialer"
-	"github.com/PeerXu/meepo/pkg/internal/logging"
-	"github.com/PeerXu/meepo/pkg/internal/option"
+	"github.com/PeerXu/meepo/pkg/lib/dialer"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+	"github.com/PeerXu/meepo/pkg/lib/option"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )

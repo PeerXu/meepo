@@ -1,6 +1,6 @@
 package rpc_core
 
-import "github.com/PeerXu/meepo/pkg/internal/errors"
+import "github.com/PeerXu/meepo/pkg/lib/errors"
 
 var (
 	ErrUnsupportedCaller, ErrUnsupportedCallerFn   = errors.NewErrorAndErrorFunc[string]("unsupported caller")

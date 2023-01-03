@@ -3,7 +3,7 @@ package meepo_core
 import (
 	"fmt"
 
-	"github.com/PeerXu/meepo/pkg/internal/errors"
+	"github.com/PeerXu/meepo/pkg/lib/errors"
 )
 
 var (

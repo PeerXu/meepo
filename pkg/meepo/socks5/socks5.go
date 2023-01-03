@@ -5,9 +5,9 @@ import (
 
 	"github.com/things-go/go-socks5"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
-	"github.com/PeerXu/meepo/pkg/internal/option"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+	"github.com/PeerXu/meepo/pkg/lib/option"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 )
 

@@ -3,7 +3,7 @@ package tracker_transport
 import (
 	"github.com/pion/webrtc/v3"
 
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	crypto_core "github.com/PeerXu/meepo/pkg/lib/crypto/core"
 )
 

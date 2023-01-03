@@ -1,6 +1,6 @@
 package transport_pipe
 
-import "github.com/PeerXu/meepo/pkg/internal/logging"
+import "github.com/PeerXu/meepo/pkg/lib/logging"
 
 func (t *PipeTransport) GetLogger() logging.Logger {
 	return t.logger.WithFields(logging.Fields{

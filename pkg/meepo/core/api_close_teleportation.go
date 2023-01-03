@@ -3,7 +3,7 @@ package meepo_core
 import (
 	"context"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )

@@ -1,7 +1,7 @@
 package marshaler
 
 import (
-	"github.com/PeerXu/meepo/pkg/internal/option"
+	"github.com/PeerXu/meepo/pkg/lib/option"
 	marshaler_interface "github.com/PeerXu/meepo/pkg/lib/marshaler/interface"
 )
 

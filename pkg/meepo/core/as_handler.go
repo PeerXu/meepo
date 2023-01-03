@@ -28,6 +28,7 @@ func (mp *Meepo) AsAPIHandler() rpc_interface.Handler {
 		{"getVersion", rpc_core.NO_REQUEST, mp.hdrAPIGetVersion},
 		{"whoami", rpc_core.NO_REQUEST, mp.hdrAPIWhoami},
 		{"ping", func() any { return &sdk_interface.PingRequest{} }, mp.hdrAPIPing},
+		{"diagnostic", rpc_core.NO_REQUEST, mp.hdrAPIDiagnostic},
 
 		// teleportation
 		{"newTeleportation", func() any { return &sdk_interface.NewTeleportationRequest{} }, mp.hdrAPINewTeleportation},

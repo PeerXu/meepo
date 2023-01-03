@@ -1,7 +1,7 @@
 package config
 
 import (
-	C "github.com/PeerXu/meepo/pkg/internal/constant"
+	C "github.com/PeerXu/meepo/pkg/lib/constant"
 	"github.com/PeerXu/meepo/pkg/lib/stun"
 )
 

@@ -3,7 +3,7 @@ package transport_webrtc
 import (
 	"context"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"

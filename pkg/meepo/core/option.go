@@ -3,10 +3,10 @@ package meepo_core
 import (
 	"time"
 
-	C "github.com/PeerXu/meepo/pkg/internal/constant"
-	"github.com/PeerXu/meepo/pkg/internal/option"
-	mrand "github.com/PeerXu/meepo/pkg/internal/rand"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	C "github.com/PeerXu/meepo/pkg/lib/constant"
+	"github.com/PeerXu/meepo/pkg/lib/option"
+	mrand "github.com/PeerXu/meepo/pkg/lib/rand"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	meepo_routing_table_core "github.com/PeerXu/meepo/pkg/meepo/routing_table/core"
 )

@@ -7,8 +7,8 @@ import (
 
 	"github.com/pion/webrtc/v3"
 
-	dialer_interface "github.com/PeerXu/meepo/pkg/internal/dialer/interface"
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	dialer_interface "github.com/PeerXu/meepo/pkg/lib/dialer/interface"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )

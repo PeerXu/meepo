@@ -3,7 +3,7 @@ package transport_pipe
 import (
 	"time"
 
-	"github.com/PeerXu/meepo/pkg/internal/option"
+	"github.com/PeerXu/meepo/pkg/lib/option"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
 

@@ -1,6 +1,6 @@
 package rpc_simple_http
 
-import "github.com/PeerXu/meepo/pkg/internal/logging"
+import "github.com/PeerXu/meepo/pkg/lib/logging"
 
 func (c *SimpleHttpCaller) GetLogger() logging.Logger {
 	return c.logger.WithFields(logging.Fields{"#instance": "SimpleHttpCaller"})

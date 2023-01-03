@@ -5,13 +5,13 @@ import (
 
 	"github.com/pion/webrtc/v3"
 
-	"github.com/PeerXu/meepo/pkg/internal/dialer"
-	"github.com/PeerXu/meepo/pkg/internal/logging"
-	"github.com/PeerXu/meepo/pkg/internal/option"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
 	crypto_core "github.com/PeerXu/meepo/pkg/lib/crypto/core"
+	"github.com/PeerXu/meepo/pkg/lib/dialer"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
+	"github.com/PeerXu/meepo/pkg/lib/option"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	tracker_interface "github.com/PeerXu/meepo/pkg/meepo/tracker/interface"
 	"github.com/PeerXu/meepo/pkg/meepo/transport"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
@@ -107,9 +107,7 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 		opts = append(opts,
 			transport_webrtc.WithGatherFunc(mp.gatherFunc(target, gtkFn, gatherOpt)),
 			well_known_option.WithPeerConnection(pc),
-			transport_core.WithBeforeNewChannelHook(func(t Transport, network, address string) error {
-				return mp.permit(t.Addr().String(), network, address)
-			}),
+			transport_core.WithBeforeNewChannelHook(mp.beforeNewChannelHook),
 		)
 
 		onAddTransport = mp.onAddWebrtcTransportNL

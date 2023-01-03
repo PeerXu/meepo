@@ -5,10 +5,10 @@ import (
 
 	"github.com/pion/webrtc/v3"
 
-	C "github.com/PeerXu/meepo/pkg/internal/constant"
-	"github.com/PeerXu/meepo/pkg/internal/option"
-	mrand "github.com/PeerXu/meepo/pkg/internal/rand"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	C "github.com/PeerXu/meepo/pkg/lib/constant"
+	"github.com/PeerXu/meepo/pkg/lib/option"
+	mrand "github.com/PeerXu/meepo/pkg/lib/rand"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
 

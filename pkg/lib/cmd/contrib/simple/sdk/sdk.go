@@ -1,7 +1,7 @@
 package simple_sdk
 
 import (
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	simple_logger "github.com/PeerXu/meepo/pkg/lib/cmd/contrib/simple/logger"
 	"github.com/PeerXu/meepo/pkg/lib/config"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"

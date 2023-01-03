@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	rpc_interface "github.com/PeerXu/meepo/pkg/lib/rpc/interface"
 )
 

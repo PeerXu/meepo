@@ -1,6 +1,6 @@
 package rpc_http
 
-import "github.com/PeerXu/meepo/pkg/internal/logging"
+import "github.com/PeerXu/meepo/pkg/lib/logging"
 
 func (s *HttpServer) GetLogger() logging.Logger {
 	return s.logger.WithFields(logging.Fields{

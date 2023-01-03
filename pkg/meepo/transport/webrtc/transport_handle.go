@@ -1,7 +1,7 @@
 package transport_webrtc
 
 import (
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 )
 

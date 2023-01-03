@@ -13,9 +13,9 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 
-	C "github.com/PeerXu/meepo/pkg/internal/constant"
-	"github.com/PeerXu/meepo/pkg/internal/daemon"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	C "github.com/PeerXu/meepo/pkg/lib/constant"
+	"github.com/PeerXu/meepo/pkg/lib/daemon"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/acl"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
 	simple_logger "github.com/PeerXu/meepo/pkg/lib/cmd/contrib/simple/logger"
@@ -169,6 +169,7 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 			well_known_option.WithMuxVer(smuxCfg.Version),
 			well_known_option.WithMuxBuf(smuxCfg.BufferSize),
 			well_known_option.WithMuxStreamBuf(smuxCfg.StreamBufferSize),
+			well_known_option.WithMuxNocomp(smuxCfg.Nocomp),
 		)
 	}
 	if !kcpCfg.Disable {

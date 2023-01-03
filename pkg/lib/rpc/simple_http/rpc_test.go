@@ -5,8 +5,8 @@ import (
 	"net"
 	"testing"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	marshaler_json "github.com/PeerXu/meepo/pkg/lib/marshaler/json"
 	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"

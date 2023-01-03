@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/PeerXu/meepo/pkg/internal/dialer"
+	"github.com/PeerXu/meepo/pkg/lib/dialer"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
 	simple_sdk "github.com/PeerXu/meepo/pkg/lib/cmd/contrib/simple/sdk"
 )

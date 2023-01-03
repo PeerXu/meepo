@@ -11,6 +11,7 @@ type SDK interface {
 	GetVersion() (*version.V, error)
 	Whoami() (addr.Addr, error)
 	Ping(target addr.Addr, nonce uint32) (uint32, error)
+	Diagnostic() (DiagnosticReportView, error)
 
 	NewTransport(target addr.Addr, opts ...NewTransportOption) (TransportView, error)
 	CloseTransport(target addr.Addr) error

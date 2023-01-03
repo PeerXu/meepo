@@ -1,8 +1,8 @@
 package tracker_rpc
 
 import (
-	"github.com/PeerXu/meepo/pkg/internal/option"
-	"github.com/PeerXu/meepo/pkg/internal/well_known_option"
+	"github.com/PeerXu/meepo/pkg/lib/option"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
 	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
 	tracker_core "github.com/PeerXu/meepo/pkg/meepo/tracker/core"

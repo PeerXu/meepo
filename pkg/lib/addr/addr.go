@@ -3,7 +3,7 @@ package addr
 import (
 	"crypto/ed25519"
 
-	"github.com/PeerXu/meepo/pkg/internal/base36"
+	"github.com/PeerXu/meepo/pkg/lib/base36"
 )
 
 const (

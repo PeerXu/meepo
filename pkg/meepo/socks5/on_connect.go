@@ -9,8 +9,8 @@ import (
 	"github.com/things-go/go-socks5"
 	"github.com/things-go/go-socks5/statute"
 
-	mio "github.com/PeerXu/meepo/pkg/internal/io"
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	mio "github.com/PeerXu/meepo/pkg/lib/io"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	meepo_core "github.com/PeerXu/meepo/pkg/meepo/core"
 )
 

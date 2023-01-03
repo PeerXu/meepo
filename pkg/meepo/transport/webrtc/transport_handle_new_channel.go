@@ -3,9 +3,9 @@ package transport_webrtc
 import (
 	"github.com/pion/webrtc/v3"
 
-	"github.com/PeerXu/meepo/pkg/internal/dialer"
-	mio "github.com/PeerXu/meepo/pkg/internal/io"
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	"github.com/PeerXu/meepo/pkg/lib/dialer"
+	mio "github.com/PeerXu/meepo/pkg/lib/io"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 )
 

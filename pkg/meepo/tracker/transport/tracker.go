@@ -1,7 +1,7 @@
 package tracker_transport
 
 import (
-	"github.com/PeerXu/meepo/pkg/internal/option"
+	"github.com/PeerXu/meepo/pkg/lib/option"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	tracker_core "github.com/PeerXu/meepo/pkg/meepo/tracker/core"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"

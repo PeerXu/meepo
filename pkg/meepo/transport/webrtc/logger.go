@@ -1,6 +1,6 @@
 package transport_webrtc
 
-import "github.com/PeerXu/meepo/pkg/internal/logging"
+import "github.com/PeerXu/meepo/pkg/lib/logging"
 
 func (t *WebrtcTransport) GetLogger() logging.Logger {
 	return t.logger.WithFields(logging.Fields{

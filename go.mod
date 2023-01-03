@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/VividCortex/godaemon v1.0.0
+	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.8.2
 	github.com/golang/snappy v0.0.4
 	github.com/imdario/mergo v0.3.13

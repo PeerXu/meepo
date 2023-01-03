@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
 func (mp *Meepo) Teleport(ctx context.Context, target Addr, sourceNetwork, sourceAddress, sinkNetwork, sinkAddress string, opts ...TeleportOption) (Teleportation, error) {

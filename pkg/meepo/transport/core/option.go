@@ -3,7 +3,7 @@ package transport_core
 import (
 	"time"
 
-	"github.com/PeerXu/meepo/pkg/internal/option"
+	"github.com/PeerXu/meepo/pkg/lib/option"
 )
 
 const (

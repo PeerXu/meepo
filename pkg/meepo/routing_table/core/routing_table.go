@@ -1,7 +1,7 @@
 package meepo_routing_table_core
 
 import (
-	"github.com/PeerXu/meepo/pkg/internal/routing_table"
+	"github.com/PeerXu/meepo/pkg/lib/routing_table"
 	meepo_routing_table_interface "github.com/PeerXu/meepo/pkg/meepo/routing_table/interface"
 )
 

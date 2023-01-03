@@ -3,7 +3,7 @@ package meepo_core
 import (
 	"context"
 
-	"github.com/PeerXu/meepo/pkg/internal/logging"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
 func (mp *Meepo) GetTeleportation(ctx context.Context, id string, opts ...GetTeleportationOption) (Teleportation, error) {
