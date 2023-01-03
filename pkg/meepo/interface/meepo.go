@@ -12,6 +12,7 @@ type Addr = addr.Addr
 type Meepo interface {
 	Addr() Addr
 	Close(ctx context.Context) error
+	Diagnostic() (DiagnosticReport, error)
 
 	Transporter
 
