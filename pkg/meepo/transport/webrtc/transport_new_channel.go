@@ -70,7 +70,7 @@ func (t *WebrtcTransport) NewChannel(ctx context.Context, network string, addres
 
 	err = t.newRemoteChannel(ctx, mode, label, channelID, network, address)
 	if err != nil {
-		defer closer()
+		defer closer() // nolint:errcheck
 		logger.WithError(err).Debugf("failed to new remote channel")
 		return nil, err
 	}

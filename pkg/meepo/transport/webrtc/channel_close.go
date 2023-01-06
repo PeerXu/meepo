@@ -1,6 +1,8 @@
 package transport_webrtc
 
-import "context"
+import (
+	"context"
+)
 
 func (c *WebrtcSourceChannel) Close(context.Context) (err error) {
 	logger := c.GetLogger().WithField("#method", "Close")
@@ -40,8 +42,8 @@ func (c *WebrtcSinkChannel) Close(context.Context) (err error) {
 		}
 	}
 
-	if c.conn != nil {
-		if err = c.conn.Close(); err != nil {
+	if conn := c.Conn(); conn != nil {
+		if err = conn.Close(); err != nil {
 			logger.WithError(err).Debugf("failed to close conn")
 			return err
 		}

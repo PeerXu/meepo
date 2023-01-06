@@ -115,7 +115,7 @@ func (t *WebrtcTransport) handleNewChannel(label string) {
 			}).Debugf("copy closed")
 		}()
 
-		c.conn = conn
+		c.connVal.Store(conn)
 		c.readyOnce.Do(func() { close(c.ready) })
 
 		select {

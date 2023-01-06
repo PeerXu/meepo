@@ -3,9 +3,9 @@ package meepo_core
 import (
 	"math/rand"
 
+	"github.com/PeerXu/meepo/pkg/lib/lock"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
-	"github.com/PeerXu/meepo/pkg/lib/lock"
 	meepo_routing_table_interface "github.com/PeerXu/meepo/pkg/meepo/routing_table/interface"
 )
 
@@ -68,7 +68,8 @@ func (mp *Meepo) poofOnce() {
 				}
 
 				if ContainAddr(handledCandidates, candidate) ||
-					mp.Addr().Equal(candidate) {
+					mp.Addr().Equal(candidate) ||
+					mp.existTransport(candidate) {
 					continue
 				}
 

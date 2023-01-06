@@ -63,13 +63,13 @@ func meepoNcat(cmd *cobra.Command, args []string) error {
 	done1 := make(chan struct{})
 	go func() {
 		defer close(done1)
-		io.Copy(conn, os.Stdin)
+		io.Copy(conn, os.Stdin) // nolint:errcheck
 	}()
 
 	done2 := make(chan struct{})
 	go func() {
 		defer close(done2)
-		io.Copy(os.Stdout, conn)
+		io.Copy(os.Stdout, conn) // nolint:errcheck
 	}()
 
 	select {

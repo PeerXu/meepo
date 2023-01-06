@@ -11,13 +11,13 @@ import (
 
 	"github.com/PeerXu/meepo/pkg/lib/dialer"
 	dialer_interface "github.com/PeerXu/meepo/pkg/lib/dialer/interface"
-	"github.com/PeerXu/meepo/pkg/lib/logging"
-	"github.com/PeerXu/meepo/pkg/lib/option"
-	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/lock"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	marshaler_interface "github.com/PeerXu/meepo/pkg/lib/marshaler/interface"
+	"github.com/PeerXu/meepo/pkg/lib/option"
 	msync "github.com/PeerXu/meepo/pkg/lib/sync"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
@@ -68,7 +68,7 @@ type WebrtcTransport struct {
 	kcpDataChannel *webrtc.DataChannel
 	kcpSess        *smux.Session
 
-	readyErr     error
+	readyErrVal  atomic.Value
 	readyTimeout time.Duration
 	ready        chan struct{}
 	readyCount   int32

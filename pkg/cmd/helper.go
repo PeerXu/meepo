@@ -19,6 +19,8 @@ func initConfig() {
 
 	cfgFile = config.FindConfigPath(cfgFile)
 	if cfgFile != "" {
+		var dstBuf []byte
+
 		buf, err = ioutil.ReadFile(cfgFile)
 		cobra.CheckErr(err)
 
@@ -27,7 +29,7 @@ func initConfig() {
 		cobra.CheckErr(err)
 
 		dst := make(map[string]any)
-		dstBuf, err := yaml.Marshal(config.Default())
+		dstBuf, err = yaml.Marshal(config.Default())
 		cobra.CheckErr(err)
 
 		err = yaml.Unmarshal(dstBuf, &dst)
@@ -69,6 +71,6 @@ type BindFlagsStruct struct {
 
 func bindFlags(fs *pflag.FlagSet, cs []BindFlagsStruct) {
 	for _, c := range cs {
-		viper.BindPFlag(c.ConfigKey, fs.Lookup(c.CommandKey))
+		viper.BindPFlag(c.ConfigKey, fs.Lookup(c.CommandKey)) // nolint:errcheck
 	}
 }

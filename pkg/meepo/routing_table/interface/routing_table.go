@@ -17,6 +17,7 @@ const (
 type HealthReport struct {
 	Summary map[HealthLevel]int
 	Report  map[HealthLevel][]int
+	Detials []map[string]any
 }
 
 type RoutingTable interface {

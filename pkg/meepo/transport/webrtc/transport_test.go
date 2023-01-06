@@ -11,14 +11,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/PeerXu/meepo/pkg/lib/addr"
 	"github.com/PeerXu/meepo/pkg/lib/dialer"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
-	meepo_testing "github.com/PeerXu/meepo/pkg/lib/testing"
-	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
-	"github.com/PeerXu/meepo/pkg/lib/addr"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	marshaler_json "github.com/PeerXu/meepo/pkg/lib/marshaler/json"
 	"github.com/PeerXu/meepo/pkg/lib/stun"
+	meepo_testing "github.com/PeerXu/meepo/pkg/lib/testing"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
@@ -79,6 +79,7 @@ func TestRawTransport(t *testing.T) {
 		WithGatherFunc(gather),
 		well_known_option.WithPeerConnection(pcSrc),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
+		transport_core.WithBeforeNewChannelHook(func(t meepo_interface.Transport, network string, address string) error { return nil }),
 		transport_core.WithOnTransportCloseFunc(func(meepo_interface.Transport) error { return nil }),
 		transport_core.WithOnTransportReadyFunc(func(meepo_interface.Transport) error { return nil }),
 		marshaler.WithMarshaler(marshaler_json.Marshaler),
@@ -97,6 +98,7 @@ func TestRawTransport(t *testing.T) {
 		WithGatherDoneFunc(gatherDone),
 		well_known_option.WithPeerConnection(pcSink),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
+		transport_core.WithBeforeNewChannelHook(func(t meepo_interface.Transport, network string, address string) error { return nil }),
 		transport_core.WithOnTransportCloseFunc(func(meepo_interface.Transport) error { return nil }),
 		transport_core.WithOnTransportReadyFunc(func(meepo_interface.Transport) error { return nil }),
 		marshaler.WithMarshaler(marshaler_json.Marshaler),
@@ -104,16 +106,17 @@ func TestRawTransport(t *testing.T) {
 		well_known_option.WithEnableMux(false),
 		well_known_option.WithEnableKcp(false),
 	)
-	defer tSink.Close(ctx) // nolint:staticcheck
 	require.Nil(t, err)
+	defer tSink.Close(ctx) // nolint:staticcheck
+
 	<-waitGatherDone
 
 	tSrc.WaitReady()  // nolint:errcheck
 	tSink.WaitReady() // nolint:errcheck
 
 	c1, err := tSrc.NewChannel(ctx, es.Listener.Addr().Network(), es.Listener.Addr().String(), well_known_option.WithMode("raw"))
-	defer c1.Close(ctx) // nolint:staticcheck
 	require.Nil(t, err)
+	defer c1.Close(ctx) // nolint:staticcheck
 
 	err = c1.WaitReady()
 	require.Nil(t, err)
@@ -128,8 +131,8 @@ func TestRawTransport(t *testing.T) {
 	assert.Equal(t, []byte("hello, world!"), buf[:n])
 
 	c2, err := tSrc.NewChannel(ctx, es.Listener.Addr().Network(), es.Listener.Addr().String(), well_known_option.WithMode("raw"))
-	defer c2.Close(ctx) // nolint:staticcheck
 	require.Nil(t, err)
+	defer c2.Close(ctx) // nolint:staticcheck
 
 	err = c2.WaitReady()
 	require.Nil(t, err)
@@ -201,6 +204,7 @@ func TestMuxTransport(t *testing.T) {
 		WithGatherFunc(gather),
 		well_known_option.WithPeerConnection(pcSrc),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
+		transport_core.WithBeforeNewChannelHook(func(t meepo_interface.Transport, network string, address string) error { return nil }),
 		transport_core.WithOnTransportCloseFunc(func(meepo_interface.Transport) error { return nil }),
 		transport_core.WithOnTransportReadyFunc(func(meepo_interface.Transport) error { return nil }),
 		marshaler.WithMarshaler(marshaler_json.Marshaler),
@@ -209,8 +213,9 @@ func TestMuxTransport(t *testing.T) {
 		WithMuxLabel(muxLabel),
 		well_known_option.WithEnableKcp(false),
 	)
-	defer tSrc.Close(ctx) // nolint:staticcheck
 	require.Nil(t, err)
+	defer tSrc.Close(ctx) // nolint:staticcheck
+
 	<-waitGather
 
 	tSink, err := NewWebrtcSinkTransport(
@@ -220,6 +225,7 @@ func TestMuxTransport(t *testing.T) {
 		WithGatherDoneFunc(gatherDone),
 		well_known_option.WithPeerConnection(pcSink),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
+		transport_core.WithBeforeNewChannelHook(func(t meepo_interface.Transport, network string, address string) error { return nil }),
 		transport_core.WithOnTransportCloseFunc(func(meepo_interface.Transport) error { return nil }),
 		transport_core.WithOnTransportReadyFunc(func(meepo_interface.Transport) error { return nil }),
 		marshaler.WithMarshaler(marshaler_json.Marshaler),
@@ -228,16 +234,17 @@ func TestMuxTransport(t *testing.T) {
 		WithMuxLabel(muxLabel),
 		well_known_option.WithEnableKcp(false),
 	)
-	defer tSink.Close(ctx) // nolint:staticcheck
 	require.Nil(t, err)
+	defer tSink.Close(ctx) // nolint:staticcheck
+
 	<-waitGatherDone
 
 	tSrc.WaitReady()  // nolint:errcheck
 	tSink.WaitReady() // nolint:errcheck
 
 	c1, err := tSrc.NewChannel(ctx, es.Listener.Addr().Network(), es.Listener.Addr().String(), well_known_option.WithMode("mux"))
-	defer c1.Close(ctx) // nolint:staticcheck
 	require.Nil(t, err)
+	defer c1.Close(ctx) // nolint:staticcheck
 
 	err = c1.WaitReady()
 	require.Nil(t, err)
@@ -252,8 +259,8 @@ func TestMuxTransport(t *testing.T) {
 	assert.Equal(t, []byte("hello, world!"), buf[:n])
 
 	c2, err := tSrc.NewChannel(ctx, es.Listener.Addr().Network(), es.Listener.Addr().String(), well_known_option.WithMode("raw"))
-	defer c2.Close(ctx) // nolint:staticcheck
 	require.Nil(t, err)
+	defer c2.Close(ctx) // nolint:staticcheck
 
 	err = c2.WaitReady()
 	require.Nil(t, err)

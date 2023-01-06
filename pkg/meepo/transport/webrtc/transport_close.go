@@ -15,7 +15,7 @@ func (t *WebrtcTransport) Close(ctx context.Context) (err error) {
 	t.closed.Swap(true)
 
 	t.readyOnce.Do(func() {
-		t.readyErr = transport_core.ErrTransportClosed
+		t.readyErrVal.Store(transport_core.ErrTransportClosed)
 		close(t.ready)
 	})
 

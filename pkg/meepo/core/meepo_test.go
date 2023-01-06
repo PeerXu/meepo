@@ -11,17 +11,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/PeerXu/meepo/pkg/lib/logging"
-	meepo_testing "github.com/PeerXu/meepo/pkg/lib/testing"
-	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
+	"github.com/PeerXu/meepo/pkg/lib/acl"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
 	crypto_core "github.com/PeerXu/meepo/pkg/lib/crypto/core"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	marshaler_json "github.com/PeerXu/meepo/pkg/lib/marshaler/json"
 	"github.com/PeerXu/meepo/pkg/lib/rpc"
 	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
 	rpc_http "github.com/PeerXu/meepo/pkg/lib/rpc/http"
 	"github.com/PeerXu/meepo/pkg/lib/stun"
+	meepo_testing "github.com/PeerXu/meepo/pkg/lib/testing"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	"github.com/PeerXu/meepo/pkg/meepo/tracker"
 	tracker_core "github.com/PeerXu/meepo/pkg/meepo/tracker/core"
@@ -44,11 +45,15 @@ func TestMeepo(t *testing.T) {
 	addr, err := addr.FromBytesWithoutMagicCode(pubk)
 	assert.Nil(t, err)
 
+	acl_, err := acl.FromString(`- allow: "*"`)
+	assert.Nil(t, err)
+
 	var cfg webrtc.Configuration
 
 	mp, err := NewMeepo(
 		well_known_option.WithAddr(addr),
 		well_known_option.WithLogger(logger),
+		acl.WithAcl(acl_),
 		tracker_core.WithTrackers(),
 		crypto_core.WithSigner(signer),
 		crypto_core.WithCryptor(cryptor),
@@ -91,6 +96,9 @@ func TestMeepo2(t *testing.T) {
 	require.Nil(t, err)
 	defer lis.Close() // nolint:errcheck
 
+	acl_, err := acl.FromString(`- allow: "*"`)
+	assert.Nil(t, err)
+
 	var mp1, mp2 meepo_interface.Meepo
 	{
 		pubk, prik, err := ed25519.GenerateKey(nil)
@@ -107,6 +115,7 @@ func TestMeepo2(t *testing.T) {
 		mp1, err = NewMeepo(
 			well_known_option.WithAddr(addr),
 			well_known_option.WithLogger(logger),
+			acl.WithAcl(acl_),
 			tracker_core.WithTrackers(),
 			crypto_core.WithSigner(signer),
 			crypto_core.WithCryptor(cryptor),
@@ -162,6 +171,7 @@ func TestMeepo2(t *testing.T) {
 		mp2, err = NewMeepo(
 			well_known_option.WithAddr(addr),
 			well_known_option.WithLogger(logger),
+			acl.WithAcl(acl_),
 			tracker_core.WithTrackers(tk),
 			crypto_core.WithSigner(signer),
 			crypto_core.WithCryptor(cryptor),
@@ -195,7 +205,7 @@ func TestMeepo2(t *testing.T) {
 	assert.Equal(t, []byte("hello, world"), buf[:n])
 }
 
-func SkipMeepo3(t *testing.T) {
+func Meepo3(t *testing.T) {
 	mpdCount := 1
 	mpCount := 32
 	ctx := context.Background()
@@ -203,6 +213,9 @@ func SkipMeepo3(t *testing.T) {
 
 	logger, err := logging.NewLogger(logging.WithLevel("trace"))
 	require.Nil(t, err)
+
+	acl_, err := acl.FromString(`- allow: "*"`)
+	assert.Nil(t, err)
 
 	for m := 0; m < mpdCount; m++ {
 		lis, err := net.Listen("tcp", "127.0.0.1:0")
@@ -218,6 +231,7 @@ func SkipMeepo3(t *testing.T) {
 		mp, err := NewMeepo(
 			well_known_option.WithAddr(addr),
 			well_known_option.WithLogger(logger),
+			acl.WithAcl(acl_),
 			tracker_core.WithTrackers(),
 			crypto_core.WithSigner(signer),
 			crypto_core.WithCryptor(cryptor),
@@ -271,6 +285,7 @@ func SkipMeepo3(t *testing.T) {
 		mp, err := NewMeepo(
 			well_known_option.WithAddr(addr),
 			well_known_option.WithLogger(logger),
+			acl.WithAcl(acl_),
 			tracker_core.WithTrackers(tks...),
 			crypto_core.WithSigner(signer),
 			crypto_core.WithCryptor(cryptor),
@@ -282,6 +297,4 @@ func SkipMeepo3(t *testing.T) {
 		defer mp.Close(ctx) // nolint:staticcheck
 		time.Sleep(31 * time.Millisecond)
 	}
-
-	time.Sleep(1000 * time.Second)
 }

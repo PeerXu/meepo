@@ -62,19 +62,31 @@ func (mp *Meepo) Diagnostic() (meepo_interface.DiagnosticReport, error) {
 	}
 	<-gatherComplted
 
+	iceServersMap := map[string]bool{}
+	for _, is := range mp.webrtcConfiguration.ICEServers {
+		for _, url := range is.URLs {
+			iceServersMap[url] = true
+		}
+	}
+	var iceServers []string
+	for is := range iceServersMap {
+		iceServers = append(iceServers, is)
+	}
+
 	rp := map[string]any{
 		"addr":           mp.Addr().String(),
 		"transports":     tvs,
 		"teleportations": tpvs,
 		"channels":       cvs,
 		"webrtc": map[string]any{
-			"offer": pc.LocalDescription(),
+			"offer":      pc.LocalDescription(),
+			"iceServers": iceServers,
 		},
 		"routingTable": map[string]any{
 			"dhtAlpha": mp.dhtAlpha,
 			"healthReport": map[string]any{
-				"report":  healthReport.Report,
 				"summary": healthReport.Summary,
+				"detials": healthReport.Detials,
 			},
 		},
 		"poof": map[string]any{

@@ -321,7 +321,7 @@ func (t *WebrtcTransport) channelDone(n int32) {
 	x := atomic.AddInt32(&t.readyCount, -n)
 	if x <= 0 {
 		t.readyOnce.Do(func() {
-			t.onReadyCb(t)
+			t.onReadyCb(t) // nolint:errcheck
 			close(t.ready)
 		})
 	}

@@ -24,6 +24,13 @@ func (t *WebrtcTransport) nextChannelID() uint16 {
 	return uint16(atomic.AddUint32(&t.currentChannelID, 2) & 0xffff)
 }
 
+func (t *WebrtcTransport) readyError() error {
+	if v := t.readyErrVal.Load(); v != nil {
+		return v.(error)
+	}
+	return nil
+}
+
 type LockableChannel struct {
 	Ch   chan Message
 	Once sync.Once
@@ -156,7 +163,6 @@ func (t *WebrtcTransport) getSmuxConfig() *smux.Config {
 	cfg.MaxReceiveBuffer = t.muxBuf
 	cfg.MaxStreamBuffer = t.muxStreamBuf
 	cfg.KeepAliveDisabled = true
-	// cfg.KeepAliveInterval = time.Duration(t.muxKeepalive) * time.Second
 	return cfg
 }
 
@@ -169,7 +175,7 @@ type compStream struct {
 func NewCompStream(conn io.ReadWriteCloser) io.ReadWriteCloser {
 	return &compStream{
 		Reader: snappy.NewReader(conn),
-		Writer: snappy.NewWriter(conn),
+		Writer: snappy.NewWriter(conn), // nolint:staticcheck
 		Closer: conn,
 	}
 }

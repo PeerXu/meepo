@@ -3,6 +3,7 @@ package transport_webrtc
 import (
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pion/webrtc/v3"
@@ -38,6 +39,6 @@ type WebrtcSinkChannel struct {
 	*WebrtcChannel
 	dc      *webrtc.DataChannel
 	rwc     dialer_interface.Conn
-	conn    meepo_interface.Conn
+	connVal atomic.Value
 	onClose transport_core.OnChannelCloseFunc
 }

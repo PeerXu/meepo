@@ -35,19 +35,28 @@ func (rt *routingTable) HealthReport() *meepo_routing_table_interface.HealthRepo
 		meepo_routing_table_interface.HEALTH_LEVEL_GREEN:  nil,
 	}
 
+	summary := map[meepo_routing_table_interface.HealthLevel]int{
+		meepo_routing_table_interface.HEALTH_LEVEL_RED:    0,
+		meepo_routing_table_interface.HEALTH_LEVEL_YELLOW: 0,
+		meepo_routing_table_interface.HEALTH_LEVEL_GREEN:  0,
+	}
+
+	detials := make([]map[string]any, rt.TableSize())
+
 	for i := 0; i < rt.TableSize(); i++ {
 		lvl := rt.BucketHealthLevel(i)
 		report[lvl] = append(report[lvl], i)
-	}
-
-	summary := map[meepo_routing_table_interface.HealthLevel]int{
-		meepo_routing_table_interface.HEALTH_LEVEL_RED:    len(report[meepo_routing_table_interface.HEALTH_LEVEL_RED]),
-		meepo_routing_table_interface.HEALTH_LEVEL_YELLOW: len(report[meepo_routing_table_interface.HEALTH_LEVEL_YELLOW]),
-		meepo_routing_table_interface.HEALTH_LEVEL_GREEN:  len(report[meepo_routing_table_interface.HEALTH_LEVEL_GREEN]),
+		detials[i] = map[string]any{
+			"cpl":   i,
+			"level": lvl,
+			"size":  rt.BucketSize(i),
+		}
+		summary[lvl]++
 	}
 
 	return &meepo_routing_table_interface.HealthReport{
 		Summary: summary,
 		Report:  report,
+		Detials: detials,
 	}
 }

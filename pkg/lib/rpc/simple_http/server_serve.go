@@ -13,7 +13,7 @@ func (s *SimpleHttpServer) Serve(context.Context) <-chan error {
 	})
 	s.errors = make(chan error, 1)
 
-	logger.Infof("serve")
+	logger.Debugf("serve")
 	go func() {
 		defer close(s.errors)
 		defer logger.Tracef("terminated")

@@ -13,20 +13,21 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 
-	C "github.com/PeerXu/meepo/pkg/lib/constant"
-	"github.com/PeerXu/meepo/pkg/lib/daemon"
-	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/acl"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
 	simple_logger "github.com/PeerXu/meepo/pkg/lib/cmd/contrib/simple/logger"
 	"github.com/PeerXu/meepo/pkg/lib/config"
+	C "github.com/PeerXu/meepo/pkg/lib/constant"
 	crypto_core "github.com/PeerXu/meepo/pkg/lib/crypto/core"
+	"github.com/PeerXu/meepo/pkg/lib/daemon"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	marshaler_json "github.com/PeerXu/meepo/pkg/lib/marshaler/json"
 	"github.com/PeerXu/meepo/pkg/lib/rpc"
 	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
 	rpc_http "github.com/PeerXu/meepo/pkg/lib/rpc/http"
 	mpo_webrtc "github.com/PeerXu/meepo/pkg/lib/webrtc"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	meepo_core "github.com/PeerXu/meepo/pkg/meepo/core"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	socks5 "github.com/PeerXu/meepo/pkg/meepo/socks5"
@@ -193,6 +194,9 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	defer mp.Close(ctx)
 
 	var name string
+	apiServerLogger := logger.WithFields(logging.Fields{
+		"name": cfg.Meepo.API.Name,
+	})
 	newAPIOpts := []rpc_core.NewServerOption{
 		rpc_core.WithHandler(mp.AsAPIHandler()),
 		well_known_option.WithLogger(logger),
@@ -208,6 +212,9 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		newAPIOpts = append(newAPIOpts, well_known_option.WithListener(lis))
+		apiServerLogger = apiServerLogger.WithFields(logging.Fields{
+			"host": cfg.Meepo.API.Host,
+		})
 	}
 	apiSrv, err := rpc.NewServer(name, newAPIOpts...)
 	if err != nil {
@@ -216,25 +223,34 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	}
 	go apiSrv.Serve(ctx)
 	defer apiSrv.Terminate(ctx) // nolint:errcheck
+	apiServerLogger.Infof("api server started")
 
-	lis, err := net.Listen("tcp", cfg.Meepo.Socks5.Host)
-	if err != nil {
-		summonLogger.WithError(err).Errorf("failed to listen")
-		return err
+	if cfg.Meepo.Socks5.Host != "" {
+		socks5Logger := logger
+		lis, err := net.Listen("tcp", cfg.Meepo.Socks5.Host)
+		if err != nil {
+			summonLogger.WithError(err).Errorf("failed to listen")
+			return err
+		}
+		socks5Srv, err := socks5.NewSocks5Server(
+			well_known_option.WithLogger(logger),
+			meepo_interface.WithMeepo(mp),
+			well_known_option.WithListener(lis),
+		)
+		if err != nil {
+			summonLogger.WithError(err).Errorf("failed to new socks5 server")
+			return err
+		}
+		go socks5Srv.Serve(ctx)
+		defer socks5Srv.Terminate(ctx) // nolint:errcheck
+		socks5Logger.WithFields(logging.Fields{
+			"host": cfg.Meepo.Socks5.Host,
+		}).Infof("socks5 server started")
 	}
-	socks5Srv, err := socks5.NewSocks5Server(
-		well_known_option.WithLogger(logger),
-		meepo_interface.WithMeepo(mp),
-		well_known_option.WithListener(lis),
-	)
-	if err != nil {
-		summonLogger.WithError(err).Errorf("failed to new socks5 server")
-		return err
-	}
-	go socks5Srv.Serve(ctx)
-	defer socks5Srv.Terminate(ctx) // nolint:errcheck
 
 	for _, tkdCfg := range cfg.Meepo.Trackerds {
+		tkdLogger := logger
+
 		switch tkdCfg.Name {
 		case "rpc":
 			var name string
@@ -255,6 +271,10 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 					return err
 				}
 				newSrvOpts = append(newSrvOpts, well_known_option.WithListener(lis))
+				tkdLogger = tkdLogger.WithFields(logging.Fields{
+					"name": name,
+					"host": tkdCfg.Host,
+				})
 			}
 			srv, err := rpc.NewServer(name, newSrvOpts...)
 			if err != nil {
@@ -263,6 +283,7 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 			}
 			go srv.Serve(ctx)
 			defer srv.Terminate(ctx) // nolint:errcheck
+			tkdLogger.Infof("trackerd server started")
 		}
 	}
 

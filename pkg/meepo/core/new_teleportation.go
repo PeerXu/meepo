@@ -41,18 +41,20 @@ func (mp *Meepo) NewTeleportation(ctx context.Context, target Addr, sourceNetwor
 		return nil, err
 	}
 
-	err = t.Call(ctx, "permit", &PermitRequest{
-		Network: sinkNetwork,
-		Address: sinkAddress,
-	}, rpc_core.NO_CONTENT())
-	if err != nil {
-		logger.WithError(err).Debugf("failed to permit")
-		return nil, err
-	}
-
 	if err = t.WaitReady(); err != nil {
 		logger.WithError(err).Debugf("failed to wait transport ready")
 		return nil, err
+	}
+
+	if sourceNetwork != "socks5" {
+		err = t.Call(ctx, "permit", &PermitRequest{
+			Network: sinkNetwork,
+			Address: sinkAddress,
+		}, rpc_core.NO_CONTENT())
+		if err != nil {
+			logger.WithError(err).Debugf("failed to permit")
+			return nil, err
+		}
 	}
 
 	lis, err := listenerer.GetGlobalListenerer().Listen(

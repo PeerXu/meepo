@@ -17,6 +17,7 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/pion/webrtc/v3"
+	"honnef.co/go/js/dom/v2"
 
 	"github.com/PeerXu/meepo/pkg/lib/acl"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
@@ -45,15 +46,13 @@ type myAddr struct {
 func (x *myAddr) Network() string { return x.network }
 func (x *myAddr) String() string  { return x.address }
 
-type conn struct {
-	ch meepo_interface.Channel
-}
+type conn struct{ meepo_interface.Channel }
 
-func (c *conn) Read(b []byte) (n int, err error)   { return c.ch.Conn().Read(b) }
-func (c *conn) Write(b []byte) (n int, err error)  { return c.ch.Conn().Write(b) }
-func (c *conn) Close() error                       { return c.ch.Conn().Close() }
+func (c *conn) Read(b []byte) (n int, err error)   { return c.Conn().Read(b) }
+func (c *conn) Write(b []byte) (n int, err error)  { return c.Conn().Write(b) }
+func (c *conn) Close() error                       { return c.Conn().Close() }
 func (c *conn) LocalAddr() net.Addr                { return &myAddr{"meepo", "meepo"} }
-func (c *conn) RemoteAddr() net.Addr               { return c.ch.SinkAddr() }
+func (c *conn) RemoteAddr() net.Addr               { return c.SinkAddr() }
 func (c *conn) SetDeadline(t time.Time) error      { return nil }
 func (c *conn) SetReadDeadline(t time.Time) error  { return nil }
 func (c *conn) SetWriteDeadline(t time.Time) error { return nil }
@@ -103,8 +102,7 @@ func NewMeepo(trackerdAddrStr string, trackerdURL string) (meepo_interface.Meepo
 	)
 	tks := []tracker_core.Tracker{tk}
 
-	// TODO: load from input
-	acl_, err := acl.FromString(`- allow: "*"`)
+	acl_, err := acl.FromString(`- block: "*"`)
 	if err != nil {
 		return nil, err
 	}
@@ -140,43 +138,59 @@ func main() {
 	c := make(chan struct{}, 0)
 
 	var mp meepo_interface.Meepo
-	js.Global().Get("document").Set("start", js.FuncOf(func(this js.Value, args []js.Value) any {
-		go func() {
-			preOutput := js.Global().Get("document").Call("getElementById", "output")
-			preError := js.Global().Get("document").Call("getElementById", "error")
+	doc := dom.GetWindow().Document()
+	preOutput := doc.GetElementByID("output").(*dom.HTMLPreElement)
+	preError := doc.GetElementByID("error").(*dom.HTMLPreElement)
+	clearScreen := func() {
+		preOutput.SetInnerHTML("")
+		preError.SetInnerHTML("")
+	}
+	printError := func(err error) {
+		clearScreen()
+		preError.SetInnerHTML(err.Error())
+	}
+	printMessage := func(msg string) {
+		clearScreen()
+		preOutput.SetInnerHTML(msg)
+	}
 
-			preOutput.Set("innerHTML", "")
-			preError.Set("innerHTML", "")
+	simpleNewJsFunc := func(name string, fn func()) {
+		doc.Underlying().Set(name, js.FuncOf(func(this js.Value, args []js.Value) any {
+			go fn()
+			return false
+		}))
+	}
 
-			inputTrackerdAddr := js.Global().Get("document").Call("getElementById", "trackerdAddr")
-			inputTrackerdURL := js.Global().Get("document").Call("getElementById", "trackerdURL")
-			trackerdAddr := inputTrackerdAddr.Get("value").String()
-			trackerdURL := inputTrackerdURL.Get("value").String()
+	simpleNewJsFunc("start", func() {
+		var err error
 
-			var err error
-			if mp, err = NewMeepo(trackerdAddr, trackerdURL); err != nil {
-				preError.Set("innerHTML", err.Error())
-				return
-			}
+		inputTrackerdAddr := doc.GetElementByID("trackerdAddr").(*dom.HTMLInputElement)
+		inputTrackerdURL := doc.GetElementByID("trackerdURL").(*dom.HTMLInputElement)
+		trackerdAddr := inputTrackerdAddr.Value()
+		trackerdURL := inputTrackerdURL.Value()
 
-			preOutput.Set("innerHTML", "meepo started")
-			js.Global().Get("document").Call("getElementById", "id").Set("innerHTML", mp.Addr().String())
-			js.Global().Get("document").Call("getElementById", "startButton").Set("disabled", true)
-		}()
-		return false
-	}))
+		if mp, err = NewMeepo(trackerdAddr, trackerdURL); err != nil {
+			printError(err)
+			return
+		}
 
-	js.Global().Get("document").Set("listTransports", js.FuncOf(func(this js.Value, args []js.Value) any {
-		preOutput := js.Global().Get("document").Call("getElementById", "output")
-		preError := js.Global().Get("document").Call("getElementById", "error")
+		printMessage("meepo started")
 
-		preOutput.Set("innerHTML", "")
-		preError.Set("innerHTML", "")
+		doc.GetElementByID("id").(*dom.HTMLSpanElement).SetInnerHTML(mp.Addr().String())
+		startButton := doc.GetElementByID("startButton").(*dom.HTMLButtonElement)
+		startButton.SetInnerHTML("running")
+		startButton.Set("disabled", true)
 
+		for _, e := range doc.QuerySelectorAll(".enableAfterRunning") {
+			e.(*dom.HTMLButtonElement).Set("disabled", false)
+		}
+	})
+
+	simpleNewJsFunc("listTransports", func() {
 		ts, err := mp.ListTransports(context.Background())
 		if err != nil {
-			preError.Set("innerHTML", err.Error())
-			return false
+			printError(err)
+			return
 		}
 
 		sort.Slice(ts, func(i, j int) bool { return ts[i].Addr().String() < ts[j].Addr().String() })
@@ -189,209 +203,162 @@ func main() {
 		}
 		tb.Render()
 
-		preOutput.Set("innerHTML", sb.String())
+		printMessage(sb.String())
+	})
 
-		return false
-	}))
+	simpleNewJsFunc("newTransport", func() {
+		ctx := context.Background()
 
-	js.Global().Get("document").Set("newTransport", js.FuncOf(func(this js.Value, args []js.Value) any {
-		go func() {
-			ctx := context.Background()
-
-			preOutput := js.Global().Get("document").Call("getElementById", "output")
-			preError := js.Global().Get("document").Call("getElementById", "error")
-
-			preOutput.Set("innerHTML", "")
-			preError.Set("innerHTML", "")
-
-			inputTarget := js.Global().Get("document").Call("getElementById", "target")
-			targetStr := inputTarget.Get("value").String()
-			target, err := addr.FromString(targetStr)
-			if err != nil {
-				preError.Set("innerHTML", err.Error())
-				return
-			}
-
-			t, err := mp.NewTransport(ctx, target)
-			if err != nil {
-				preError.Set("innerHTML", err.Error())
-				return
-			}
-
-			preOutput.Set("innerHTML", t.Addr().String())
-
+		inputTarget := doc.GetElementByID("target").(*dom.HTMLInputElement)
+		targetStr := inputTarget.Value()
+		target, err := addr.FromString(targetStr)
+		if err != nil {
+			printError(err)
 			return
-		}()
-		return false
-	}))
+		}
 
-	js.Global().Get("document").Set("closeTransport", js.FuncOf(func(this js.Value, args []js.Value) any {
-		go func() {
-			ctx := context.Background()
-
-			preOutput := js.Global().Get("document").Call("getElementById", "output")
-			preError := js.Global().Get("document").Call("getElementById", "error")
-
-			preOutput.Set("innerHTML", "")
-			preError.Set("innerHTML", "")
-
-			inputTarget := js.Global().Get("document").Call("getElementById", "target")
-			targetStr := inputTarget.Get("value").String()
-			target, err := addr.FromString(targetStr)
-			if err != nil {
-				preError.Set("innerHTML", err.Error())
-				return
-			}
-
-			t, err := mp.GetTransport(ctx, target)
-			if err != nil {
-				preError.Set("innerHTML", err.Error())
-				return
-			}
-
-			err = t.Close(ctx)
-			if err != nil {
-				preError.Set("innerHTML", err.Error())
-				return
-			}
-
-			preOutput.Set("innerHTML", fmt.Sprintf("%s closed", target.String()))
-
+		t, err := mp.NewTransport(ctx, target)
+		if err != nil {
+			printError(err)
 			return
-		}()
-		return false
-	}))
+		}
 
-	js.Global().Get("document").Set("whoami", js.FuncOf(func(this js.Value, args []js.Value) any {
-		preOutput := js.Global().Get("document").Call("getElementById", "output")
-		preError := js.Global().Get("document").Call("getElementById", "error")
+		printMessage(fmt.Sprintf("%s created", t.Addr().String()))
+		return
+	})
 
-		preOutput.Set("innerHTML", "")
-		preError.Set("innerHTML", "")
+	simpleNewJsFunc("closeTransport", func() {
+		ctx := context.Background()
 
-		preOutput.Set("innerHTML", mp.Addr().String())
+		inputTarget := doc.GetElementByID("target").(*dom.HTMLInputElement)
+		targetStr := inputTarget.Value()
+		target, err := addr.FromString(targetStr)
+		if err != nil {
+			printError(err)
+			return
+		}
 
-		return false
-	}))
+		t, err := mp.GetTransport(ctx, target)
+		if err != nil {
+			printError(err)
+			return
+		}
 
-	js.Global().Get("document").Set("ping", js.FuncOf(func(this js.Value, args []js.Value) any {
-		go func() {
-			ctx := context.Background()
+		err = t.Close(ctx)
+		if err != nil {
+			printError(err)
+			return
+		}
 
-			preOutput := js.Global().Get("document").Call("getElementById", "output")
-			preError := js.Global().Get("document").Call("getElementById", "error")
+		printMessage(fmt.Sprintf("%s closed", target.String()))
+		return
+	})
 
-			preOutput.Set("innerHTML", "")
-			preError.Set("innerHTML", "")
+	simpleNewJsFunc("whoami", func() { printMessage(mp.Addr().String()) })
 
-			inputTarget := js.Global().Get("document").Call("getElementById", "target")
-			targetStr := inputTarget.Get("value").String()
-			target, err := addr.FromString(targetStr)
-			if err != nil {
-				preError.Set("innerHTML", err.Error())
-				return
-			}
+	simpleNewJsFunc("ping", func() {
+		ctx := context.Background()
 
-			t, err := mp.GetTransport(ctx, target)
-			if err != nil {
-				preError.Set("innerHTML", err.Error())
-				return
-			}
+		inputTarget := doc.GetElementByID("target").(*dom.HTMLInputElement)
+		targetStr := inputTarget.Value()
+		target, err := addr.FromString(targetStr)
+		if err != nil {
+			printError(err)
+			return
+		}
 
-			var res meepo_core.PingResponse
-			if err = t.Call(ctx, "ping", &meepo_core.PingRequest{Nonce: 0}, &res); err != nil {
-				preError.Set("innerHTML", err.Error())
-				return
-			}
+		t, err := mp.GetTransport(ctx, target)
+		if err != nil {
+			printError(err)
+			return
+		}
 
-			preOutput.Set("innerHTML", fmt.Sprintf("ping: %v", time.Now()))
-		}()
+		var res meepo_core.PingResponse
+		if err = t.Call(ctx, "ping", &meepo_core.PingRequest{Nonce: 0}, &res); err != nil {
+			printError(err)
+			return
+		}
 
-		return false
-	}))
+		printMessage(fmt.Sprintf("ping: %v", time.Now()))
+		return
+	})
 
-	js.Global().Get("document").Set("doRequest", js.FuncOf(func(this js.Value, args []js.Value) any {
-		go func() {
-			ctx := context.Background()
+	simpleNewJsFunc("doRequest", func() {
+		ctx := context.Background()
 
-			preOutput := js.Global().Get("document").Call("getElementById", "output")
-			preError := js.Global().Get("document").Call("getElementById", "error")
+		inputTarget := doc.GetElementByID("target").(*dom.HTMLInputElement)
+		targetStr := inputTarget.Value()
+		target, err := addr.FromString(targetStr)
+		if err != nil {
+			preError.Set("innerHTML", err.Error())
+			return
+		}
 
-			preOutput.Set("innerHTML", "")
-			preError.Set("innerHTML", "")
+		inputMode := doc.GetElementByID("mode").(*dom.HTMLInputElement)
+		mode := inputMode.Value()
 
-			inputTarget := js.Global().Get("document").Call("getElementById", "target")
-			inputMode := js.Global().Get("document").Call("getElementById", "mode")
-			inputMethod := js.Global().Get("document").Call("getElementById", "method")
-			inputURL := js.Global().Get("document").Call("getElementById", "url")
-			inputHeaders := js.Global().Get("document").Call("getElementById", "headers")
-			inputBody := js.Global().Get("document").Call("getElementById", "body")
+		inputMethod := doc.GetElementByID("method").(*dom.HTMLInputElement)
+		method := inputMethod.Value()
 
-			targetStr := inputTarget.Get("value").String()
-			target, err := addr.FromString(targetStr)
-			if err != nil {
-				preError.Set("innerHTML", err.Error())
-				return
-			}
+		inputURL := doc.GetElementByID("url").(*dom.HTMLInputElement)
+		url := inputURL.Value()
 
-			mode := inputMode.Get("value").String()
-			method := inputMethod.Get("value").String()
-			url := inputURL.Get("value").String()
-			headersStr := inputHeaders.Get("value").String()
-			headers := make(map[string]string)
-			if err = json.Unmarshal([]byte(headersStr), &headers); err != nil {
-				preError.Set("innerHTML", err.Error())
-				return
-			}
-			body := inputBody.Get("value").String()
+		inputHeaders := doc.GetElementByID("headers").(*dom.HTMLInputElement)
+		headersStr := inputHeaders.Value()
+		headers := make(map[string]string)
+		if err = json.Unmarshal([]byte(headersStr), &headers); err != nil {
+			preError.Set("innerHTML", err.Error())
+			return
+		}
 
-			httpTransport := &http.Transport{
-				Dial: func(network, address string) (net.Conn, error) {
-					t, err := mp.GetTransport(ctx, target)
-					if err != nil {
-						return nil, err
-					}
+		inputBody := doc.GetElementByID("body").(*dom.HTMLInputElement)
+		body := inputBody.Value()
 
-					ch, err := t.NewChannel(ctx, network, address, well_known_option.WithMode(mode))
-					if err != nil {
-						return nil, err
-					}
+		httpTransport := &http.Transport{
+			Dial: func(network, address string) (net.Conn, error) {
+				t, err := mp.GetTransport(ctx, target)
+				if err != nil {
+					return nil, err
+				}
 
-					if err = ch.WaitReady(); err != nil {
-						return nil, err
-					}
+				ch, err := t.NewChannel(ctx, network, address, well_known_option.WithMode(mode))
+				if err != nil {
+					return nil, err
+				}
 
-					return &conn{ch}, nil
-				},
-			}
-			cli := http.Client{Transport: httpTransport}
-			req, err := http.NewRequest(method, url, strings.NewReader(body))
-			if err != nil {
-				preError.Set("innerHTML", err.Error())
-				return
-			}
-			for k, v := range headers {
-				req.Header.Set(k, v)
-			}
+				if err = ch.WaitReady(); err != nil {
+					return nil, err
+				}
 
-			res, err := cli.Do(req)
-			if err != nil {
-				preError.Set("innerHTML", err.Error())
-				return
-			}
-			defer res.Body.Close()
+				return &conn{ch}, nil
+			},
+		}
+		cli := http.Client{Transport: httpTransport}
+		req, err := http.NewRequest(method, url, strings.NewReader(body))
+		if err != nil {
+			printError(err)
+			return
+		}
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
 
-			resBody, err := ioutil.ReadAll(res.Body)
-			if err != nil {
-				preError.Set("innerHTML", err.Error())
-				return
-			}
+		res, err := cli.Do(req)
+		if err != nil {
+			printError(err)
+			return
+		}
+		defer res.Body.Close()
 
-			preOutput.Set("innerHTML", string(resBody))
-		}()
+		resBody, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			printError(err)
+			return
+		}
 
-		return false
-	}))
+		printMessage(string(resBody))
+		return
+	})
 
 	<-c
 }

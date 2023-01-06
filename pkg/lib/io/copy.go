@@ -11,7 +11,7 @@ var copyBufPool *sync.Pool
 
 func Copy(dst io.Writer, src io.Reader) (written int64, err error) {
 	buf := copyBufPool.Get().([]byte)
-	defer copyBufPool.Put(buf)
+	defer copyBufPool.Put(buf) // nolint:staticcheck
 	return io.CopyBuffer(dst, src, buf)
 }
 

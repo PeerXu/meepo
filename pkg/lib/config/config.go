@@ -30,19 +30,25 @@ func Default() *Config {
 		Meepo: Meepo{
 			Daemon: true,
 			Identity: Identity{
-				NoFile: false,
+				NoFile: true,
 				File:   "",
+			},
+			Tracker: &Tracker{
+				Name:       "rpc",
+				CallerName: "http",
+				Addr:       C.TRACKER_ADDR,
+				Host:       C.TRACKER_HOST,
 			},
 			API: API{
 				Name: "http",
-				Host: "127.0.0.1:12345",
+				Host: C.API_HOST,
 			},
 			Socks5: Socks5{
-				Host: "127.0.0.1:12341",
+				Host: C.SOCKS5_HOST,
 			},
-			Acl: `- allow: "*"`,
+			Acl: C.ACL,
 			Log: Log{
-				Level: "error",
+				Level: C.LOG_LEVEL,
 			},
 			Webrtc: Webrtc{
 				IceServers:     stun.STUNS,

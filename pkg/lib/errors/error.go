@@ -2,16 +2,14 @@ package errors
 
 import (
 	"fmt"
-
-	"github.com/PeerXu/meepo/pkg/lib/typer"
 )
 
-func NewErrorAndErrorFunc[T typer.Typer](errStr string, tpls ...string) (error, func(T) error) {
+func NewErrorAndErrorFunc[T any](errStr string, tpls ...string) (error, func(T) error) {
 	err := fmt.Errorf(errStr)
 	return err, NewErrorFunc[T](err, tpls...)
 }
 
-func NewErrorFunc[T typer.Typer](err error, tpls ...string) func(T) error {
+func NewErrorFunc[T any](err error, tpls ...string) func(T) error {
 	var tpl string
 	if len(tpls) > 0 {
 		tpl = tpls[0]

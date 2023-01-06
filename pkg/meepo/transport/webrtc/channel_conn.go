@@ -7,5 +7,8 @@ func (c *WebrtcSourceChannel) Conn() meepo_interface.Conn {
 }
 
 func (c *WebrtcSinkChannel) Conn() meepo_interface.Conn {
-	return c.conn
+	if v := c.connVal.Load(); v != nil {
+		return v.(meepo_interface.Conn)
+	}
+	return nil
 }

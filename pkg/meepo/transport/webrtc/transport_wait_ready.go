@@ -7,21 +7,22 @@ import (
 )
 
 func (t *WebrtcTransport) WaitReady() error {
-	if t.readyErr != nil {
-		return t.readyErr
+	if err := t.readyError(); err != nil {
+		return err
 	}
 
 	select {
 	case <-t.ready:
-		if t.readyErr != nil {
-			return t.readyErr
+		if err := t.readyError(); err != nil {
+			return err
 		}
+
 		return nil
 	case <-time.After(t.readyTimeout):
 		t.readyOnce.Do(func() {
 			close(t.ready)
-			t.readyErr = transport_core.ErrReadyTimeout
+			t.readyErrVal.Store(transport_core.ErrReadyTimeout)
 		})
-		return t.readyErr
+		return t.readyError()
 	}
 }
