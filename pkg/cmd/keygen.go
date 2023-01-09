@@ -52,6 +52,7 @@ func meepoKeygen(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println("Key generated!")
+	fmt.Printf("Your identity file has been saved in %s\n", filename)
 
 	return nil
 }
