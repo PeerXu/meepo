@@ -1,9 +1,4 @@
 <!doctype html>
-<!--
-Copyright 2018 The Go Authors. All rights reserved.
-Use of this source code is governed by a BSD-style
-license that can be found in the LICENSE file.
--->
 <html>
 
 <head>
@@ -23,33 +18,26 @@ license that can be found in the LICENSE file.
 </head>
 
 <body>
-	<!--
-	Add the following polyfill for Microsoft Edge 17/18 support:
-	<script src="https://cdn.jsdelivr.net/npm/text-encoding@0.7.0/lib/encoding.min.js"></script>
-	(see https://caniuse.com/#feat=textencoder)
-	-->
-
   <script src="wasm_exec.js"></script>
   <script>
    if (!WebAssembly.instantiateStreaming) { // polyfill
-		   WebAssembly.instantiateStreaming = async (resp, importObject) => {
-			     const source = await (await resp).arrayBuffer();
-			     return await WebAssembly.instantiate(source, importObject);
-		   };
+       WebAssembly.instantiateStreaming = async (resp, importObject) => {
+           const source = await (await resp).arrayBuffer();
+           return await WebAssembly.instantiate(source, importObject);
+       };
    }
 
    const go = new Go();
    let mod, inst;
    WebAssembly.instantiateStreaming(fetch("meepo.wasm"), go.importObject).then(async (result) => {
-		   mod = result.module;
-		   inst = result.instance;
-		   console.clear();
-	     document.getElementById("startButton").disabled = false;
-		   await go.run(inst);
-		   inst = await WebAssembly.instantiate(mod, go.importObject); // reset instance
-
+       mod = result.module;
+       inst = result.instance;
+       console.clear();
+       document.getElementById("startButton").disabled = false;
+       await go.run(inst);
+       inst = await WebAssembly.instantiate(mod, go.importObject); // reset instance
    }).catch((err) => {
-		   console.error(err);
+       console.error(err);
    });
 
   </script>
