@@ -143,7 +143,43 @@ TBD
 
 TBD
 
+### Tracker
+
+TBD
+
 ## 工作原理
+
+```
+Meepo是以WebRTC技术作为主要底层协议, 实现Meepo实例与实例之间的通信功能.
+由于, 两个WebRTC节点创建连接前, 需要交换各自的Description, 才能建立连接.
+所以Meepo提供了Tracker系统, 使得WebRTC节点在创建连接前, 能够交换Description.
+
+简化的交换Description流程可以理解为, Meepo节点A需要与Meepo节点B创建Transport,
+那么节点A作为Tracker-Client, 对Tracker-Server发起请求, 请求将自己的Description(Offer)发送给节点B.
+当Tracker-Server能将Offer转发到节点B时, 就会完成这次交换Description的行为.
+当Tracker-Server无法将Offer转发到节点B时, 这次请求将会失败,
+当节点A记录的所有Tracker-Server都无法完成转发时, 节点A就无法与节点B创建Transport.
+
+接下来我们将会了解到, Tracker-Server是怎么将Offer转发到节点B.
+我们将转发行为划分成三种情况讨论.
+
+1. 节点B就是Tracker-Server自身
+这种情况下, Tracker-Server也是Meepo节点, 这时候发现Offer的目的身份地址是自身,
+那么就把相应的请求进行处理, 并且把Description(Answer)返回给节点A, 完成交换Description.
+
+2. Tracker-Server与节点B已经建立Transport
+这种情况下, Tracker-Server会把Offer直接转发到节点B上,
+节点B收到目的身份地址是自身的情况下, 就进行处理并且返回给Tracker-Server,
+然后再由Tracker-Server返回给节点A, 完成交换Description.
+
+3. Tracker-Server与节点B没有创立Transport
+在这种情况下, 由于Tracker-Server没有与节点B有直接连接,
+只能转发给与节点B身份地址最接近的已经创建Transport的N个Meepo节点, 希望他们能够处理这个请求.
+
+当执行到上面的情况3时, 我们需要寻找节点B身份地址最接近的Meepo节点,
+Meepo采用的寻址算法是Kademlia算法的一个变种.
+```
+
 
 TBD
 
