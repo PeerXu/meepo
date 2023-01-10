@@ -6,8 +6,8 @@ import (
 )
 
 func (mp *Meepo) onReadyWebrtcTransport(t Transport) error {
-	mp.transportsMtx.Lock()
-	defer mp.transportsMtx.Unlock()
+	mp.trackersMtx.Lock()
+	defer mp.trackersMtx.Unlock()
 
 	return mp.onReadyWebrtcTransportNL(t)
 }
