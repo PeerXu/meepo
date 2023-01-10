@@ -136,11 +136,11 @@ Welcome to Meepo Network!
 **注意:** 默认情况下, `Meepo`是允许所有`Meepo`实例访问任何地址和端口的, 所以出于安全考虑, 请务必配置好`访问控制列表`后, 再公布`身份识别地址`.
 
 ```bash
-$ echo -n "<h1>Welcome to Meepo Network!</h1>" > hello.html
+$ echo -n "<h1>Welcome to Meepo Network!</h1>" > welcome.html
 $ python3 -m http.server --bind 127.0.0.1 8080
 
 # open new terminal
-$ curl http://127.0.0.1:8080/hello.html
+$ curl http://127.0.0.1:8080/welcome.html
 <h1>Welcome to Meepo Network!</h1>
 ```
 
@@ -151,7 +151,7 @@ $ curl http://127.0.0.1:8080/hello.html
 因为`Meepo`已经兼容了`Webassembly`, 所以我们可以在浏览器上运行`Meepo Webassembly Demo`, 来模拟远程访问本机`Meepo`实例发布的服务.
 
 ```bash
-$ echo -n "http://peerxu.github.io/meepo.html?url=http://127.0.0.1:8080&target=$(meepo whomai)"
+$ echo -n "http://peerxu.github.io/meepo.html?url=http://127.0.0.1:8080/welcome.html&target=$(meepo whoami)"
 ```
 
 运行上面的命令后, 会得到Demo的访问地址.
@@ -164,7 +164,7 @@ $ echo -n "http://peerxu.github.io/meepo.html?url=http://127.0.0.1:8080&target=$
 
 等待一会儿, 点击`listTransports`按钮, 可以看见已经与本机的`Meepo`实例连接上.
 
-这时候, 我们就可以点击`doRequest`按钮, 等待一会儿, 可以在`output`提示栏内看见`<h1>Welcome to Meepo Network!</h1>`.
+这时候, 我们就可以点击`doRequest`按钮, 等待一会儿, 可以在`output`提示栏内看见`Welcome to Meepo Network!`.
 
 ## 概念
 
