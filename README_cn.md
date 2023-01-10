@@ -34,7 +34,13 @@ $ brew install PeerXu/tap/meepo
 
 ```bash
 $ meepo serve --no-identity-file --daemon=false
+
+# open new terminal
+$ meepo whoami
+62vpszrzczcn7f946ba2ujr0bk311jhlqti357th6346ot2doc8
 ```
+
+启动`Meepo`实例后, 可以使用`whoami`获取`Meepo`实例的`身份识别地址`, 后面可以提供给其他人访问使用.
 
 ### 2. 连接到测试`Meepo`实例
 
@@ -125,6 +131,41 @@ Welcome to Meepo Network!
 
 意味着, 我们访问的是`65j07gtrxewig4ns5ehlgj21qn15zlphc8e726lqvgrl788zgib`节点的`HTTP`服务.
 
+### 7. 发布服务(可选)
+
+**注意:** 默认情况下, `Meepo`是允许所有`Meepo`实例访问任何地址和端口的, 所以出于安全考虑, 请务必配置好`访问控制列表`后, 再公布`身份识别地址`.
+
+```bash
+$ echo -n "<h1>Welcome to Meepo Network!</h1>" > hello.html
+$ python3 -m http.server --bind 127.0.0.1 8080
+
+# open new terminal
+$ curl http://127.0.0.1:8080/hello.html
+<h1>Welcome to Meepo Network!</h1>
+```
+
+现在, 我们已经启动了一个HTTP服务, 监听着`127.0.0.1:8080`.
+
+由于我们在本机已经运行了`Meepo`实例, 因此我们需要通过另外的`Meepo`实例来访问本机的HTTP服务.
+
+因为`Meepo`已经兼容了`Webassembly`, 所以我们可以在浏览器上运行`Meepo Webassembly Demo`, 来模拟远程访问本机`Meepo`实例发布的服务.
+
+```bash
+$ echo -n "http://peerxu.github.io/meepo.html?url=http://127.0.0.1:8080&target=$(meepo whomai)"
+```
+
+运行上面的命令后, 会得到Demo的访问地址.
+
+打开网址后, 等待加载完毕, 可以点击`start`按钮.
+
+运行成功后, 按钮内容会变成`running`, 并且在`output`提示栏内显示`meepo started`.
+
+然后点击`newTransport`按钮, 创建与本机`Meepo`实例的`Transport`.
+
+等待一会儿, 点击`listTransports`按钮, 可以看见已经与本机的`Meepo`实例连接上.
+
+这时候, 我们就可以点击`doRequest`按钮, 等待一会儿, 可以在`output`提示栏内看见`<h1>Welcome to Meepo Network!</h1>`.
+
 ## 概念
 
 ### Meepo
@@ -164,37 +205,42 @@ Meepo是以WebRTC技术作为主要底层协议, 实现Meepo实例与实例之�
 我们将转发行为划分成三种情况讨论.
 
 1. 节点B就是Tracker-Server自身
-这种情况下, Tracker-Server也是Meepo节点, 这时候发现Offer的目的身份地址是自身,
+
+这种情况下, Tracker-Server也是Meepo节点, 这时候发现Offer的目的身份识别地址是自身,
 那么就把相应的请求进行处理, 并且把Description(Answer)返回给节点A, 完成交换Description.
 
 2. Tracker-Server与节点B已经建立Transport
+
 这种情况下, Tracker-Server会把Offer直接转发到节点B上,
-节点B收到目的身份地址是自身的情况下, 就进行处理并且返回给Tracker-Server,
+节点B收到目的身份识别地址是自身的情况下, 就进行处理并且返回给Tracker-Server,
 然后再由Tracker-Server返回给节点A, 完成交换Description.
 
-3. Tracker-Server与节点B没有创立Transport
+3. Tracker-Server与节点B没有建立Transport
+
 在这种情况下, 由于Tracker-Server没有与节点B有直接连接,
-只能转发给与节点B身份地址最接近的已经创建Transport的N个Meepo节点, 希望他们能够处理这个请求.
+只能转发给与节点B身份识别地址最接近的已经创建Transport的N个Meepo节点, 希望他们能够处理这个请求.
 
-当执行到上面的情况3时, 我们需要寻找节点B身份地址最接近的Meepo节点,
-Meepo采用的寻址算法是Kademlia算法的一个变种.
+当执行到上面的情况3时, 我们需要寻找节点B身份识别地址最接近的Meepo节点,
+Meepo采用的寻址算法是Kademlia算法的一个变种实现.
+
+Meepo采用ed25519算法的公钥作为身份识别地址. 在使用Tracker系统交换Description时,
+会对Description请求进行加密和签名, 保证消息无法被篡改.
+只有拥有目的身份识别地址的节点, 才能对消息进行解密.
+中途转发的节点都有验证消息的完整性的义务, 与选择是否转发交换Description的请求的权利.
 ```
-
-
-TBD
 
 ## 基础配置
 
 ### 1. 身份识别文件
 
-默认情况下, `Meepo`启动时, 会生成随机的`身份地址`.
+默认情况下, `Meepo`启动时, 会生成随机的`身份识别地址`.
 
-在以下情况下, 有需要使用固定的`身份地址`.
+在以下情况下, 有需要使用固定的`身份识别地址`.
 
-* 需要固定`身份地址`提供服务.
+* 需要固定`身份识别地址`提供服务.
 * 访问的`Meepo`实例, 配置了`白名单`访问策略.
 
-`Meepo`采用的身份识别算法是`ED25519`, 使用`Base36`算法编码`公钥`得到`身份地址`.
+`Meepo`采用的身份识别算法是`ED25519`, 使用`Base36`算法编码`公钥`得到`身份识别地址`.
 
 所以我们可以采用两种方式生成`身份识别文件`.
 
@@ -231,7 +277,7 @@ The key's randomart image is:
 
 **注意:** `Meepo`暂时只支持`passphrase`为空的`身份识别文件`.
 
-可以使用`whoami`子命令读取`身份识别文件`的`身份地址`.
+可以使用`whoami`子命令读取`身份识别文件`的`身份识别地址`.
 
 ```bash
 $ meepo whoami -f mpo_id_ed25519
@@ -252,7 +298,7 @@ $ meepo serve --identity-file mpo_id_ed25519
 
 默认情况下, `Meepo`实例是允许其他`Meepo`实例访问所有的地址和端口的.
 
-但是出于安全考虑, 我们提供了`访问控制列表`功能, 可以指定允许持有指定`身份地址`的`Meepo`实例对指定的目的地址和端口进行访问.
+但是出于安全考虑, 我们提供了`访问控制列表`功能, 可以指定允许持有指定`身份识别地址`的`Meepo`实例对指定的目的地址和端口进行访问.
 
 `访问控制列表`的格式如下:
 
@@ -306,10 +352,20 @@ $ meepo serve --identity-file mpo_id_ed25519
 
 ### 1. 在浏览器中运行`Meepo`实例
 
-[Demo](http://peerxu.github.io/meepo.html)
+[Meepo Webassembly Demo](http://peerxu.github.io/meepo.html?target=65j07gtrxewig4ns5ehlgj21qn15zlphc8e726lqvgrl788zgib)
 
 [About](https://github.com/PeerXu/meepo/tree/main/wasm)
 
 ## FAQ
 
 ### 1. Error: transport exist
+
+TBD
+
+### 2. Transport一直处于非connected状态
+
+TBD
+
+### 3. Meepo Webassembly Demo点击start后, listTransports列表为空
+
+TBD
