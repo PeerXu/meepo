@@ -68,7 +68,7 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 
 	var pubk ed25519.PublicKey
 	var prik ed25519.PrivateKey
-	if cfg.Meepo.Identity.NoFile {
+	if cfg.Meepo.Identity.NoFile || cfg.Meepo.Identity.File == "" {
 		pubk, prik, err = ed25519.GenerateKey(nil)
 		if err != nil {
 			summonLogger.WithError(err).Errorf("failed to generate ed25519 key")
@@ -103,6 +103,11 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	for _, tkCfg := range cfg.Meepo.Trackers {
 		var tk tracker_core.Tracker
 		var name string
+
+		if tkCfg.Name == "skip" {
+			continue
+		}
+
 		tkAddr, err := addr.FromString(tkCfg.Addr)
 		if err != nil {
 			summonLogger.WithError(err).Errorf("failed to parse tracker addr")

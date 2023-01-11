@@ -30,7 +30,7 @@ func Default() *Config {
 		Meepo: Meepo{
 			Daemon: true,
 			Identity: Identity{
-				NoFile: true,
+				NoFile: false,
 				File:   "",
 			},
 			Tracker: &Tracker{
