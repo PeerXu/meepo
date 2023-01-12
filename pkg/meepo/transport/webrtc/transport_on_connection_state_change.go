@@ -5,8 +5,8 @@ import (
 
 	"github.com/pion/webrtc/v3"
 
-	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/lock"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
 func (t *WebrtcTransport) onSinkConnectionStateChange(s webrtc.PeerConnectionState) {
@@ -60,6 +60,7 @@ func (t *WebrtcTransport) tryNewSysDataChannel() {
 		logger.WithField("label", t.sysDataChannel.Label()).Tracef("sys data channel still alive, skip")
 		return
 	}
+
 	if t.sysDataChannel != nil {
 		logger = logger.WithField("old", t.sysDataChannel.Label())
 		logger.WithError(t.sysDataChannel.Close()).Debugf("close old sys data channel")

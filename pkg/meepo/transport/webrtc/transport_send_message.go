@@ -9,6 +9,12 @@ func (t *WebrtcTransport) sendMessage(ctx context.Context, m Message) error {
 
 	logger := t.GetLogger().WithField("#method", "sendMessage").WithFields(t.wrapMessage(m))
 
+	if t.rwc == nil {
+		err := ErrInvalidSystemDataChannel
+		logger.WithError(err).Debugf("system data channel is empty")
+		return err
+	}
+
 	buf, err := t.marshaler.Marshal(&m)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to marshal message")
