@@ -16,7 +16,7 @@ Meepo的目标是以便捷的, 去中心化的形式发布服务.
 $ sudo snap install meepo
 ```
 
-如果发行版不支持`snap`, 需要从[release](https://github.com/PeerXu/meepo/releases/latest)下载对应版本并手动安装.
+如果发行版不支持`Snapcraft`, 需要从[release](https://github.com/PeerXu/meepo/releases/latest)下载对应版本并手动安装.
 
 ### macOS
 
@@ -369,3 +369,31 @@ TBD
 ### 3. Meepo Webassembly Demo点击start后, listTransports列表为空
 
 TBD
+
+## 捐赠
+
+如果`Meepo`对你有帮助, 欢迎对我们进行捐赠.
+
+### Telegram
+
+[https://t.me/meepoDiscussion](https://t.me/meepoDiscussion)
+
+### BTC
+
+![BTC](./donations/btc.png)
+
+36PnaXCMCtKLbkzVyfrkudhU6u8vjbfax4
+
+### ETH
+
+![ETH](./donations/eth.png)
+
+0xa4f00EdD5fA66EEC124ab0529cF35a64Ee94BFDE
+
+## 贡献者
+
+[PeerXu](https://github.com/PeerXu) (pppeerxu@gmail.com)
+
+## License
+
+MIT
