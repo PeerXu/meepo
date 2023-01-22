@@ -41,8 +41,7 @@ func (t *WebrtcTransport) Call(ctx context.Context, method string, req meepo_int
 	}
 	logger = logger.WithField("scope", scope)
 
-	st := t.pc.ConnectionState()
-	if st != webrtc.PeerConnectionStateConnected {
+	if st := t.pc.ConnectionState(); st != webrtc.PeerConnectionStateConnected {
 		err = ErrInvalidConnectionStateFn(st.String())
 		logger.WithError(err).Debugf("connection state not in connected")
 		return err

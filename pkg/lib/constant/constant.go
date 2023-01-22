@@ -4,7 +4,7 @@ const (
 	WEBRTC_RECEIVE_BUFFER_SIZE uint32 = 33554432
 
 	TRACKER_ADDR = "62vv3lwalqmdb2657f7ax73fem7gkgzmin3w7qyy0sjjfae0f3p"
-	TRACKER_HOST = "tkd.mpo.peerstud.io:12346"
+	TRACKER_HOST = "tkd-0.meepo.dev:12346"
 
 	API_HOST = "127.0.0.1:12345"
 

@@ -74,14 +74,14 @@ func (t *WebrtcTransport) sinkGather(offer webrtc.SessionDescription, done Gathe
 		return
 	}
 
+	gatherComplete := webrtc.GatheringCompletePromise(t.pc)
+
 	answer, err := t.pc.CreateAnswer(nil)
 	if err != nil {
 		done(webrtc.SessionDescription{}, err)
 		logger.WithError(err).Debugf("failed to create answer")
 		return
 	}
-
-	gatherComplete := webrtc.GatheringCompletePromise(t.pc)
 
 	if err = t.pc.SetLocalDescription(answer); err != nil {
 		done(webrtc.SessionDescription{}, err)
