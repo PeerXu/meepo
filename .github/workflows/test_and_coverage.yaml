@@ -11,8 +11,10 @@ jobs:
     - uses: actions/setup-go@v2
       with:
         go-version: '1.18'
+    - name: Go mod
+      run: go mod tidy && go mod vendor
     - name: Run coverage
-      run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
+      run: CGO_ENABLED=0 go test -race -coverprofile=coverage.out -covermode=atomic ./...
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
 
