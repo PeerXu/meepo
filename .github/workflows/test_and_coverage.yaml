@@ -14,7 +14,7 @@ jobs:
     - name: Go mod
       run: go mod tidy && go mod vendor
     - name: Run coverage
-      run: CGO_ENABLED=0 go test -race -coverprofile=coverage.out -covermode=atomic ./...
+      run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
 
