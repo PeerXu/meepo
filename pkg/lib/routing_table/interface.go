@@ -15,6 +15,6 @@ type RoutingTable interface {
 	AddID(x ID) error
 	RemoveID(x ID) error
 
-	NearestIDs(x ID, count int, excludes []ID) (ys []ID, found bool)
+	CloserIDs(x ID, count int, excludes []ID) (ys []ID, found bool)
 	ClosestIDs(x ID, count int) (ys []ID, found bool)
 }

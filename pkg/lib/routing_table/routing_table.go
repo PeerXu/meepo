@@ -168,21 +168,21 @@ func (rt *routingTable) RemoveID(x ID) error {
 	return nil
 }
 
-func (rt *routingTable) NearestIDs(x ID, count int, excludes []ID) (ys []ID, found bool) {
+func (rt *routingTable) CloserIDs(x ID, count int, excludes []ID) (ys []ID, found bool) {
 	rt.mtx.Lock()
 	defer rt.mtx.Unlock()
 
-	return rt.nearestIDs(x, count, false, excludes)
+	return rt.neighbours(x, count, false, excludes)
 }
 
 func (rt *routingTable) ClosestIDs(x ID, count int) (ys []ID, found bool) {
 	rt.mtx.Lock()
 	defer rt.mtx.Unlock()
 
-	return rt.nearestIDs(x, count, true, nil)
+	return rt.neighbours(x, count, true, nil)
 }
 
-func (rt *routingTable) nearestIDs(x ID, count int, strict bool, excludes []ID) (ys []ID, found bool) {
+func (rt *routingTable) neighbours(x ID, count int, strict bool, excludes []ID) (ys []ID, found bool) {
 	defer func() {
 		cb := NewComparableBucket(x, ys)
 		sort.Sort(sort.Reverse(cb))

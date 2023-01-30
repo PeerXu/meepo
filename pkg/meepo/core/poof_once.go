@@ -40,9 +40,9 @@ func (mp *Meepo) poofOnce() {
 		"level":  lvl.String(),
 	})
 
-	tks, _, err := mp.getNearestTrackers(targetAddr, mp.poofCount, nil)
+	tks, _, err := mp.getCloserTrackers(targetAddr, mp.poofCount, nil)
 	if err != nil {
-		logger.WithError(err).Debugf("failed to get nearest trackers")
+		logger.WithError(err).Debugf("failed to get closer trackers")
 		return
 	}
 

@@ -46,12 +46,12 @@ func (mp *Meepo) genGatherFunc(target addr.Addr, gtkFn getTrackersFunc, opt gath
 		}
 
 		if gtkFn == nil {
-			gtkFn = func(target Addr) ([]Tracker, bool, error) { return mp.getNearestTrackers(target, mp.dhtAlpha, nil) }
+			gtkFn = func(target Addr) ([]Tracker, bool, error) { return mp.getCloserTrackers(target, mp.dhtAlpha, nil) }
 		}
 
 		tks, found, err := gtkFn(target)
 		if err != nil {
-			logger.WithError(err).Debugf("failed to get nearest trackers")
+			logger.WithError(err).Debugf("failed to get closer trackers")
 			return
 		}
 		logger = logger.WithFields(logging.Fields{

@@ -3,8 +3,8 @@ package meepo_core
 import (
 	"context"
 
-	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	tracker_interface "github.com/PeerXu/meepo/pkg/meepo/tracker/interface"
 )
 
@@ -47,9 +47,9 @@ func (mp *Meepo) onGetCandidates(target Addr, count int, excludes []Addr) (candi
 		"count":   count,
 	})
 
-	tks, _, err := mp.getNearestTrackers(target, count, excludes)
+	tks, _, err := mp.getCloserTrackers(target, count, excludes)
 	if err != nil {
-		logger.WithError(err).Debugf("failed to get nearest trackers")
+		logger.WithError(err).Debugf("failed to get closer trackers")
 		return nil, err
 	}
 

@@ -162,7 +162,7 @@ func TestRoutingTableRemoveID(t *testing.T) {
 	}
 }
 
-func TestRoutingTableNearestIDs(t *testing.T) {
+func TestRoutingTableCloserIDs(t *testing.T) {
 	for i, c := range []struct {
 		localID     []byte
 		buckets     map[int][][]byte
@@ -236,7 +236,7 @@ func TestRoutingTableNearestIDs(t *testing.T) {
 			excludeIDs = append(excludeIDs, FromBytes(x))
 		}
 
-		actualIDs, actualFound := rt.NearestIDs(FromBytes(c.x), c.count, excludeIDs)
+		actualIDs, actualFound := rt.CloserIDs(FromBytes(c.x), c.count, excludeIDs)
 		assert.Equal(t, []ID(bytesSlice2Bucket(c.expectIDs)), actualIDs, "index=%v, data=%v", i, c)
 		assert.Equal(t, c.expectFound, actualFound, "index=%v, data=%v", i, c)
 	}
