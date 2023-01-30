@@ -1,6 +1,7 @@
 package transport_webrtc
 
 import (
+	"io"
 	"math"
 	"sync"
 
@@ -15,12 +16,15 @@ var rlBufPool = sync.Pool{New: func() any {
 	return make([]byte, datachannelBufferSize)
 }}
 
-func (t *WebrtcTransport) readLoop() {
-	logger := t.GetLogger().WithField("#method", "readLoop")
+func (t *WebrtcTransport) readLoop(sess Session, rwc io.ReadWriteCloser) {
+	logger := t.GetLogger().WithFields(logging.Fields{
+		"#method": "readLoop",
+		"session": sess.String(),
+	})
 
 	for {
 		buffer := rlBufPool.Get().([]byte)
-		n, err := t.rwc.Read(buffer)
+		n, err := rwc.Read(buffer)
 		if err != nil {
 			rlBufPool.Put(buffer) // nolint:staticcheck
 			logger.WithError(err).Debugf("read ReadWriteCloser error")

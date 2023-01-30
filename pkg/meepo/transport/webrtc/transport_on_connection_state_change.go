@@ -1,6 +1,8 @@
 package transport_webrtc
 
 import (
+	"context"
+	"errors"
 	"fmt"
 
 	"github.com/pion/webrtc/v3"
@@ -9,87 +11,122 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
-func (t *WebrtcTransport) onSinkConnectionStateChange(s webrtc.PeerConnectionState) {
-	logger := t.GetLogger().WithField("#method", "onSinkConnectionStateChange")
+func (t *WebrtcTransport) onSinkConnectionStateChange(sess Session) func(webrtc.PeerConnectionState) {
+	return func(s webrtc.PeerConnectionState) {
+		logger := t.GetLogger().WithFields(logging.Fields{
+			"#method": "onSinkConnectionStateChange",
+			"session": sess.String(),
+			"state":   s.String(),
+		})
 
-	switch s {
-	case webrtc.PeerConnectionStateNew,
-		webrtc.PeerConnectionStateConnecting:
-	case webrtc.PeerConnectionStateConnected:
-		go t.tryNewSysDataChannel()
-		if t.enableMux {
-			go t.tryNewMuxDataChannel()
+		switch s {
+		case webrtc.PeerConnectionStateNew,
+			webrtc.PeerConnectionStateConnecting:
+		case webrtc.PeerConnectionStateConnected:
+			go t.tryNewSysDataChannel(sess)
+			if t.enableMux {
+				go t.tryNewMuxDataChannel()
+			}
+			if t.enableKcp {
+				go t.tryNewKcpDataChannel()
+			}
+		case webrtc.PeerConnectionStateDisconnected:
+		case webrtc.PeerConnectionStateFailed,
+			webrtc.PeerConnectionStateClosed:
+			t.unregisterPeerConnection(sess)
+			if t.isClosable() {
+				go t.Close(t.context())
+			}
 		}
-		if t.enableKcp {
-			go t.tryNewKcpDataChannel()
-		}
-	case webrtc.PeerConnectionStateDisconnected:
-	case webrtc.PeerConnectionStateFailed,
-		webrtc.PeerConnectionStateClosed:
-		go t.Close(t.context())
+
+		logger.Tracef("peer connection state changed")
 	}
-
-	logger.WithField("state", s.String()).Tracef("peer connection state changed")
 }
 
-func (t *WebrtcTransport) onSourceConnectionStateChange(s webrtc.PeerConnectionState) {
-	logger := t.GetLogger().WithField("#method", "onSourceConnectionStateChange")
+func (t *WebrtcTransport) onSourceConnectionStateChange(sess Session) func(webrtc.PeerConnectionState) {
+	return func(s webrtc.PeerConnectionState) {
+		logger := t.GetLogger().WithFields(logging.Fields{
+			"#method": "onSourceConnectionStateChange",
+			"session": sess.String(),
+			"state":   s.String(),
+		})
 
-	switch s {
-	case webrtc.PeerConnectionStateNew,
-		webrtc.PeerConnectionStateConnecting,
-		webrtc.PeerConnectionStateConnected,
-		webrtc.PeerConnectionStateDisconnected:
-	case webrtc.PeerConnectionStateFailed,
-		webrtc.PeerConnectionStateClosed:
-		go t.Close(t.context())
+		switch s {
+		case webrtc.PeerConnectionStateNew,
+			webrtc.PeerConnectionStateConnecting,
+			webrtc.PeerConnectionStateConnected,
+			webrtc.PeerConnectionStateDisconnected:
+		case webrtc.PeerConnectionStateFailed,
+			webrtc.PeerConnectionStateClosed:
+			t.unregisterPeerConnection(sess)
+			if t.isClosable() {
+				go t.Close(t.context())
+			}
+		}
+
+		logger.Tracef("peer connection state changed")
 	}
-
-	logger.WithField("state", s.String()).Tracef("peer connection state changed")
 }
 
-func (t *WebrtcTransport) tryNewSysDataChannel() {
+func (t *WebrtcTransport) tryNewSysDataChannel(sess Session) {
 	var err error
 
-	logger := t.GetLogger().WithField("#method", "tryNewSysDataChannel")
+	logger := t.GetLogger().WithFields(logging.Fields{
+		"#method": "tryNewSysDataChannel",
+		"session": sess.String(),
+	})
 
 	t.sysMtx.Lock()
 	defer t.sysMtx.Unlock()
 
-	if t.isSysDataChannelAlive() {
-		logger.WithField("label", t.sysDataChannel.Label()).Tracef("sys data channel still alive, skip")
+	pc, err := t.loadPeerConnection(sess)
+	if err != nil {
+		logger.WithError(err).Debugf("failed to load peer connection")
 		return
 	}
 
-	if t.sysDataChannel != nil {
-		logger = logger.WithField("old", t.sysDataChannel.Label())
-		logger.WithError(t.sysDataChannel.Close()).Debugf("close old sys data channel")
-		t.sysDataChannel = nil
-		t.rwc = nil
+	sdc, err := t.loadSystemDataChannel(sess)
+	if err == nil {
+		if t.isSysDataChannelAlive(sess) {
+			logger.WithField("label", sdc.Label()).Tracef("sys data channel still alive, skip")
+			return
+		}
+
+		logger.WithFields(logging.Fields{
+			"old": sdc.Label(),
+		}).WithError(sdc.Close()).Debugf("close old system data channel")
+		t.unregisterSystemDataChannel(sess)
+		t.unregisterSystemReadWriteCloser(sess)
+	} else {
+		if !errors.Is(err, ErrDataChannelNotFound) {
+			logger.WithError(err).Debugf("failed to get system data channel")
+			return
+		}
 	}
 
 	ordered := !t.enableKcp
-	t.sysDataChannel, err = t.pc.CreateDataChannel(t.nextDataChannelLabel("sys"), &webrtc.DataChannelInit{Ordered: &ordered})
+	sdc, err = pc.CreateDataChannel(t.nextDataChannelLabel("sys"), &webrtc.DataChannelInit{Ordered: &ordered})
 	if err != nil {
 		defer t.Close(t.context())
 		logger.WithError(err).Debugf("failed to new sys data channel")
 		return
 	}
-	logger = logger.WithField("label", t.sysDataChannel.Label())
+	logger = logger.WithField("label", sdc.Label())
+	t.registerSystemDataChannel(sess, sdc)
 
-	t.sysDataChannel.OnOpen(func() { t.onSysDataChannelOpen(t.sysDataChannel) })
+	sdc.OnOpen(func() { t.onSysDataChannelOpen(sess, sdc) })
 
 	logger.Tracef("new sys data channel")
 }
 
-func (t *WebrtcTransport) isSysDataChannelAlive() bool {
-	logger := t.GetLogger().WithField("#method", "isSysDataChannelAlive")
+func (t *WebrtcTransport) isSysDataChannelAlive(sess Session) bool {
+	logger := t.GetLogger().WithFields(logging.Fields{
+		"#method": "isSysDataChannelAlive",
+		"session": sess,
+	})
 
-	if t.sysDataChannel == nil {
-		return false
-	}
-
-	ttl, err := t.ping(t.context())
+	ctx := context.WithValue(t.context(), OPTION_SESSION, sess)
+	ttl, err := t.ping(ctx)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to ping")
 		return false
@@ -137,7 +174,15 @@ func (t *WebrtcTransport) tryNewDataChannelTpl(name string, label string, mtx lo
 			*dcPtr = nil
 		}
 
-		ndc, err := t.pc.CreateDataChannel(label, &webrtc.DataChannelInit{Ordered: &ordered})
+		pc, err := t.loadRandomPeerConnection()
+		if err != nil {
+			// TODO: dont close transport when failed to load pc
+			defer t.Close(t.context())
+			logger.WithError(err).Debugf("failed to load peer connection")
+			return
+		}
+
+		ndc, err := pc.CreateDataChannel(label, &webrtc.DataChannelInit{Ordered: &ordered})
 		if err != nil {
 			defer t.Close(t.context())
 			logger.WithError(err).Debugf("failed to new %s data channel", name)

@@ -20,45 +20,47 @@ type tempDataChannel struct {
 	req *NewChannelRequest
 }
 
-func (t *WebrtcTransport) onDataChannel(dc *webrtc.DataChannel) {
-	logger := t.GetLogger().WithFields(logging.Fields{
-		"#method": "onDataChannel",
-		"label":   dc.Label(),
-	})
+func (t *WebrtcTransport) onDataChannel(sess Session) func(*webrtc.DataChannel) {
+	return func(dc *webrtc.DataChannel) {
+		logger := t.GetLogger().WithFields(logging.Fields{
+			"#method": "onDataChannel",
+			"label":   dc.Label(),
+		})
 
-	if t.isSysDataChannel(dc) {
-		dc.OnOpen(func() { t.onSysDataChannelOpen(dc) })
-		logger.Tracef("setup sys data channel")
-		return
+		if t.isSysDataChannel(dc) {
+			dc.OnOpen(func() { t.onSysDataChannelOpen(sess, dc) })
+			logger.Tracef("setup sys data channel")
+			return
+		}
+
+		if t.isMuxDataChannel(dc) {
+			dc.OnOpen(func() { t.onMuxDataChannelOpen(dc) })
+			logger.Tracef("setup mux data channel")
+			return
+		}
+
+		if t.isKcpDataChannel(dc) {
+			dc.OnOpen(func() { t.onKcpDataChannelOpen(dc) })
+			logger.Tracef("setup kcp data channel")
+			return
+		}
+
+		t.tempDataChannelsMtx.Lock()
+		defer t.tempDataChannelsMtx.Unlock()
+
+		dc.OnOpen(t.onDataChannelOpen(dc))
+
+		tdc, found := t.tempDataChannels[dc.Label()]
+		if !found {
+			t.tempDataChannels[dc.Label()] = &tempDataChannel{dc: dc}
+			go t.removeTimeoutTempDataChannel(dc.Label())
+			logger.Tracef("create temp data channel")
+			return
+		}
+
+		tdc.dc = dc
+		logger.Tracef("assign webrtc.DataChannel to temp data channel")
 	}
-
-	if t.isMuxDataChannel(dc) {
-		dc.OnOpen(func() { t.onMuxDataChannelOpen(dc) })
-		logger.Tracef("setup mux data channel")
-		return
-	}
-
-	if t.isKcpDataChannel(dc) {
-		dc.OnOpen(func() { t.onKcpDataChannelOpen(dc) })
-		logger.Tracef("setup kcp data channel")
-		return
-	}
-
-	t.tempDataChannelsMtx.Lock()
-	defer t.tempDataChannelsMtx.Unlock()
-
-	dc.OnOpen(t.onDataChannelOpen(dc))
-
-	tdc, found := t.tempDataChannels[dc.Label()]
-	if !found {
-		t.tempDataChannels[dc.Label()] = &tempDataChannel{dc: dc}
-		go t.removeTimeoutTempDataChannel(dc.Label())
-		logger.Tracef("create temp data channel")
-		return
-	}
-
-	tdc.dc = dc
-	logger.Tracef("assign webrtc.DataChannel to temp data channel")
 }
 
 func (t *WebrtcTransport) onDataChannelOpen(dc *webrtc.DataChannel) func() {
@@ -148,36 +150,42 @@ func (t *WebrtcTransport) isKcpDataChannel(dc *webrtc.DataChannel) bool {
 	}
 }
 
-func (t *WebrtcTransport) onSysDataChannelOpen(dc *webrtc.DataChannel) {
+func (t *WebrtcTransport) onSysDataChannelOpen(sess Session, ndc *webrtc.DataChannel) {
 	var err error
 
 	logger := t.GetLogger().WithFields(logging.Fields{
 		"#method": "onSysDataChannelOpen",
-		"label":   dc.Label(),
+		"session": sess.String(),
+		"label":   ndc.Label(),
 	})
 
 	t.sysMtx.Lock()
 	defer t.sysMtx.Unlock()
 
-	if t.sysDataChannel != nil && t.sysDataChannel.Label() != dc.Label() {
-		logger.WithField("old", t.sysDataChannel.Label()).Debugf("sys data channel existed, close new one")
-		dc.Close()
-		return
+	odc, err := t.loadSystemDataChannel(sess)
+	if err == nil {
+		if odc.Label() != ndc.Label() {
+			logger.WithField("old-label", odc.Label()).Debugf("system data channel existed, close new data channel")
+			ndc.Close()
+			return
+		}
 	}
 
-	rwc, err := dc.Detach()
+	rwc, err := ndc.Detach()
 	if err != nil {
 		logger.WithError(err).Debugf("failed to detach DataChannel")
-		dc.Close()
+		ndc.Close()
 		return
 	}
 
-	t.rwc = rwc
-	t.sysDataChannel = dc
+	if odc == nil {
+		t.registerSystemDataChannel(sess, ndc)
+	}
+	t.registerSystemReadWriteCloser(sess, rwc)
 
-	go t.readLoop()
+	go t.readLoop(sess, rwc)
 	t.channelDone(1)
-	logger.Tracef("on sys data channel open")
+	logger.Tracef("on system data channel open")
 }
 
 func (t *WebrtcTransport) onMuxDataChannelOpen(dc *webrtc.DataChannel) {

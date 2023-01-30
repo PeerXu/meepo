@@ -9,9 +9,9 @@ func (t *WebrtcTransport) sendMessage(ctx context.Context, m Message) error {
 
 	logger := t.GetLogger().WithField("#method", "sendMessage").WithFields(t.wrapMessage(m))
 
-	if t.rwc == nil {
-		err := ErrInvalidSystemDataChannel
-		logger.WithError(err).Debugf("system data channel is empty")
+	rwc, err := t.loadSystemReadWriteCloserByContext(ctx)
+	if err != nil {
+		logger.WithError(err).Debugf("failed to get system rwc by context")
 		return err
 	}
 
@@ -21,7 +21,7 @@ func (t *WebrtcTransport) sendMessage(ctx context.Context, m Message) error {
 		return err
 	}
 
-	if n, err = t.rwc.Write(buf); err != nil {
+	if n, err = rwc.Write(buf); err != nil {
 		logger.WithError(err).Debugf("failed to send buffer")
 		return err
 	}

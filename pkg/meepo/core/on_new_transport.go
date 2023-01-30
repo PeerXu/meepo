@@ -94,11 +94,12 @@ func (mp *Meepo) onNewTransport(in *crypto_core.Packet) (answer webrtc.SessionDe
 		well_known_option.WithLogger(mp.GetLogger()),
 		well_known_option.WithAddr(srcAddr),
 		transport_webrtc.WithOffer(req.Offer),
+		transport_webrtc.WithSession(req.Session),
 		well_known_option.WithPeerConnection(pc),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
 		marshaler.WithMarshaler(mp.marshaler),
 		marshaler.WithUnmarshaler(mp.unmarshaler),
-		transport_webrtc.WithGatherDoneFunc(func(_answer webrtc.SessionDescription, _err error) {
+		transport_webrtc.WithGatherDoneFunc(func(_ transport_webrtc.Session, _answer webrtc.SessionDescription, _err error) {
 			answer = _answer
 			er = _err
 			done <- struct{}{}
@@ -133,7 +134,7 @@ func (mp *Meepo) onNewTransport(in *crypto_core.Packet) (answer webrtc.SessionDe
 		)
 	}
 
-	t, err := transport.NewTransport("webrtc/sink", opts...)
+	t, err := transport.NewTransport(transport_webrtc.TRANSPORT_WEBRTC_SINK, opts...)
 	if err != nil {
 		defer mp.transportsMtx.Unlock()
 		logger.WithError(err).Debugf("failed to new transport")

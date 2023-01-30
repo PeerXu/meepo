@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pion/webrtc/v3"
-
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/option"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
+	"github.com/pion/webrtc/v3"
 )
 
 func (t *WebrtcTransport) defaultCallOptions() option.Option {
@@ -41,7 +40,13 @@ func (t *WebrtcTransport) Call(ctx context.Context, method string, req meepo_int
 	}
 	logger = logger.WithField("scope", scope)
 
-	if st := t.pc.ConnectionState(); st != webrtc.PeerConnectionStateConnected {
+	pc, err := t.loadPeerConnectionByContext(ctx)
+	if err != nil {
+		logger.WithError(err).Debugf("failed to load peer connection")
+		return err
+	}
+
+	if st := pc.ConnectionState(); st != webrtc.PeerConnectionStateConnected {
 		err = ErrInvalidConnectionStateFn(st.String())
 		logger.WithError(err).Debugf("connection state not in connected")
 		return err

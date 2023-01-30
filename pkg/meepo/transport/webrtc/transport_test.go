@@ -44,15 +44,17 @@ func TestRawTransport(t *testing.T) {
 		},
 	}
 
+	var sess Session
 	var offer, answer *webrtc.SessionDescription
 	var waitGather, waitGatherDone = make(chan struct{}), make(chan struct{})
 	gather, gatherDone := func() (GatherFunc, GatherDoneFunc) {
-		return func(_offer webrtc.SessionDescription) (webrtc.SessionDescription, error) {
+		return func(_sess Session, _offer webrtc.SessionDescription) (webrtc.SessionDescription, error) {
 				offer = &_offer
+				sess = _sess
 				close(waitGather)
 				<-waitGatherDone
 				return *answer, nil
-			}, func(_answer webrtc.SessionDescription, er error) {
+			}, func(_sess Session, _answer webrtc.SessionDescription, er error) {
 				require.Nil(t, er)
 				answer = &_answer
 				close(waitGatherDone)
@@ -95,6 +97,7 @@ func TestRawTransport(t *testing.T) {
 		well_known_option.WithLogger(logger),
 		well_known_option.WithAddr(addrSink),
 		WithOffer(*offer),
+		WithSession(int32(sess)),
 		WithGatherDoneFunc(gatherDone),
 		well_known_option.WithPeerConnection(pcSink),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
@@ -168,15 +171,17 @@ func TestMuxTransport(t *testing.T) {
 		},
 	}
 
+	var sess Session
 	var offer, answer *webrtc.SessionDescription
 	var waitGather, waitGatherDone = make(chan struct{}), make(chan struct{})
 	gather, gatherDone := func() (GatherFunc, GatherDoneFunc) {
-		return func(_offer webrtc.SessionDescription) (webrtc.SessionDescription, error) {
+		return func(_sess Session, _offer webrtc.SessionDescription) (webrtc.SessionDescription, error) {
 				offer = &_offer
+				sess = _sess
 				close(waitGather)
 				<-waitGatherDone
 				return *answer, nil
-			}, func(_answer webrtc.SessionDescription, er error) {
+			}, func(_sess Session, _answer webrtc.SessionDescription, er error) {
 				require.Nil(t, er)
 				answer = &_answer
 				close(waitGatherDone)
@@ -222,6 +227,7 @@ func TestMuxTransport(t *testing.T) {
 		well_known_option.WithLogger(logger),
 		well_known_option.WithAddr(addrSink),
 		WithOffer(*offer),
+		WithSession(int32(sess)),
 		WithGatherDoneFunc(gatherDone),
 		well_known_option.WithPeerConnection(pcSink),
 		dialer.WithDialer(dialer.GetGlobalDialer()),

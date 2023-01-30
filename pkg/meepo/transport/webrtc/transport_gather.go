@@ -8,7 +8,7 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
-func (t *WebrtcTransport) sourceGather(gather GatherFunc) {
+func (t *WebrtcTransport) sourceGather(sess Session, gather GatherFunc) {
 	var err error
 	logger := t.GetLogger().WithFields(logging.Fields{
 		"#method": "sourceGather",
@@ -20,22 +20,28 @@ func (t *WebrtcTransport) sourceGather(gather GatherFunc) {
 		}
 	}()
 
-	ignore, err := t.pc.CreateDataChannel("_IGNORE_", nil)
+	pc, err := t.loadPeerConnection(sess)
+	if err != nil {
+		logger.WithError(err).Debugf("failed to load peer connection")
+		return
+	}
+
+	ignore, err := pc.CreateDataChannel("_IGNORE_", nil)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to create hacked data channel")
 		return
 	}
 	defer ignore.Close()
 
-	offer, err := t.pc.CreateOffer(nil)
+	offer, err := pc.CreateOffer(nil)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to create offer")
 		return
 	}
 
-	gatherCompleted := webrtc.GatheringCompletePromise(t.pc)
+	gatherCompleted := webrtc.GatheringCompletePromise(pc)
 
-	if err = t.pc.SetLocalDescription(offer); err != nil {
+	if err = pc.SetLocalDescription(offer); err != nil {
 		logger.WithError(err).Debugf("failed to set offer")
 		return
 	}
@@ -48,13 +54,13 @@ func (t *WebrtcTransport) sourceGather(gather GatherFunc) {
 		return
 	}
 
-	answer, err := gather(*t.pc.LocalDescription())
+	answer, err := gather(sess, *pc.LocalDescription())
 	if err != nil {
 		logger.WithError(err).Debugf("failed to gather")
 		return
 	}
 
-	if err = t.pc.SetRemoteDescription(answer); err != nil {
+	if err = pc.SetRemoteDescription(answer); err != nil {
 		logger.WithError(err).Debugf("failed to set answer")
 		return
 	}
@@ -62,29 +68,35 @@ func (t *WebrtcTransport) sourceGather(gather GatherFunc) {
 	logger.Tracef("gather completed")
 }
 
-func (t *WebrtcTransport) sinkGather(offer webrtc.SessionDescription, done GatherDoneFunc) {
+func (t *WebrtcTransport) sinkGather(sess Session, offer webrtc.SessionDescription, done GatherDoneFunc) {
 	logger := t.GetLogger().WithFields(logging.Fields{
 		"#method": "sinkGather",
 	})
 
-	err := t.pc.SetRemoteDescription(offer)
+	pc, err := t.loadPeerConnection(sess)
 	if err != nil {
-		done(webrtc.SessionDescription{}, err)
+		done(sess, webrtc.SessionDescription{}, err)
+		logger.WithError(err).Debugf("failed to load peer peer connection")
+		return
+	}
+
+	if err = pc.SetRemoteDescription(offer); err != nil {
+		done(sess, webrtc.SessionDescription{}, err)
 		logger.WithError(err).Debugf("failed to set offer")
 		return
 	}
 
-	gatherComplete := webrtc.GatheringCompletePromise(t.pc)
+	gatherComplete := webrtc.GatheringCompletePromise(pc)
 
-	answer, err := t.pc.CreateAnswer(nil)
+	answer, err := pc.CreateAnswer(nil)
 	if err != nil {
-		done(webrtc.SessionDescription{}, err)
+		done(sess, webrtc.SessionDescription{}, err)
 		logger.WithError(err).Debugf("failed to create answer")
 		return
 	}
 
-	if err = t.pc.SetLocalDescription(answer); err != nil {
-		done(webrtc.SessionDescription{}, err)
+	if err = pc.SetLocalDescription(answer); err != nil {
+		done(sess, webrtc.SessionDescription{}, err)
 		logger.WithError(err).Debugf("failed to set local description")
 		return
 	}
@@ -93,19 +105,19 @@ func (t *WebrtcTransport) sinkGather(offer webrtc.SessionDescription, done Gathe
 	case <-gatherComplete:
 	case <-time.After(t.gatherTimeout):
 		err = ErrGatherTimeout
-		done(webrtc.SessionDescription{}, err)
+		done(sess, webrtc.SessionDescription{}, err)
 		logger.WithError(err).Debugf("gather timeout")
 		return
 	}
 
-	answer = *t.pc.LocalDescription()
+	answer = *pc.LocalDescription()
 	if answer.Type == webrtc.SDPType(webrtc.Unknown) {
 		err = ErrInvalidAnswer
-		done(webrtc.SessionDescription{}, err)
+		done(sess, webrtc.SessionDescription{}, err)
 		logger.WithError(err).Debugf("failed to gather")
 		return
 	}
 
-	done(answer, nil)
+	done(sess, answer, nil)
 	logger.Tracef("gather completed")
 }

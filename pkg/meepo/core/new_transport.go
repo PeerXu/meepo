@@ -15,6 +15,7 @@ import (
 	tracker_interface "github.com/PeerXu/meepo/pkg/meepo/tracker/interface"
 	"github.com/PeerXu/meepo/pkg/meepo/transport"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
+	transport_pipe "github.com/PeerXu/meepo/pkg/meepo/transport/pipe"
 	transport_webrtc "github.com/PeerXu/meepo/pkg/meepo/transport/webrtc"
 )
 
@@ -43,23 +44,16 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 	var onRemoveTransport func(Transport) error
 	switch target {
 	case mp.Addr():
-		name = "pipe"
+		name = transport_pipe.TRANSPORT_PIPE
 
 		onAddTransport = mp.onAddPipeTransportNL
 		onRemoveTransport = mp.onRemovePipeTransport
 		onReadyTransport = func(Transport) error { return nil }
 	default:
-		name = "webrtc/source"
+		name = transport_webrtc.TRANSPORT_WEBRTC_SOURCE
 		var gatherOpt gatherOption
-
-		gatherOpt.EnableMux, _ = well_known_option.GetEnableMux(o)
+		mp.setupGatherOption(o, &gatherOpt)
 		if gatherOpt.EnableMux {
-			gatherOpt.MuxLabel = mp.newLabel("mux")
-			gatherOpt.MuxVer, _ = well_known_option.GetMuxVer(o)
-			gatherOpt.MuxBuf, _ = well_known_option.GetMuxBuf(o)
-			gatherOpt.MuxStreamBuf, _ = well_known_option.GetMuxStreamBuf(o)
-			gatherOpt.MuxNocomp, _ = well_known_option.GetMuxNocomp(o)
-
 			opts = append(opts,
 				transport_webrtc.WithMuxLabel(gatherOpt.MuxLabel),
 				well_known_option.WithMuxVer(gatherOpt.MuxVer),
@@ -69,18 +63,7 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 			)
 		}
 
-		gatherOpt.EnableKcp, _ = well_known_option.GetEnableKcp(o)
 		if gatherOpt.EnableKcp {
-			gatherOpt.KcpLabel = mp.newLabel("kcp")
-			gatherOpt.KcpPreset, _ = well_known_option.GetKcpPreset(o)
-			gatherOpt.KcpCrypt, _ = well_known_option.GetKcpCrypt(o)
-			gatherOpt.KcpKey, _ = well_known_option.GetKcpKey(o)
-			gatherOpt.KcpMtu, _ = well_known_option.GetKcpMtu(o)
-			gatherOpt.KcpSndwnd, _ = well_known_option.GetKcpSndwnd(o)
-			gatherOpt.KcpRcvwnd, _ = well_known_option.GetKcpRcvwnd(o)
-			gatherOpt.KcpDataShard, _ = well_known_option.GetKcpDataShard(o)
-			gatherOpt.KcpParityShard, _ = well_known_option.GetKcpParityShard(o)
-
 			opts = append(opts,
 				transport_webrtc.WithKcpLabel(gatherOpt.KcpLabel),
 				well_known_option.WithKcpPreset(gatherOpt.KcpPreset),
@@ -105,7 +88,7 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 		}
 
 		opts = append(opts,
-			transport_webrtc.WithGatherFunc(mp.gatherFunc(target, gtkFn, gatherOpt)),
+			transport_webrtc.WithGatherFunc(mp.genGatherFunc(target, gtkFn, gatherOpt)),
 			well_known_option.WithPeerConnection(pc),
 			transport_core.WithBeforeNewChannelHook(mp.beforeNewChannelHook),
 		)
@@ -138,14 +121,15 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 	return t, nil
 }
 
-func (mp *Meepo) newNewTransportRequest(target addr.Addr, offer webrtc.SessionDescription, opt gatherOption) (*crypto_core.Packet, error) {
+func (mp *Meepo) newNewTransportRequest(target addr.Addr, sess transport_webrtc.Session, offer webrtc.SessionDescription, opt gatherOption) (*crypto_core.Packet, error) {
 	logger := mp.GetLogger().WithFields(logging.Fields{
 		"#method": "newNewTransportRequest",
 		"target":  target.String(),
 	})
 
 	req := &tracker_interface.NewTransportRequest{
-		Offer: offer,
+		Session: int32(sess),
+		Offer:   offer,
 
 		EnableMux:    opt.EnableMux,
 		MuxLabel:     opt.MuxLabel,
@@ -186,4 +170,29 @@ func (mp *Meepo) newNewTransportRequest(target addr.Addr, offer webrtc.SessionDe
 	logger.Tracef("new NewTransport request")
 
 	return out, nil
+}
+
+func (mp *Meepo) setupGatherOption(o option.Option, gatherOpt *gatherOption) {
+	gatherOpt.EnableMux, _ = well_known_option.GetEnableMux(o)
+
+	if gatherOpt.EnableMux {
+		gatherOpt.MuxLabel = mp.newMuxLabel()
+		gatherOpt.MuxVer, _ = well_known_option.GetMuxVer(o)
+		gatherOpt.MuxBuf, _ = well_known_option.GetMuxBuf(o)
+		gatherOpt.MuxStreamBuf, _ = well_known_option.GetMuxStreamBuf(o)
+		gatherOpt.MuxNocomp, _ = well_known_option.GetMuxNocomp(o)
+	}
+
+	gatherOpt.EnableKcp, _ = well_known_option.GetEnableKcp(o)
+	if gatherOpt.EnableKcp {
+		gatherOpt.KcpLabel = mp.newKcpLabel()
+		gatherOpt.KcpPreset, _ = well_known_option.GetKcpPreset(o)
+		gatherOpt.KcpCrypt, _ = well_known_option.GetKcpCrypt(o)
+		gatherOpt.KcpKey, _ = well_known_option.GetKcpKey(o)
+		gatherOpt.KcpMtu, _ = well_known_option.GetKcpMtu(o)
+		gatherOpt.KcpSndwnd, _ = well_known_option.GetKcpSndwnd(o)
+		gatherOpt.KcpRcvwnd, _ = well_known_option.GetKcpRcvwnd(o)
+		gatherOpt.KcpDataShard, _ = well_known_option.GetKcpDataShard(o)
+		gatherOpt.KcpParityShard, _ = well_known_option.GetKcpParityShard(o)
+	}
 }

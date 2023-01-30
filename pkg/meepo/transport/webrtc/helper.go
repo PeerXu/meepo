@@ -25,10 +25,7 @@ func (t *WebrtcTransport) nextChannelID() uint16 {
 }
 
 func (t *WebrtcTransport) readyError() error {
-	if v := t.readyErrVal.Load(); v != nil {
-		return v.(error)
-	}
-	return nil
+	return t.readyErrVal.Load()
 }
 
 type LockableChannel struct {

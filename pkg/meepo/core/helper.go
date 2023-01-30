@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/PeerXu/meepo/pkg/lib/routing_table"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
+	"github.com/PeerXu/meepo/pkg/lib/routing_table"
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
 
@@ -113,6 +113,14 @@ func (mp *Meepo) newTeleportationID() string {
 
 func (mp *Meepo) newLabel(ns string) string {
 	return fmt.Sprintf("%s#%016x", ns, mp.randSrc.Int63())
+}
+
+func (mp *Meepo) newMuxLabel() string {
+	return mp.newLabel("mux")
+}
+
+func (mp *Meepo) newKcpLabel() string {
+	return mp.newLabel("kcp")
 }
 
 // nolint:unused

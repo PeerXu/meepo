@@ -9,10 +9,10 @@ import (
 func (t *WebrtcTransport) Close(ctx context.Context) (err error) {
 	logger := t.GetLogger().WithField("#method", "Close")
 
-	if t.closed.Load().(bool) {
+	if t.isClosed() {
 		return nil
 	}
-	t.closed.Swap(true)
+	t.closed.Store(true)
 
 	t.readyOnce.Do(func() {
 		t.readyErrVal.Store(transport_core.ErrTransportClosed)
@@ -29,9 +29,9 @@ func (t *WebrtcTransport) Close(ctx context.Context) (err error) {
 		logger.WithError(err).Debugf("failed to close all channels")
 	}
 
-	if er := t.pc.Close(); er != nil {
+	if er := t.closeAllPeerConnections(); er != nil {
 		err = er
-		logger.WithError(err).Debugf("failed to close peer connection")
+		logger.WithError(err).Debugf("failed to close all peer connections")
 	}
 
 	if er := t.onCloseCb(t); er != nil {
@@ -63,4 +63,20 @@ func (t *WebrtcTransport) closeAllChannels(ctx context.Context) error {
 	logger.Tracef("close all channels")
 
 	return err
+}
+
+func (t *WebrtcTransport) isClosed() bool {
+	return t.closed.Load()
+}
+
+func (t *WebrtcTransport) isClosable() bool {
+	if t.isClosed() {
+		return false
+	}
+
+	if t.countPeerConnections() > 0 {
+		return false
+	}
+
+	return true
 }

@@ -19,14 +19,14 @@ type PingResponse struct {
 func (t *WebrtcTransport) ping(ctx context.Context) (ttl time.Duration, err error) {
 	var res PingResponse
 
-	sess := t.randSrc.Int63()
+	pingSess := t.randSrc.Int63()
 	logger := t.GetLogger().WithFields(logging.Fields{
 		"#method": "ping",
-		"session": sess,
+		"session": pingSess,
 	})
 	pingAt := time.Now()
 
-	if err = t.Call(ctx, "ping", &PingRequest{Session: sess}, &res, well_known_option.WithScope("sys")); err != nil {
+	if err = t.Call(ctx, "ping", &PingRequest{Session: pingSess}, &res, well_known_option.WithScope("sys")); err != nil {
 		logger.WithError(err).Debugf("failed to ping")
 		return time.Duration(0), err
 	}
@@ -34,8 +34,8 @@ func (t *WebrtcTransport) ping(ctx context.Context) (ttl time.Duration, err erro
 	ttl = time.Since(pingAt)
 	logger = logger.WithField("ttl", ttl)
 
-	if sess != res.Session {
-		err = ErrInvalidPingSessionFn(sess, res.Session)
+	if pingSess != res.Session {
+		err = ErrInvalidPingSessionFn(pingSess, res.Session)
 		logger.WithError(err).Debugf("invalid ping session")
 		return time.Duration(0), err
 	}

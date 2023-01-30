@@ -16,11 +16,14 @@ var (
 )
 
 var (
-	ErrSessionNotFound, ErrSessionNotFoundFn               = errors.NewErrorAndErrorFunc[string]("session not found")
-	ErrUnsupportedScope, ErrUnsupportedScopeFn             = errors.NewErrorAndErrorFunc[string]("unsupported scope")
-	ErrUnsupportedMethod, ErrUnsupportedMethodFn           = errors.NewErrorAndErrorFunc[string]("unsupported method")
-	ErrInvalidConnectionState, ErrInvalidConnectionStateFn = errors.NewErrorAndErrorFunc[string]("invalid connection state")
-	ErrChannelNotFound, ErrChannelNotFoundFn               = errors.NewErrorAndErrorFunc[uint16]("channel not found")
+	ErrSessionNotFound, ErrSessionNotFoundFn                 = errors.NewErrorAndErrorFunc[string]("session not found")
+	ErrUnsupportedScope, ErrUnsupportedScopeFn               = errors.NewErrorAndErrorFunc[string]("unsupported scope")
+	ErrUnsupportedMethod, ErrUnsupportedMethodFn             = errors.NewErrorAndErrorFunc[string]("unsupported method")
+	ErrInvalidConnectionState, ErrInvalidConnectionStateFn   = errors.NewErrorAndErrorFunc[string]("invalid connection state")
+	ErrChannelNotFound, ErrChannelNotFoundFn                 = errors.NewErrorAndErrorFunc[uint16]("channel not found")
+	ErrPeerConnectionNotFound, ErrPeerConnectionNotFoundFn   = errors.NewErrorAndErrorFunc[Session]("peer connection not found")
+	ErrDataChannelNotFound, ErrDataChannelNotFoundFn         = errors.NewErrorAndErrorFunc[Session]("data channel not found")
+	ErrReadWriteCloserNotFound, ErrReadWriteCloserNotFoundFn = errors.NewErrorAndErrorFunc[Session]("readWriteCloser not found")
 )
 
 func ErrInvalidPingSessionFn(expect int64, actual int64) error {

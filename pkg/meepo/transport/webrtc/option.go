@@ -12,8 +12,8 @@ import (
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
 
-type GatherFunc func(webrtc.SessionDescription) (webrtc.SessionDescription, error)
-type GatherDoneFunc func(webrtc.SessionDescription, error)
+type GatherFunc func(Session, webrtc.SessionDescription) (webrtc.SessionDescription, error)
+type GatherDoneFunc func(Session, webrtc.SessionDescription, error)
 
 const (
 	OPTION_TEMP_DATA_CHANNEL_TIMEOUT = "tempDataChannelTimeout"
@@ -24,6 +24,7 @@ const (
 	OPTION_GATHER_DONE_FUNC          = "gatherDoneFunc"
 	OPTION_MUX_LABEL                 = "muxLabel"
 	OPTION_KCP_LABEL                 = "kcpLabel"
+	OPTION_SESSION                   = "session"
 
 	CHANNEL_MODE_RAW = "raw"
 	CHANNEL_MODE_MUX = "mux"
@@ -75,4 +76,5 @@ var (
 	WithGatherDoneFunc, GetGatherDoneFunc                 = option.New[GatherDoneFunc](OPTION_GATHER_DONE_FUNC)
 	WithMuxLabel, GetMuxLabel                             = option.New[string](OPTION_MUX_LABEL)
 	WithKcpLabel, GetKcpLabel                             = option.New[string](OPTION_KCP_LABEL)
+	WithSession, GetSession                               = option.New[int32](OPTION_SESSION)
 )

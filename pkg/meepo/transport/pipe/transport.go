@@ -4,14 +4,18 @@ import (
 	"sync/atomic"
 
 	"github.com/PeerXu/meepo/pkg/lib/dialer"
-	"github.com/PeerXu/meepo/pkg/lib/logging"
-	"github.com/PeerXu/meepo/pkg/lib/option"
-	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/lock"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	marshaler_interface "github.com/PeerXu/meepo/pkg/lib/marshaler/interface"
+	"github.com/PeerXu/meepo/pkg/lib/option"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
+)
+
+const (
+	TRANSPORT_PIPE = "pipe"
 )
 
 type PipeTransport struct {
@@ -96,5 +100,5 @@ func NewPipeTransport(opts ...meepo_interface.NewTransportOption) (meepo_interfa
 }
 
 func init() {
-	transport_core.RegisterNewTransportFunc("pipe", NewPipeTransport)
+	transport_core.RegisterNewTransportFunc(TRANSPORT_PIPE, NewPipeTransport)
 }

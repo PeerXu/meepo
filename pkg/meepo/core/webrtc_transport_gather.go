@@ -3,8 +3,8 @@ package meepo_core
 import (
 	"github.com/pion/webrtc/v3"
 
-	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	transport_webrtc "github.com/PeerXu/meepo/pkg/meepo/transport/webrtc"
 )
 
@@ -31,14 +31,15 @@ type gatherOption struct {
 	KcpParityShard int
 }
 
-func (mp *Meepo) gatherFunc(target addr.Addr, gtkFn getTrackersFunc, opt gatherOption) transport_webrtc.GatherFunc {
-	return func(offer webrtc.SessionDescription) (answer webrtc.SessionDescription, err error) {
+func (mp *Meepo) genGatherFunc(target addr.Addr, gtkFn getTrackersFunc, opt gatherOption) transport_webrtc.GatherFunc {
+	return func(sess transport_webrtc.Session, offer webrtc.SessionDescription) (answer webrtc.SessionDescription, err error) {
 		logger := mp.GetLogger().WithFields(logging.Fields{
 			"#method": "gatherFunc",
 			"target":  target.String(),
+			"session": sess.String(),
 		})
 
-		req, err := mp.newNewTransportRequest(target, offer, opt)
+		req, err := mp.newNewTransportRequest(target, sess, offer, opt)
 		if err != nil {
 			logger.WithError(err).Debugf("failed to new NewTransport request")
 			return

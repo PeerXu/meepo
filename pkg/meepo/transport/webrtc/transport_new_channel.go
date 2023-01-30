@@ -38,8 +38,14 @@ func (t *WebrtcTransport) NewChannel(ctx context.Context, network string, addres
 
 	switch mode {
 	case CHANNEL_MODE_RAW:
+		pc, err := t.loadRandomPeerConnection()
+		if err != nil {
+			logger.WithError(err).Debugf("failed to load peer connection")
+			return nil, err
+		}
+
 		label = t.nextDataChannelLabel("data")
-		dc, err = t.pc.CreateDataChannel(label, nil)
+		dc, err = pc.CreateDataChannel(label, nil)
 		if err != nil {
 			logger.WithError(err).Debugf("failed to create data channel")
 			return nil, err

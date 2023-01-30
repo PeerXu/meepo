@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
+	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
 
 type CloseRequest struct{}
@@ -27,6 +28,16 @@ func (t *WebrtcTransport) onClose(ctx context.Context, _req any) (res any, err e
 	res = &CloseResponse{}
 
 	logger := t.GetLogger().WithField("#method", "onClose")
+
+	if t.isClosed() {
+		return
+	}
+	t.closed.Store(true)
+
+	t.readyOnce.Do(func() {
+		t.readyErrVal.Store(transport_core.ErrTransportClosed)
+		close(t.ready)
+	})
 
 	logger.WithError(t.closeAllChannels(ctx)).Tracef("close all channels")
 

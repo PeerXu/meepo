@@ -93,7 +93,7 @@ func meepoTestWebrtc(cmd *cobra.Command, args []string) error {
 		pc.OnDataChannel(func(dc *webrtc.DataChannel) {
 			dc.OnOpen(func() {
 				for t := range time.NewTicker(5 * time.Second).C {
-					msg := fmt.Sprintf("%s", t.String())
+					msg := t.String()
 					if err := dc.SendText(msg); err != nil {
 						fmt.Printf("answerer: error: %s\n", err.Error())
 						return

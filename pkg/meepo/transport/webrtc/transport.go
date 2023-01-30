@@ -1,34 +1,40 @@
 package transport_webrtc
 
 import (
+	"io"
 	"math/rand"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/pion/webrtc/v3"
 	"github.com/xtaci/smux"
 
 	"github.com/PeerXu/meepo/pkg/lib/dialer"
-	dialer_interface "github.com/PeerXu/meepo/pkg/lib/dialer/interface"
 	"github.com/PeerXu/meepo/pkg/lib/lock"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	marshaler_interface "github.com/PeerXu/meepo/pkg/lib/marshaler/interface"
 	"github.com/PeerXu/meepo/pkg/lib/option"
 	msync "github.com/PeerXu/meepo/pkg/lib/sync"
+	matomic "github.com/PeerXu/meepo/pkg/lib/sync/atomic"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
 
+const (
+	TRANSPORT_WEBRTC_SOURCE = "webrtc/source"
+	TRANSPORT_WEBRTC_SINK   = "webrtc/sink"
+)
+
 type WebrtcTransport struct {
 	addr meepo_interface.Addr
 
-	pc                     *webrtc.PeerConnection
+	peerConnections        msync.GenericsMap[Session, *webrtc.PeerConnection]
+	systemDataChannels     msync.GenericsMap[Session, *webrtc.DataChannel]
+	systemReadWriteClosers msync.GenericsMap[Session, io.ReadWriteCloser]
+
 	sysMtx                 lock.Locker
-	sysDataChannel         *webrtc.DataChannel
-	rwc                    dialer_interface.Conn
 	tempDataChannelsMtx    lock.Locker
 	tempDataChannels       map[string]*tempDataChannel
 	tempDataChannelTimeout time.Duration
@@ -39,7 +45,7 @@ type WebrtcTransport struct {
 	onReadyCb              transport_core.OnTransportReadyFunc
 	beforeNewChannelHook   transport_core.BeforeNewChannelHook
 	logger                 logging.Logger
-	closed                 atomic.Value
+	closed                 matomic.GenericsValue[bool]
 	role                   string
 	currentChannelID       uint32
 
@@ -68,7 +74,7 @@ type WebrtcTransport struct {
 	kcpDataChannel *webrtc.DataChannel
 	kcpSess        *smux.Session
 
-	readyErrVal  atomic.Value
+	readyErrVal  matomic.GenericsValue[error]
 	readyTimeout time.Duration
 	ready        chan struct{}
 	readyCount   int32
@@ -78,7 +84,7 @@ type WebrtcTransport struct {
 	fns         map[string]meepo_interface.HandleFunc
 	marshaler   marshaler_interface.Marshaler
 	unmarshaler marshaler_interface.Unmarshaler
-	polls       msync.GenericsMap[*LockableChannel]
+	polls       msync.GenericsMap[string, *LockableChannel]
 
 	csMtx lock.Locker
 	cs    map[uint16]meepo_interface.Channel
@@ -97,7 +103,7 @@ func NewWebrtcSourceTransport(opts ...meepo_interface.NewTransportOption) (meepo
 		return nil, err
 	}
 
-	gather, err := GetGatherFunc(o)
+	gatherFn, err := GetGatherFunc(o)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +165,9 @@ func NewWebrtcSourceTransport(opts ...meepo_interface.NewTransportOption) (meepo
 
 	t := &WebrtcTransport{
 		addr:                   addr,
-		pc:                     pc,
+		peerConnections:        msync.NewMap[Session, *webrtc.PeerConnection](),
+		systemDataChannels:     msync.NewMap[Session, *webrtc.DataChannel](),
+		systemReadWriteClosers: msync.NewMap[Session, io.ReadWriteCloser](),
 		sysMtx:                 lock.NewLock(well_known_option.WithName("sysMtx")),
 		tempDataChannelsMtx:    lock.NewLock(well_known_option.WithName("tempDataChannelsMtx")),
 		tempDataChannels:       make(map[string]*tempDataChannel),
@@ -171,8 +179,10 @@ func NewWebrtcSourceTransport(opts ...meepo_interface.NewTransportOption) (meepo
 		onReadyCb:              onTransportReady,
 		beforeNewChannelHook:   beforeNewChannelHook,
 		logger:                 logger,
+		closed:                 matomic.NewValue[bool](),
 		role:                   "source",
 		currentChannelID:       0,
+		readyErrVal:            matomic.NewValue[error](),
 		readyTimeout:           readyTimeout,
 		ready:                  make(chan struct{}),
 		readyCount:             1,
@@ -180,10 +190,11 @@ func NewWebrtcSourceTransport(opts ...meepo_interface.NewTransportOption) (meepo
 		fns:                    make(map[string]meepo_interface.HandleFunc),
 		marshaler:              mr,
 		unmarshaler:            umr,
-		polls:                  msync.NewMap[*LockableChannel](),
+		polls:                  msync.NewMap[string, *LockableChannel](),
 		csMtx:                  lock.NewLock(well_known_option.WithName("csMtx")),
 		cs:                     make(map[uint16]meepo_interface.Channel),
 	}
+	sess := t.registerPeerConnection(pc)
 
 	t.enableMux, _ = well_known_option.GetEnableMux(o)
 	if t.enableMux {
@@ -214,9 +225,9 @@ func NewWebrtcSourceTransport(opts ...meepo_interface.NewTransportOption) (meepo
 
 	t.closed.Store(false)
 
-	pc.OnConnectionStateChange(t.onSourceConnectionStateChange)
-	pc.OnDataChannel(t.onDataChannel)
-	go t.sourceGather(gather)
+	pc.OnConnectionStateChange(t.onSourceConnectionStateChange(sess))
+	pc.OnDataChannel(t.onDataChannel(sess))
+	go t.sourceGather(sess, gatherFn)
 
 	return t, nil
 }
@@ -249,6 +260,12 @@ func NewWebrtcSinkTransport(opts ...meepo_interface.NewTransportOption) (meepo_i
 		return nil, err
 	}
 
+	sessI32, err := GetSession(o)
+	if err != nil {
+		return nil, err
+	}
+	pcSess := Session(sessI32)
+
 	pc, err := well_known_option.GetPeerConnection(o)
 	if err != nil {
 		return nil, err
@@ -301,7 +318,9 @@ func NewWebrtcSinkTransport(opts ...meepo_interface.NewTransportOption) (meepo_i
 
 	t := &WebrtcTransport{
 		addr:                   addr,
-		pc:                     pc,
+		peerConnections:        msync.NewMap[Session, *webrtc.PeerConnection](),
+		systemDataChannels:     msync.NewMap[Session, *webrtc.DataChannel](),
+		systemReadWriteClosers: msync.NewMap[Session, io.ReadWriteCloser](),
 		sysMtx:                 lock.NewLock(well_known_option.WithName("sysMtx")),
 		tempDataChannelsMtx:    lock.NewLock(well_known_option.WithName("tempDataChannelsMtx")),
 		tempDataChannels:       make(map[string]*tempDataChannel),
@@ -313,8 +332,10 @@ func NewWebrtcSinkTransport(opts ...meepo_interface.NewTransportOption) (meepo_i
 		onReadyCb:              onTransportReady,
 		beforeNewChannelHook:   beforeNewChannelHook,
 		logger:                 logger,
+		closed:                 matomic.NewValue[bool](),
 		role:                   "sink",
 		currentChannelID:       1,
+		readyErrVal:            matomic.NewValue[error](),
 		readyTimeout:           readyTimeout,
 		ready:                  make(chan struct{}),
 		readyCount:             1,
@@ -322,10 +343,11 @@ func NewWebrtcSinkTransport(opts ...meepo_interface.NewTransportOption) (meepo_i
 		fns:                    make(map[string]meepo_interface.HandleFunc),
 		marshaler:              mr,
 		unmarshaler:            umr,
-		polls:                  msync.NewMap[*LockableChannel](),
+		polls:                  msync.NewMap[string, *LockableChannel](),
 		csMtx:                  lock.NewLock(well_known_option.WithName("tpsMtx")),
 		cs:                     make(map[uint16]meepo_interface.Channel),
 	}
+	t.setPeerConnection(pcSess, pc)
 
 	t.enableMux, _ = well_known_option.GetEnableMux(o)
 	if t.enableMux {
@@ -356,14 +378,14 @@ func NewWebrtcSinkTransport(opts ...meepo_interface.NewTransportOption) (meepo_i
 
 	t.closed.Store(false)
 
-	pc.OnConnectionStateChange(t.onSinkConnectionStateChange)
-	pc.OnDataChannel(t.onDataChannel)
-	go t.sinkGather(offer, gatherDone)
+	pc.OnConnectionStateChange(t.onSinkConnectionStateChange(pcSess))
+	pc.OnDataChannel(t.onDataChannel(pcSess))
+	go t.sinkGather(pcSess, offer, gatherDone)
 
 	return t, nil
 }
 
 func init() {
-	transport_core.RegisterNewTransportFunc("webrtc/source", NewWebrtcSourceTransport)
-	transport_core.RegisterNewTransportFunc("webrtc/sink", NewWebrtcSinkTransport)
+	transport_core.RegisterNewTransportFunc(TRANSPORT_WEBRTC_SOURCE, NewWebrtcSourceTransport)
+	transport_core.RegisterNewTransportFunc(TRANSPORT_WEBRTC_SINK, NewWebrtcSinkTransport)
 }
