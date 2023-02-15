@@ -1,9 +1,10 @@
 package sdk_rpc
 
 import (
+	"github.com/PeerXu/meepo/pkg/lib/addr"
 	"github.com/PeerXu/meepo/pkg/lib/option"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
-	"github.com/PeerXu/meepo/pkg/lib/addr"
+	sdk_core "github.com/PeerXu/meepo/pkg/meepo/sdk/core"
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
 
@@ -38,7 +39,7 @@ func (s *RPCSDK) NewTransport(target addr.Addr, opts ...sdk_interface.NewTranspo
 	}
 
 	var tv sdk_interface.TransportView
-	err := s.caller.Call(s.context(), "newTransport", &req, &tv)
+	err := s.caller.Call(s.context(), sdk_core.METHOD_NEW_TRANSPORT, &req, &tv)
 	if err != nil {
 		return tv, err
 	}

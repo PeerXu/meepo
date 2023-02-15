@@ -11,15 +11,14 @@ func (t *WebrtcTransport) State() meepo_interface.TransportState {
 		return meepo_interface.TRANSPORT_STATE_CLOSED
 	}
 
-	anyConnecting := false
-	anyConnected := false
+	connected := false
 	t.peerConnections.Range(func(sess Session, pc *webrtc.PeerConnection) bool {
 		switch pc.ConnectionState() {
 		case webrtc.PeerConnectionStateNew:
 		case webrtc.PeerConnectionStateConnecting:
-			anyConnecting = true
 		case webrtc.PeerConnectionStateConnected:
-			anyConnected = true
+			connected = true
+			return false
 		case webrtc.PeerConnectionStateDisconnected:
 		case webrtc.PeerConnectionStateFailed:
 		case webrtc.PeerConnectionStateClosed:
@@ -27,17 +26,21 @@ func (t *WebrtcTransport) State() meepo_interface.TransportState {
 		return true
 	})
 
+	if connected {
+		return meepo_interface.TRANSPORT_STATE_CONNECTED
+	}
+
 	if !t.isReady() {
 		return meepo_interface.TRANSPORT_STATE_NEW
 	}
 
-	if anyConnected {
-		return meepo_interface.TRANSPORT_STATE_CONNECTED
-	}
-
-	if anyConnecting {
+	if !t.isConnectedOnce() {
 		return meepo_interface.TRANSPORT_STATE_CONNECTING
 	}
 
 	return meepo_interface.TRANSPORT_STATE_DISCONNECTED
+}
+
+func (t *WebrtcTransport) isConnectedOnce() bool {
+	return t.connectedOnce.Load()
 }

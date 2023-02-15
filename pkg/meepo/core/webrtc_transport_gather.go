@@ -4,6 +4,7 @@ import (
 	"github.com/pion/webrtc/v3"
 
 	"github.com/PeerXu/meepo/pkg/lib/addr"
+	crypto_core "github.com/PeerXu/meepo/pkg/lib/crypto/core"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	transport_webrtc "github.com/PeerXu/meepo/pkg/meepo/transport/webrtc"
 )
@@ -31,84 +32,61 @@ type gatherOption struct {
 	KcpParityShard int
 }
 
-func (mp *Meepo) genGatherFunc(target addr.Addr, gtkFn getTrackersFunc, opt gatherOption) transport_webrtc.GatherFunc {
+func (mp *Meepo) genGatherFunc(target addr.Addr) transport_webrtc.GatherFunc {
 	return func(sess transport_webrtc.Session, offer webrtc.SessionDescription) (answer webrtc.SessionDescription, err error) {
 		logger := mp.GetLogger().WithFields(logging.Fields{
 			"#method": "gatherFunc",
 			"target":  target.String(),
 			"session": sess.String(),
 		})
+		req, err := mp.newAddPeerConnectionRequest(target, sess, offer)
+		if err != nil {
+			logger.WithError(err).Debugf("failed to new AddPeerConnection request")
+			return
+		}
 
+		out, err := mp.forwardRequest(mp.context(), target, req,
+			func(tk Tracker, in *crypto_core.Packet) (any, error) { return tk.AddPeerConnection(in) },
+			func(target Addr) ([]Tracker, bool, error) {
+				return mp.getCloserTrackers(target, mp.dhtAlpha, []Addr{target})
+			},
+			logger)
+		if err != nil {
+			return
+		}
+
+		answer = out.(webrtc.SessionDescription)
+
+		return
+	}
+}
+
+func (mp *Meepo) genGatherOnNewFunc(target addr.Addr, gtksFn getTrackersFunc, opt gatherOption) transport_webrtc.GatherFunc {
+	return func(sess transport_webrtc.Session, offer webrtc.SessionDescription) (answer webrtc.SessionDescription, err error) {
+		logger := mp.GetLogger().WithFields(logging.Fields{
+			"#method": "gatherOnNewFunc",
+			"target":  target.String(),
+			"session": sess.String(),
+		})
 		req, err := mp.newNewTransportRequest(target, sess, offer, opt)
 		if err != nil {
 			logger.WithError(err).Debugf("failed to new NewTransport request")
 			return
 		}
-
-		if gtkFn == nil {
-			gtkFn = func(target Addr) ([]Tracker, bool, error) { return mp.getCloserTrackers(target, mp.dhtAlpha, nil) }
+		if gtksFn == nil {
+			gtksFn = func(target Addr) ([]Tracker, bool, error) { return mp.getCloserTrackers(target, mp.dhtAlpha, nil) }
 		}
 
-		tks, found, err := gtkFn(target)
+		out, err := mp.forwardRequest(mp.context(), target, req,
+			func(tk Tracker, in *crypto_core.Packet) (any, error) { return tk.NewTransport(in) },
+			gtksFn,
+			logger)
 		if err != nil {
-			logger.WithError(err).Debugf("failed to get closer trackers")
-			return
-		}
-		logger = logger.WithFields(logging.Fields{
-			"found":           found,
-			"trackers.length": len(tks),
-		})
-
-		if len(tks) == 0 {
-			err = ErrNoAvailableTrackers
-			logger.WithError(err).Debugf("no available trackers")
 			return
 		}
 
-		if found {
-			tks = tks[:1]
-		}
+		answer = out.(webrtc.SessionDescription)
 
-		done := make(chan struct{})
-		answers := make(chan webrtc.SessionDescription)
-		errs := make(chan error)
-		defer func() {
-			close(done)
-			close(answers)
-			close(errs)
-		}()
-
-		for _, tk := range tks {
-			go func(tk Tracker) {
-				logger := logger.WithField("tracker", tk.Addr().String())
-				_answer, _err := tk.NewTransport(req)
-				select {
-				case <-done:
-					logger.Tracef("gather already done")
-					return
-				default:
-				}
-
-				if _err != nil {
-					logger.WithError(_err).Tracef("failed to new transport by tracker")
-					errs <- _err
-					return
-				}
-				answers <- _answer
-				logger.Tracef("new transport by tracker")
-			}(tk)
-		}
-
-		for i := 0; i < len(tks); i++ {
-			select {
-			case answer = <-answers:
-				logger.Tracef("gather done")
-				return answer, nil
-			case err = <-errs:
-			}
-		}
-
-		logger.WithError(err).Debugf("failed to gather")
 		return
 	}
 }

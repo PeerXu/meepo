@@ -10,12 +10,12 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/PeerXu/meepo/pkg/lib/logging"
-	"github.com/PeerXu/meepo/pkg/lib/option"
-	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
 	crypto_interface "github.com/PeerXu/meepo/pkg/lib/crypto/interface"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+	"github.com/PeerXu/meepo/pkg/lib/option"
 	rpc_interface "github.com/PeerXu/meepo/pkg/lib/rpc/interface"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 )
 
 func (x *HttpCaller) Call(ctx context.Context, method string, req rpc_interface.CallRequest, res rpc_interface.CallResponse, opts ...rpc_interface.CallOption) error {
@@ -70,9 +70,11 @@ func (x *HttpCaller) Call(ctx context.Context, method string, req rpc_interface.
 		return err
 	}
 
-	if err = x.unmarshaler.Unmarshal(doRes.CallResponse, res); err != nil {
-		logger.WithError(err).Debugf("failed to unmarshal call response")
-		return err
+	if res != nil {
+		if err = x.unmarshaler.Unmarshal(doRes.CallResponse, res); err != nil {
+			logger.WithError(err).Debugf("failed to unmarshal call response")
+			return err
+		}
 	}
 
 	logger.Tracef("call")

@@ -1,11 +1,11 @@
 package meepo_core
 
 import (
-	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
-func (mp *Meepo) getClosestTrackers(target addr.Addr) ([]Tracker, error) {
+func (mp *Meepo) getClosestTrackers(target addr.Addr) ([]Tracker, bool, error) {
 	logger := mp.GetLogger().WithFields(logging.Fields{
 		"#method": "getClosestTrackers",
 		"target":  target.String(),
@@ -13,21 +13,13 @@ func (mp *Meepo) getClosestTrackers(target addr.Addr) ([]Tracker, error) {
 
 	targetID := Addr2ID(target)
 	closestIDs, found := mp.routingTable.ClosestIDs(targetID, mp.dhtAlpha)
-
-	var closestAddrs []addr.Addr
-	if found {
-		closestAddrs = IDs2Addrs(closestIDs[:1])
-	} else {
-		closestAddrs = IDs2Addrs(closestIDs)
-	}
-
-	closestTrackers, err := mp.listTrackersByAddrs(closestAddrs)
+	closestTrackers, err := mp.listTrackersByAddrs(IDs2Addrs(closestIDs))
 	if err != nil {
 		logger.WithError(err).Debugf("failed to list trackers by addrs")
-		return nil, err
+		return nil, false, err
 	}
 
 	logger.Tracef("get closest trackers")
 
-	return closestTrackers, nil
+	return closestTrackers, found, nil
 }

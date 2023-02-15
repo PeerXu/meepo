@@ -3,6 +3,7 @@ package transport_webrtc
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/rand"
 
 	mcontext "github.com/PeerXu/meepo/pkg/lib/context"
@@ -23,7 +24,15 @@ func (t *WebrtcTransport) newSession() Session {
 }
 
 func newSession(randSrc rand.Source) Session {
-	return Session(randSrc.Int63())
+	return Session(randSrc.Int63() & (math.MaxInt64 - 1))
+}
+
+func (t *WebrtcTransport) nextSession(sess Session) Session {
+	return nextSession(sess)
+}
+
+func nextSession(sess Session) Session {
+	return Session(int32(sess) + 1)
 }
 
 func getSessionFromContext(ctx context.Context) Session {

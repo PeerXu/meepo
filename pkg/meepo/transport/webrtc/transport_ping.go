@@ -26,7 +26,7 @@ func (t *WebrtcTransport) ping(ctx context.Context) (ttl time.Duration, err erro
 	})
 	pingAt := time.Now()
 
-	if err = t.Call(ctx, "ping", &PingRequest{Session: pingSess}, &res, well_known_option.WithScope("sys")); err != nil {
+	if err = t.Call(ctx, SYS_METHOD_PING, &PingRequest{Session: pingSess}, &res, well_known_option.WithScope("sys")); err != nil {
 		logger.WithError(err).Debugf("failed to ping")
 		return time.Duration(0), err
 	}

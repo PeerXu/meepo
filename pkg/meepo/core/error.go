@@ -11,6 +11,7 @@ var (
 )
 
 var (
+	ErrUnsupportedMethod, ErrUnsupportedMethodFn         = errors.NewErrorAndErrorFunc[string]("unsupported method")
 	ErrTeleportationNotFound, ErrTeleportationNotFoundFn = errors.NewErrorAndErrorFunc[string]("teleportation not found")
 	ErrTransportNotFound, ErrTransportNotFoundFn         = errors.NewErrorAndErrorFunc[string]("transport not found")
 	ErrTransportFound, ErrTransportFoundFn               = errors.NewErrorAndErrorFunc[string]("transport found")

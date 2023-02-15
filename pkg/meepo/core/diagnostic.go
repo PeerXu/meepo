@@ -55,12 +55,12 @@ func (mp *Meepo) Diagnostic() (meepo_interface.DiagnosticReport, error) {
 		logger.WithError(err).Debugf("failed to create offer")
 		return nil, err
 	}
-	gatherComplted := webrtc.GatheringCompletePromise(pc)
+	gatherCompleted := webrtc.GatheringCompletePromise(pc)
 	if err = pc.SetLocalDescription(offer); err != nil {
 		logger.WithError(err).Debugf("failed to gather")
 		return nil, err
 	}
-	<-gatherComplted
+	<-gatherCompleted
 
 	iceServersMap := map[string]bool{}
 	for _, is := range mp.webrtcConfiguration.ICEServers {

@@ -7,12 +7,13 @@ import (
 )
 
 var (
-	ErrCallTimeout              = fmt.Errorf("call timeout")
-	ErrInvalidPingSession       = fmt.Errorf("invalid ping session")
-	ErrGatherTimeout            = fmt.Errorf("gather timeout")
-	ErrInvalidAnswer            = fmt.Errorf("invalid answer")
-	ErrRepeatedChannelID        = fmt.Errorf("repeated channel id")
-	ErrInvalidSystemDataChannel = fmt.Errorf("invalid system data channel")
+	ErrCallTimeout                = fmt.Errorf("call timeout")
+	ErrInvalidPingSession         = fmt.Errorf("invalid ping session")
+	ErrGatherTimeout              = fmt.Errorf("gather timeout")
+	ErrInvalidAnswer              = fmt.Errorf("invalid answer")
+	ErrRepeatedChannelID          = fmt.Errorf("repeated channel id")
+	ErrInvalidSystemDataChannel   = fmt.Errorf("invalid system data channel")
+	ErrNotConnectedPeerConnection = fmt.Errorf("not connected peer connection")
 )
 
 var (

@@ -5,7 +5,6 @@ import (
 
 	"github.com/pion/webrtc/v3"
 
-	"github.com/PeerXu/meepo/pkg/lib/addr"
 	crypto_core "github.com/PeerXu/meepo/pkg/lib/crypto/core"
 	"github.com/PeerXu/meepo/pkg/lib/dialer"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
@@ -81,15 +80,10 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 			well_known_option.WithEnableKcp(gatherOpt.EnableKcp),
 		)
 
-		pc, err := mp.newPeerConnection()
-		if err != nil {
-			logger.WithError(err).Debugf("failed to new peer connection")
-			return nil, err
-		}
-
 		opts = append(opts,
-			transport_webrtc.WithGatherFunc(mp.genGatherFunc(target, gtkFn, gatherOpt)),
-			well_known_option.WithPeerConnection(pc),
+			transport_webrtc.WithGatherOnNewFunc(mp.genGatherOnNewFunc(target, gtkFn, gatherOpt)),
+			transport_webrtc.WithGatherFunc(mp.genGatherFunc(target)),
+			transport_webrtc.WithNewPeerConnectionFunc(mp.newPeerConnection),
 			transport_core.WithBeforeNewChannelHook(mp.beforeNewChannelHook),
 		)
 
@@ -121,12 +115,7 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 	return t, nil
 }
 
-func (mp *Meepo) newNewTransportRequest(target addr.Addr, sess transport_webrtc.Session, offer webrtc.SessionDescription, opt gatherOption) (*crypto_core.Packet, error) {
-	logger := mp.GetLogger().WithFields(logging.Fields{
-		"#method": "newNewTransportRequest",
-		"target":  target.String(),
-	})
-
+func (mp *Meepo) newNewTransportRequest(target Addr, sess transport_webrtc.Session, offer webrtc.SessionDescription, opt gatherOption) (*crypto_core.Packet, error) {
 	req := &tracker_interface.NewTransportRequest{
 		Session: int32(sess),
 		Offer:   offer,
@@ -149,27 +138,7 @@ func (mp *Meepo) newNewTransportRequest(target addr.Addr, sess transport_webrtc.
 		DataShard:   opt.KcpDataShard,
 		ParityShard: opt.KcpParityShard,
 	}
-
-	buf, err := mp.marshaler.Marshal(req)
-	if err != nil {
-		logger.WithError(err).Debugf("failed to marshal offer to plaintext")
-		return nil, err
-	}
-
-	out, err := mp.cryptor.Encrypt(target.Bytes(), buf)
-	if err != nil {
-		logger.WithError(err).Debugf("failed to encrypt plaintext to packet")
-		return nil, err
-	}
-
-	if err = mp.signer.Sign(out); err != nil {
-		logger.WithError(err).Debugf("failed to sign packet")
-		return nil, err
-	}
-
-	logger.Tracef("new NewTransport request")
-
-	return out, nil
+	return mp.encryptMessage(target, req)
 }
 
 func (mp *Meepo) setupGatherOption(o option.Option, gatherOpt *gatherOption) {

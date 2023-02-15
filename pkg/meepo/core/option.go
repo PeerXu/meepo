@@ -17,6 +17,10 @@ const (
 	OPTION_POOF_COUNT        = "poofCount"
 	OPTION_ENABLE_POOF       = "enablePoof"
 	OPTION_GET_TRACKERS_FUNC = "getTrackersFunc"
+
+	METHOD_PING                = "ping"
+	METHOD_PERMIT              = "permit"
+	METHOD_ADD_PEER_CONNECTION = "addPeerConnection"
 )
 
 type NewMeepoOption = option.ApplyOption

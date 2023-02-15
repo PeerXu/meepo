@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync/atomic"
 
 	"github.com/pion/webrtc/v3"
 
@@ -20,19 +21,35 @@ func (t *WebrtcTransport) onSinkConnectionStateChange(sess Session) func(webrtc.
 		})
 
 		switch s {
-		case webrtc.PeerConnectionStateNew,
-			webrtc.PeerConnectionStateConnecting:
+		case webrtc.PeerConnectionStateNew:
+
+		case webrtc.PeerConnectionStateConnecting:
+
 		case webrtc.PeerConnectionStateConnected:
-			go t.tryNewSysDataChannel(sess)
-			if t.enableMux {
-				go t.tryNewMuxDataChannel()
-			}
-			if t.enableKcp {
-				go t.tryNewKcpDataChannel()
+			atomic.StoreInt64(&t.stat.failedSinkConnections, 0)
+			if t.ensureUniqueConnectedPeerConnection(sess) {
+				logger.Tracef("peer connection is unique")
+
+				go t.tryNewSysDataChannel(sess)
+				if t.enableMux {
+					go t.tryNewMuxDataChannel()
+				}
+				if t.enableKcp {
+					go t.tryNewKcpDataChannel()
+				}
 			}
 		case webrtc.PeerConnectionStateDisconnected:
-		case webrtc.PeerConnectionStateFailed,
-			webrtc.PeerConnectionStateClosed:
+
+		case webrtc.PeerConnectionStateFailed:
+			atomic.AddInt64(&t.stat.failedSinkConnections, 1)
+
+			pc, err := t.loadPeerConnection(sess)
+			if err != nil {
+				logger.WithError(err).Debugf("failed to get load peer connection")
+			} else {
+				go logger.WithError(pc.Close()).Tracef("close peer connection")
+			}
+		case webrtc.PeerConnectionStateClosed:
 			t.unregisterPeerConnection(sess)
 			if t.isClosable() {
 				go t.Close(t.context())
@@ -52,12 +69,27 @@ func (t *WebrtcTransport) onSourceConnectionStateChange(sess Session) func(webrt
 		})
 
 		switch s {
-		case webrtc.PeerConnectionStateNew,
-			webrtc.PeerConnectionStateConnecting,
-			webrtc.PeerConnectionStateConnected,
-			webrtc.PeerConnectionStateDisconnected:
-		case webrtc.PeerConnectionStateFailed,
-			webrtc.PeerConnectionStateClosed:
+		case webrtc.PeerConnectionStateNew:
+
+		case webrtc.PeerConnectionStateConnecting:
+
+		case webrtc.PeerConnectionStateConnected:
+			atomic.StoreInt64(&t.stat.failedSourceConnections, 0)
+			if t.ensureUniqueConnectedPeerConnection(sess) {
+				logger.Tracef("peer connection is unique")
+			}
+		case webrtc.PeerConnectionStateDisconnected:
+
+		case webrtc.PeerConnectionStateFailed:
+			atomic.AddInt64(&t.stat.failedSourceConnections, 1)
+
+			pc, err := t.loadPeerConnection(sess)
+			if err != nil {
+				logger.WithError(err).Debugf("failed to get load peer connection")
+			} else {
+				go logger.WithError(pc.Close()).Tracef("close peer connection")
+			}
+		case webrtc.PeerConnectionStateClosed:
 			t.unregisterPeerConnection(sess)
 			if t.isClosable() {
 				go t.Close(t.context())

@@ -1,8 +1,9 @@
 package tracker_rpc
 
 import (
-	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
+	tracker_core "github.com/PeerXu/meepo/pkg/meepo/tracker/core"
 	tracker_interface "github.com/PeerXu/meepo/pkg/meepo/tracker/interface"
 )
 
@@ -19,7 +20,7 @@ func (tk *RPCTracker) GetCandidates(target addr.Addr, count int, excludes []addr
 		Excludes: excludesStrSlice,
 	}
 	var res tracker_interface.GetCandidatesResponse
-	err = tk.caller.Call(ctx, "getCandidates", req, &res, well_known_option.WithDestination(tk.addr.Bytes()))
+	err = tk.caller.Call(ctx, tracker_core.METHOD_GET_CANDIDATES, req, &res, well_known_option.WithDestination(tk.addr.Bytes()))
 	if err != nil {
 		return
 	}

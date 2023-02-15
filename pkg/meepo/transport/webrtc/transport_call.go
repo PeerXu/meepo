@@ -95,11 +95,13 @@ func (t *WebrtcTransport) Call(ctx context.Context, method string, req meepo_int
 		return err
 	}
 
-	if err = t.unmarshaler.Unmarshal(out.Data, res); err != nil {
-		logger.WithError(err).WithFields(logging.Fields{
-			"data": string(out.Data),
-		}).Debugf("failed to unmarshal call response")
-		return err
+	if res != nil {
+		if err = t.unmarshaler.Unmarshal(out.Data, res); err != nil {
+			logger.WithError(err).WithFields(logging.Fields{
+				"data": string(out.Data),
+			}).Debugf("failed to unmarshal call response")
+			return err
+		}
 	}
 
 	logger.Tracef("call")

@@ -184,6 +184,7 @@ func (t *WebrtcTransport) onSysDataChannelOpen(sess Session, ndc *webrtc.DataCha
 	t.registerSystemReadWriteCloser(sess, rwc)
 
 	go t.readLoop(sess, rwc)
+	t.connectedOnce.Store(true)
 	t.channelDone(1)
 	logger.Tracef("on system data channel open")
 }

@@ -3,8 +3,8 @@ package meepo_core
 import (
 	"context"
 
-	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
 
@@ -30,7 +30,7 @@ func (mp *Meepo) hdrAPIPing(ctx context.Context, _req any) (any, error) {
 	}
 
 	var res PingResponse
-	if err = t.Call(ctx, "ping", &PingRequest{Nonce: req.Nonce}, &res); err != nil {
+	if err = t.Call(ctx, METHOD_PING, &PingRequest{Nonce: req.Nonce}, &res); err != nil {
 		logger.WithError(err).Errorf("failed to ping")
 		return nil, err
 	}

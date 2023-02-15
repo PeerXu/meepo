@@ -43,9 +43,11 @@ func (c *SimpleHttpCaller) Call(ctx context.Context, method string, req rpc_inte
 		return err
 	}
 
-	if err = c.unmarshaler.Unmarshal(out.CallResponse, res); err != nil {
-		logger.WithError(err).Debugf("failed to unmarshal call response")
-		return err
+	if res != nil {
+		if err = c.unmarshaler.Unmarshal(out.CallResponse, res); err != nil {
+			logger.WithError(err).Debugf("failed to unmarshal call response")
+			return err
+		}
 	}
 
 	logger.Tracef("call")

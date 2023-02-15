@@ -10,8 +10,7 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
-func (t *WebrtcTransport) registerPeerConnection(pc *webrtc.PeerConnection) Session {
-	sess := t.newSession()
+func (t *WebrtcTransport) registerPeerConnection(sess Session, pc *webrtc.PeerConnection) {
 	logger := t.GetLogger().WithFields(logging.Fields{
 		"#method": "registerPeerConnection",
 		"session": sess.String(),
@@ -20,8 +19,6 @@ func (t *WebrtcTransport) registerPeerConnection(pc *webrtc.PeerConnection) Sess
 	t.peerConnections.Store(sess, pc)
 
 	logger.Tracef("register peer connection")
-
-	return sess
 }
 
 func (t *WebrtcTransport) unregisterPeerConnection(sess Session) {
@@ -33,17 +30,6 @@ func (t *WebrtcTransport) unregisterPeerConnection(sess Session) {
 	t.peerConnections.Delete(sess)
 
 	logger.Tracef("unregister peer connection")
-}
-
-func (t *WebrtcTransport) setPeerConnection(sess Session, pc *webrtc.PeerConnection) {
-	logger := t.GetLogger().WithFields(logging.Fields{
-		"#method": "setPeerConnection",
-		"session": sess.String(),
-	})
-
-	t.peerConnections.Store(sess, pc)
-
-	logger.Tracef("set peer connection")
 }
 
 func (t *WebrtcTransport) loadPeerConnection(sess Session) (*webrtc.PeerConnection, error) {
@@ -109,4 +95,33 @@ func (t *WebrtcTransport) closeAllPeerConnections() error {
 	logger.Tracef("close all peer connections")
 
 	return err
+}
+
+func (t *WebrtcTransport) ensureUniqueConnectedPeerConnection(sess Session) bool {
+	unique := true
+
+	logger := t.GetLogger().WithFields(logging.Fields{
+		"#method": "ensureUniqueConnectedPeerConnection",
+		"session": sess.String(),
+	})
+
+	t.sysMtx.Lock()
+	defer t.sysMtx.Unlock()
+	t.peerConnections.Range(func(k Session, v *webrtc.PeerConnection) bool {
+		if k != sess && v.ConnectionState() == webrtc.PeerConnectionStateConnected {
+			unique = false
+			logger.WithField("connectedSession", k.String()).Tracef("connected peer connection existed, close it")
+			pc, err := t.loadPeerConnection(sess)
+			if err != nil {
+				logger.WithError(err).Debugf("failed to load peer connection")
+				return false
+			}
+			pc.Close()
+
+			return false
+		}
+		return true
+	})
+
+	return unique
 }

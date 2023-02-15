@@ -37,9 +37,11 @@ func (t *PipeTransport) Call(ctx context.Context, method string, req meepo_inter
 		return err
 	}
 
-	if err = t.unmarshaler.Unmarshal(out, res); err != nil {
-		logger.WithError(err).Debugf("failed to unmarshal response")
-		return err
+	if res != nil {
+		if err = t.unmarshaler.Unmarshal(out, res); err != nil {
+			logger.WithError(err).Debugf("failed to unmarshal response")
+			return err
+		}
 	}
 
 	logger.Tracef("call")

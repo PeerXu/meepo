@@ -56,11 +56,11 @@ func meepoTestWebrtc(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+		gatherCompleted := webrtc.GatheringCompletePromise(pc)
 		if err = pc.SetLocalDescription(offer); err != nil {
 			return err
 		}
-
-		<-webrtc.GatheringCompletePromise(pc)
+		<-gatherCompleted
 
 		offerStr, err := encodeSessionDescription(*pc.LocalDescription())
 		if err != nil {
@@ -120,12 +120,11 @@ func meepoTestWebrtc(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-
+		gatherCompleted := webrtc.GatheringCompletePromise(pc)
 		if err = pc.SetLocalDescription(answer); err != nil {
 			return err
 		}
-
-		<-webrtc.GatheringCompletePromise(pc)
+		<-gatherCompleted
 
 		answerStr, err := encodeSessionDescription(*pc.LocalDescription())
 		if err != nil {

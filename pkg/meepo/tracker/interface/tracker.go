@@ -11,4 +11,5 @@ type Tracker interface {
 	Addr() addr.Addr
 	NewTransport(*crypto_core.Packet) (webrtc.SessionDescription, error)
 	GetCandidates(target addr.Addr, count int, excludes []addr.Addr) ([]addr.Addr, error)
+	AddPeerConnection(*crypto_core.Packet) (webrtc.SessionDescription, error)
 }

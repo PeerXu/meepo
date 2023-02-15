@@ -11,11 +11,12 @@ func (mp *Meepo) onAddWebrtcTransportNL(t Transport) (err error) {
 		}
 	}()
 
-	t.Handle("sys/newTransport", transport_core.WrapHandleFunc(mp.newOnNewTransportRequest, mp.hdrOnNewTransport))
-	t.Handle("sys/getCandidates", transport_core.WrapHandleFunc(mp.newOnGetCandidatesRequest, mp.hdrOnGetCandidates))
+	t.Handle("newTransport", transport_core.WrapHandleFunc(mp.newOnNewTransportRequest, mp.hdrOnNewTransport))
+	t.Handle("getCandidates", transport_core.WrapHandleFunc(mp.newOnGetCandidatesRequest, mp.hdrOnGetCandidates))
+	t.Handle("addPeerConnection", transport_core.WrapHandleFunc(mp.newOnAddPeerConnectionRequest, mp.hdrOnAddPeerConnection))
 
-	t.Handle("ping", transport_core.WrapHandleFunc(mp.newOnPingRequest, mp.hdrOnPing))
-	t.Handle("permit", transport_core.WrapHandleFunc(mp.newOnPermitRequest, mp.hdrOnPermit))
+	t.Handle(METHOD_PING, transport_core.WrapHandleFunc(mp.newOnPingRequest, mp.hdrOnPing))
+	t.Handle(METHOD_PERMIT, transport_core.WrapHandleFunc(mp.newOnPermitRequest, mp.hdrOnPermit))
 
 	mp.transports[t.Addr()] = t
 
@@ -23,8 +24,8 @@ func (mp *Meepo) onAddWebrtcTransportNL(t Transport) (err error) {
 }
 
 func (mp *Meepo) onAddPipeTransportNL(t Transport) error {
-	t.Handle("ping", transport_core.WrapHandleFunc(mp.newOnPingRequest, mp.hdrOnPing))
-	t.Handle("permit", transport_core.WrapHandleFunc(mp.newOnPermitRequest, mp.hdrOnPermit))
+	t.Handle(METHOD_PING, transport_core.WrapHandleFunc(mp.newOnPingRequest, mp.hdrOnPing))
+	t.Handle(METHOD_PERMIT, transport_core.WrapHandleFunc(mp.newOnPermitRequest, mp.hdrOnPermit))
 
 	mp.transports[t.Addr()] = t
 	return nil

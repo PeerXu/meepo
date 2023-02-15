@@ -12,11 +12,13 @@ func (t *WebrtcTransport) onSystemRequestMessage(in Message) {
 	ctx := marshaler.ContextWithMarshalerAndUnmarshaler(t.context(), t.marshaler, t.unmarshaler)
 	var h meepo_interface.HandleFunc
 	switch in.Method {
-	case "ping":
+	case SYS_METHOD_PING:
 		h = transport_core.WrapHandleFunc(func() any { return &PingRequest{} }, t.onPing)
-	case "newChannel":
+	case SYS_METHOD_NEW_CHANNEL:
 		h = transport_core.WrapHandleFunc(func() any { return &NewChannelRequest{} }, t.onNewChannel)
-	case "close":
+	case SYS_METHOD_ADD_PEER_CONNECTION:
+		h = transport_core.WrapHandleFunc(func() any { return &AddPeerConnectionRequest{} }, t.onAddPeerConnection)
+	case SYS_METHOD_CLOSE:
 		h = transport_core.WrapHandleFunc(func() any { return &CloseRequest{} }, t.onClose)
 	default:
 		var ok bool

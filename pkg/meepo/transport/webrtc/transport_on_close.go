@@ -14,7 +14,7 @@ type CloseResponse struct{}
 func (t *WebrtcTransport) closeRemoteTransport(ctx context.Context) (err error) {
 	var res CloseResponse
 	logger := t.GetLogger().WithField("#method", "closeRemoteTransport")
-	if err = t.Call(ctx, "close", &CloseRequest{}, &res, well_known_option.WithScope("sys")); err != nil {
+	if err = t.Call(ctx, SYS_METHOD_CLOSE, &CloseRequest{}, &res, well_known_option.WithScope("sys")); err != nil {
 		logger.WithError(err).Debugf("failed to close")
 		return
 	}

@@ -7,7 +7,6 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/listenerer"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/option"
-	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	teleportation_core "github.com/PeerXu/meepo/pkg/meepo/teleportation/core"
 )
@@ -47,10 +46,10 @@ func (mp *Meepo) NewTeleportation(ctx context.Context, target Addr, sourceNetwor
 	}
 
 	if sourceNetwork != "socks5" {
-		err = t.Call(ctx, "permit", &PermitRequest{
+		err = t.Call(ctx, METHOD_PERMIT, &PermitRequest{
 			Network: sinkNetwork,
 			Address: sinkAddress,
-		}, rpc_core.NO_CONTENT())
+		}, nil)
 		if err != nil {
 			logger.WithError(err).Debugf("failed to permit")
 			return nil, err

@@ -4,6 +4,10 @@ import "github.com/PeerXu/meepo/pkg/lib/option"
 
 const (
 	OPTION_TRACKERS = "trackers"
+
+	METHOD_GET_CANDIDATES      = "getCandidates"
+	METHOD_NEW_TRANSPORT       = "newTransport"
+	METHOD_ADD_PEER_CONNECTION = "addPeerConnection"
 )
 
 type NewTrackerOption = option.ApplyOption

@@ -3,12 +3,12 @@ package tracker_rpc
 import (
 	"github.com/pion/webrtc/v3"
 
-	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	crypto_core "github.com/PeerXu/meepo/pkg/lib/crypto/core"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
+	tracker_core "github.com/PeerXu/meepo/pkg/meepo/tracker/core"
 )
 
 func (tk *RPCTracker) NewTransport(in *crypto_core.Packet) (answer webrtc.SessionDescription, err error) {
-	ctx := tk.context()
-	err = tk.caller.Call(ctx, "newTransport", in, &answer, well_known_option.WithDestination(tk.Addr().Bytes()))
+	err = tk.caller.Call(tk.context(), tracker_core.METHOD_NEW_TRANSPORT, in, &answer, well_known_option.WithDestination(tk.Addr().Bytes()))
 	return
 }

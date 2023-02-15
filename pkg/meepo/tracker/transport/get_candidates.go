@@ -1,8 +1,8 @@
 package tracker_transport
 
 import (
-	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
+	tracker_core "github.com/PeerXu/meepo/pkg/meepo/tracker/core"
 	tracker_interface "github.com/PeerXu/meepo/pkg/meepo/tracker/interface"
 )
 
@@ -18,7 +18,7 @@ func (tk *TransportTracker) GetCandidates(target addr.Addr, count int, excludes 
 		Excludes: excludesStrSlice,
 	}
 	var res tracker_interface.GetCandidatesResponse
-	err = tk.transport.Call(ctx, "getCandidates", req, &res, well_known_option.WithScope("sys"))
+	err = tk.transport.Call(ctx, tracker_core.METHOD_GET_CANDIDATES, req, &res)
 	if err != nil {
 		return nil, err
 	}

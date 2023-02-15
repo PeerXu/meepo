@@ -69,17 +69,12 @@ func TestRawTransport(t *testing.T) {
 	}
 	addrSink := addr.Must(addr.FromBytesWithoutMagicCode(addrSinkBuf))
 
-	pcSrc, err := api.NewPeerConnection(cfg)
-	require.Nil(t, err)
-
-	pcSink, err := api.NewPeerConnection(cfg)
-	require.Nil(t, err)
-
+	npcFn := func() (*webrtc.PeerConnection, error) { return api.NewPeerConnection(cfg) }
 	tSrc, err := NewWebrtcSourceTransport(
 		well_known_option.WithLogger(logger),
 		well_known_option.WithAddr(addrSrc),
-		WithGatherFunc(gather),
-		well_known_option.WithPeerConnection(pcSrc),
+		WithGatherOnNewFunc(gather),
+		WithNewPeerConnectionFunc(npcFn),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
 		transport_core.WithBeforeNewChannelHook(func(t meepo_interface.Transport, network string, address string) error { return nil }),
 		transport_core.WithOnTransportCloseFunc(func(meepo_interface.Transport) error { return nil }),
@@ -98,8 +93,8 @@ func TestRawTransport(t *testing.T) {
 		well_known_option.WithAddr(addrSink),
 		WithOffer(*offer),
 		WithSession(int32(sess)),
-		WithGatherDoneFunc(gatherDone),
-		well_known_option.WithPeerConnection(pcSink),
+		WithGatherDoneOnNewFunc(gatherDone),
+		WithNewPeerConnectionFunc(npcFn),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
 		transport_core.WithBeforeNewChannelHook(func(t meepo_interface.Transport, network string, address string) error { return nil }),
 		transport_core.WithOnTransportCloseFunc(func(meepo_interface.Transport) error { return nil }),
@@ -197,17 +192,12 @@ func TestMuxTransport(t *testing.T) {
 	}
 	addrSink := addr.Must(addr.FromBytesWithoutMagicCode(addrSinkBuf))
 
-	pcSrc, err := api.NewPeerConnection(cfg)
-	require.Nil(t, err)
-
-	pcSink, err := api.NewPeerConnection(cfg)
-	require.Nil(t, err)
-
+	npcFn := func() (*webrtc.PeerConnection, error) { return api.NewPeerConnection(cfg) }
 	tSrc, err := NewWebrtcSourceTransport(
 		well_known_option.WithLogger(logger),
 		well_known_option.WithAddr(addrSrc),
-		WithGatherFunc(gather),
-		well_known_option.WithPeerConnection(pcSrc),
+		WithGatherOnNewFunc(gather),
+		WithNewPeerConnectionFunc(npcFn),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
 		transport_core.WithBeforeNewChannelHook(func(t meepo_interface.Transport, network string, address string) error { return nil }),
 		transport_core.WithOnTransportCloseFunc(func(meepo_interface.Transport) error { return nil }),
@@ -228,8 +218,8 @@ func TestMuxTransport(t *testing.T) {
 		well_known_option.WithAddr(addrSink),
 		WithOffer(*offer),
 		WithSession(int32(sess)),
-		WithGatherDoneFunc(gatherDone),
-		well_known_option.WithPeerConnection(pcSink),
+		WithGatherDoneOnNewFunc(gatherDone),
+		WithNewPeerConnectionFunc(npcFn),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
 		transport_core.WithBeforeNewChannelHook(func(t meepo_interface.Transport, network string, address string) error { return nil }),
 		transport_core.WithOnTransportCloseFunc(func(meepo_interface.Transport) error { return nil }),

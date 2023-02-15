@@ -14,17 +14,26 @@ import (
 
 type GatherFunc func(Session, webrtc.SessionDescription) (webrtc.SessionDescription, error)
 type GatherDoneFunc func(Session, webrtc.SessionDescription, error)
+type NewPeerConnectionFunc func() (*webrtc.PeerConnection, error)
 
 const (
 	OPTION_TEMP_DATA_CHANNEL_TIMEOUT = "tempDataChannelTimeout"
 	OPTION_OFFER                     = "offer"
 	OPTION_ANSWER                    = "answer"
 	OPTION_GATHER_TIMEOUT            = "gatherTimeout"
+	OPTION_GATHER_ON_NEW_FUNC        = "gatherOnNewFunc"
+	OPTION_GATHER_DONE_ON_NEW_FUNC   = "gatherDoneOnNewFunc"
 	OPTION_GATHER_FUNC               = "gatherFunc"
-	OPTION_GATHER_DONE_FUNC          = "gatherDoneFunc"
-	OPTION_MUX_LABEL                 = "muxLabel"
-	OPTION_KCP_LABEL                 = "kcpLabel"
-	OPTION_SESSION                   = "session"
+
+	OPTION_MUX_LABEL                = "muxLabel"
+	OPTION_KCP_LABEL                = "kcpLabel"
+	OPTION_SESSION                  = "session"
+	OPTION_NEW_PEER_CONNECTION_FUNC = "newPeerConnectionFunc"
+
+	SYS_METHOD_PING                = "ping"
+	SYS_METHOD_NEW_CHANNEL         = "newChannel"
+	SYS_METHOD_ADD_PEER_CONNECTION = "addPeerConnection"
+	SYS_METHOD_CLOSE               = "close"
 
 	CHANNEL_MODE_RAW = "raw"
 	CHANNEL_MODE_MUX = "mux"
@@ -72,9 +81,11 @@ var (
 	WithOffer, GetOffer                                   = option.New[webrtc.SessionDescription](OPTION_OFFER)
 	WithAnswer, GetAnswer                                 = option.New[webrtc.SessionDescription](OPTION_ANSWER)
 	WithGatherTimeout, GetGatherTimeout                   = option.New[time.Duration](OPTION_GATHER_TIMEOUT)
+	WithGatherOnNewFunc, GetGatherOnNewFunc               = option.New[GatherFunc](OPTION_GATHER_ON_NEW_FUNC)
+	WithGatherDoneOnNewFunc, GetGatherDoneOnNewFunc       = option.New[GatherDoneFunc](OPTION_GATHER_DONE_ON_NEW_FUNC)
 	WithGatherFunc, GetGatherFunc                         = option.New[GatherFunc](OPTION_GATHER_FUNC)
-	WithGatherDoneFunc, GetGatherDoneFunc                 = option.New[GatherDoneFunc](OPTION_GATHER_DONE_FUNC)
 	WithMuxLabel, GetMuxLabel                             = option.New[string](OPTION_MUX_LABEL)
 	WithKcpLabel, GetKcpLabel                             = option.New[string](OPTION_KCP_LABEL)
 	WithSession, GetSession                               = option.New[int32](OPTION_SESSION)
+	WithNewPeerConnectionFunc, GetNewPeerConnectionFunc   = option.New[NewPeerConnectionFunc](OPTION_NEW_PEER_CONNECTION_FUNC)
 )

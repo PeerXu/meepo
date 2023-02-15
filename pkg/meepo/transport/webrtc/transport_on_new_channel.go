@@ -15,11 +15,7 @@ type NewChannelRequest struct {
 	Mode      string
 }
 
-type NewChannelResponse struct{}
-
 func (t *WebrtcTransport) newRemoteChannel(ctx context.Context, mode string, label string, channelID uint16, network, address string) error {
-	var res NewChannelResponse
-
 	logger := t.GetLogger().WithFields(logging.Fields{
 		"#method":   "newRemoteChannel",
 		"label":     label,
@@ -29,13 +25,13 @@ func (t *WebrtcTransport) newRemoteChannel(ctx context.Context, mode string, lab
 		"mode":      mode,
 	})
 
-	if err := t.Call(ctx, "newChannel", &NewChannelRequest{
+	if err := t.Call(ctx, SYS_METHOD_NEW_CHANNEL, &NewChannelRequest{
 		Label:     label,
 		ChannelID: channelID,
 		Network:   network,
 		Address:   address,
 		Mode:      mode,
-	}, &res, well_known_option.WithScope("sys")); err != nil {
+	}, nil, well_known_option.WithScope("sys")); err != nil {
 		logger.WithError(err).Debugf("failed to new remote channel")
 		return err
 	}
@@ -47,7 +43,6 @@ func (t *WebrtcTransport) newRemoteChannel(ctx context.Context, mode string, lab
 
 func (t *WebrtcTransport) onNewChannel(ctx context.Context, _req any) (res any, err error) {
 	req := _req.(*NewChannelRequest)
-	res = &NewChannelResponse{}
 
 	logger := t.GetLogger().WithFields(logging.Fields{
 		"#method":   "onNewChannel",

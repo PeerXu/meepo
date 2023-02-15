@@ -2,7 +2,10 @@ package transport_webrtc
 
 import (
 	"context"
+	"time"
 
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
 
@@ -78,5 +81,25 @@ func (t *WebrtcTransport) isClosable() bool {
 		return false
 	}
 
+	if t.State() == meepo_interface.TRANSPORT_STATE_NEW {
+		if t.stat.failedSourceConnections == 0 || t.stat.failedSinkConnections == 0 {
+			return false
+		}
+	}
+
 	return true
+}
+
+func (t *WebrtcTransport) tryCloseFailedTransport() {
+	logger := t.GetLogger().WithFields(logging.Fields{
+		"#method": "tryCloseFailedTransport",
+	})
+
+	select {
+	case <-t.Ready():
+		logger.Tracef("transport is ready")
+	case <-time.After(t.gatherTimeout):
+		logger.Debugf("gather timeout")
+		go t.Close(t.context())
+	}
 }

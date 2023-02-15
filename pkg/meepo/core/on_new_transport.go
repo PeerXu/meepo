@@ -2,7 +2,6 @@ package meepo_core
 
 import (
 	"context"
-	"encoding/hex"
 
 	"github.com/pion/webrtc/v3"
 
@@ -49,7 +48,7 @@ func (mp *Meepo) onNewTransport(in *crypto_core.Packet) (answer webrtc.SessionDe
 	}
 
 	if !mp.Addr().Equal(dstAddr) {
-		answer, err = mp.forwardNewTransportRequestToClosestTrackers(dstAddr, in)
+		answer, err = mp.forwardNewTransportRequest(dstAddr, in)
 		if err != nil {
 			logger.WithError(err).Debugf("failed to forward new transport request to closest trackers")
 			return
@@ -58,21 +57,9 @@ func (mp *Meepo) onNewTransport(in *crypto_core.Packet) (answer webrtc.SessionDe
 		return
 	}
 
-	buf, err := mp.cryptor.Decrypt(in)
-	if err != nil {
-		logger.WithError(err).Debugf("failed to decrypt packet")
-		return
-	}
-
 	var req tracker_interface.NewTransportRequest
-	if err = mp.unmarshaler.Unmarshal(buf, &req); err != nil {
-		logger.WithError(err).Debugf("failed to unmarshal buffer")
-		return
-	}
-
-	pc, err := mp.newPeerConnection()
-	if err != nil {
-		logger.WithError(err).Debugf("failed to new peer connection")
+	if err = mp.decryptMessage(in, &req); err != nil {
+		logger.WithError(err).Debugf("failed to decrypt message")
 		return
 	}
 
@@ -84,7 +71,6 @@ func (mp *Meepo) onNewTransport(in *crypto_core.Packet) (answer webrtc.SessionDe
 
 	if _, found := mp.transports[srcAddr]; found {
 		defer mp.transportsMtx.Unlock()
-		pc.Close()
 		err = ErrTransportFoundFn(srcAddr.String())
 		logger.WithError(err).Debugf("transport existed")
 		return
@@ -95,15 +81,16 @@ func (mp *Meepo) onNewTransport(in *crypto_core.Packet) (answer webrtc.SessionDe
 		well_known_option.WithAddr(srcAddr),
 		transport_webrtc.WithOffer(req.Offer),
 		transport_webrtc.WithSession(req.Session),
-		well_known_option.WithPeerConnection(pc),
+		transport_webrtc.WithNewPeerConnectionFunc(mp.newPeerConnection),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
 		marshaler.WithMarshaler(mp.marshaler),
 		marshaler.WithUnmarshaler(mp.unmarshaler),
-		transport_webrtc.WithGatherDoneFunc(func(_ transport_webrtc.Session, _answer webrtc.SessionDescription, _err error) {
+		transport_webrtc.WithGatherDoneOnNewFunc(func(_ transport_webrtc.Session, _answer webrtc.SessionDescription, _err error) {
 			answer = _answer
 			er = _err
 			done <- struct{}{}
 		}),
+		transport_webrtc.WithGatherFunc(mp.genGatherFunc(srcAddr)),
 		transport_core.WithBeforeNewChannelHook(mp.beforeNewChannelHook),
 		transport_core.WithOnTransportCloseFunc(mp.onRemoveWebrtcTransport),
 		transport_core.WithOnTransportReadyFunc(mp.onReadyWebrtcTransport),
@@ -161,65 +148,18 @@ func (mp *Meepo) onNewTransport(in *crypto_core.Packet) (answer webrtc.SessionDe
 	return
 }
 
-func (mp *Meepo) forwardNewTransportRequestToClosestTrackers(dstAddr addr.Addr, in *crypto_core.Packet) (answer webrtc.SessionDescription, err error) {
+func (mp *Meepo) forwardNewTransportRequest(dstAddr addr.Addr, in *crypto_core.Packet) (answer webrtc.SessionDescription, err error) {
 	logger := mp.GetLogger().WithFields(logging.Fields{
-		"#method":     "forwardNewTransportRequestToClosestTrackers",
-		"destination": dstAddr.String(),
-		"nonce":       hex.EncodeToString(in.Nonce),
+		"#method": "forwardNewTransportRequest",
+		"target":  dstAddr.String(),
 	})
 
-	tks, err := mp.getClosestTrackers(dstAddr)
+	out, err := mp.forwardRequest(mp.context(), dstAddr, in, func(tk Tracker, in *crypto_core.Packet) (any, error) { return tk.NewTransport(in) }, mp.getClosestTrackers, logger)
 	if err != nil {
-		logger.WithError(err).Debugf("failed to get closest trackers")
-		return
-	}
-	logger = logger.WithField("trackers.length", len(tks))
-
-	if len(tks) == 0 {
-		err = ErrNoAvailableTrackers
-		logger.WithError(err).Debugf("no available trackers")
 		return
 	}
 
-	done := make(chan struct{})
-	answers := make(chan webrtc.SessionDescription)
-	errs := make(chan error)
-	defer func() {
-		close(done)
-		close(answers)
-		close(errs)
-	}()
+	answer = out.(webrtc.SessionDescription)
 
-	for _, tk := range tks {
-		go func(tk Tracker) {
-			logger := logger.WithField("tracker", tk.Addr().String())
-			_answer, _err := tk.NewTransport(in)
-			select {
-			case <-done:
-				logger.Tracef("forward already done")
-				return
-			default:
-			}
-
-			if _err != nil {
-				logger.WithError(_err).Tracef("failed to new transport by tracker")
-				errs <- _err
-				return
-			}
-			answers <- _answer
-			logger.Tracef("new transport by tracker")
-		}(tk)
-	}
-
-	for i := 0; i < len(tks); i++ {
-		select {
-		case answer = <-answers:
-			logger.Tracef("forward done")
-			return answer, nil
-		case err = <-errs:
-		}
-	}
-
-	logger.WithError(err).Debugf("failed to forward")
 	return
 }
