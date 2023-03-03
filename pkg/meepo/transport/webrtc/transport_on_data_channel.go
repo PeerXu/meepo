@@ -34,13 +34,13 @@ func (t *WebrtcTransport) onDataChannel(sess Session) func(*webrtc.DataChannel) 
 		}
 
 		if t.isMuxDataChannel(dc) {
-			dc.OnOpen(func() { t.onMuxDataChannelOpen(dc) })
+			dc.OnOpen(func() { t.onMuxDataChannelOpen(sess, dc) })
 			logger.Tracef("setup mux data channel")
 			return
 		}
 
 		if t.isKcpDataChannel(dc) {
-			dc.OnOpen(func() { t.onKcpDataChannelOpen(dc) })
+			dc.OnOpen(func() { t.onKcpDataChannelOpen(sess, dc) })
 			logger.Tracef("setup kcp data channel")
 			return
 		}
@@ -184,16 +184,16 @@ func (t *WebrtcTransport) onSysDataChannelOpen(sess Session, ndc *webrtc.DataCha
 	t.registerSystemReadWriteCloser(sess, rwc)
 
 	go t.readLoop(sess, rwc)
-	t.connectedOnce.Store(true)
 	t.channelDone(1)
 	logger.Tracef("on system data channel open")
 }
 
-func (t *WebrtcTransport) onMuxDataChannelOpen(dc *webrtc.DataChannel) {
+func (t *WebrtcTransport) onMuxDataChannelOpen(sess Session, dc *webrtc.DataChannel) {
 	var err error
 
 	logger := t.GetLogger().WithFields(logging.Fields{
 		"#method":       "onMuxDataChannelOpen",
+		"session":       sess.String(),
 		"label":         dc.Label(),
 		"smuxVer":       t.muxVer,
 		"smuxBuf":       t.muxBuf,
@@ -255,6 +255,7 @@ func (t *WebrtcTransport) onMuxDataChannelOpen(dc *webrtc.DataChannel) {
 	t.muxDataChannel = dc
 
 	var conn io.ReadWriteCloser = pc1
+	// var conn io.ReadWriteCloser = rwc
 	if !t.muxNocomp {
 		conn = NewCompStream(conn)
 	}
@@ -270,11 +271,12 @@ func (t *WebrtcTransport) onMuxDataChannelOpen(dc *webrtc.DataChannel) {
 	logger.Tracef("on mux data channel open")
 }
 
-func (t *WebrtcTransport) onKcpDataChannelOpen(dc *webrtc.DataChannel) {
+func (t *WebrtcTransport) onKcpDataChannelOpen(sess Session, dc *webrtc.DataChannel) {
 	var err error
 
 	logger := t.GetLogger().WithFields(logging.Fields{
 		"#method":        "onKcpDataChannelOpen",
+		"session":        sess.String(),
 		"label":          dc.Label(),
 		"smuxVer":        t.muxVer,
 		"smuxBuf":        t.muxBuf,
@@ -327,7 +329,9 @@ func (t *WebrtcTransport) onKcpDataChannelOpen(dc *webrtc.DataChannel) {
 }
 
 func (t *WebrtcTransport) channelDone(n int32) {
+	logger := t.GetLogger().WithField("#method", "channelDone")
 	x := atomic.AddInt32(&t.readyCount, -n)
+	logger.WithField("rest", x).Tracef("do channel done")
 	if x <= 0 {
 		t.readyOnce.Do(func() {
 			t.onReadyCb(t) // nolint:errcheck

@@ -2,6 +2,7 @@ package addr
 
 import (
 	"crypto/ed25519"
+	"encoding/base64"
 
 	"github.com/PeerXu/meepo/pkg/lib/base36"
 )
@@ -32,18 +33,18 @@ func FromString(x string) (Addr, error) {
 
 func FromBytes(x []byte) (Addr, error) {
 	if len(x) != ADDR_SIZE {
-		return "", ErrInvalidAddrString
+		return "", ErrInvalidAddrStringFn(base64.RawStdEncoding.EncodeToString(x))
 	}
 
 	if x[0] != MAGIC_CODE {
-		return "", ErrInvalidAddrString
+		return "", ErrInvalidAddrStringFn(base64.RawStdEncoding.EncodeToString(x))
 	}
 	return Addr(base36.Encode(x)), nil
 }
 
 func FromBytesWithoutMagicCode(x []byte) (Addr, error) {
 	if len(x) != ADDR_SIZE-1 {
-		return "", ErrInvalidAddrString
+		return "", ErrInvalidAddrStringFn(base64.RawStdEncoding.EncodeToString(x))
 	}
 
 	return FromBytes(append([]byte{MAGIC_CODE}, x...))

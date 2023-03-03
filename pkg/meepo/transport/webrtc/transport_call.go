@@ -61,12 +61,12 @@ func (t *WebrtcTransport) Call(ctx context.Context, method string, req meepo_int
 	in := t.newRequest(scope, method, data)
 	logger = logger.WithField("session", in.Session)
 
-	if err = t.DoRequest(ctx, in); err != nil {
+	if err = t.doRequest(ctx, in); err != nil {
 		logger.WithError(err).Debugf("failed to do request")
 		return err
 	}
 
-	outs, err := t.WaitResponse(ctx, in)
+	outs, err := t.waitResponse(ctx, in)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to get outs")
 		return err
@@ -76,13 +76,11 @@ func (t *WebrtcTransport) Call(ctx context.Context, method string, req meepo_int
 		if ok {
 			lch.Close()
 		}
-		logger.Tracef("close outs")
 	}()
 
 	var out Message
 	select {
 	case out = <-outs:
-		logger.Tracef("read response buffer from outs")
 	case <-time.After(timeout):
 		err = ErrCallTimeout
 		logger.Debugf("call timeout")

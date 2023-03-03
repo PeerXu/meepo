@@ -10,15 +10,21 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
-func (t *WebrtcTransport) registerPeerConnection(sess Session, pc *webrtc.PeerConnection) {
+func (t *WebrtcTransport) registerPeerConnection(sess Session, pc *webrtc.PeerConnection) error {
 	logger := t.GetLogger().WithFields(logging.Fields{
 		"#method": "registerPeerConnection",
 		"session": sess.String(),
 	})
 
-	t.peerConnections.Store(sess, pc)
+	_, found := t.peerConnections.LoadOrStore(sess, pc)
+	if found {
+		err := ErrPeerConnectionFoundFn(sess)
+		logger.WithError(err).Debugf("peer connection found")
+		return err
+	}
 
 	logger.Tracef("register peer connection")
+	return nil
 }
 
 func (t *WebrtcTransport) unregisterPeerConnection(sess Session) {
@@ -58,7 +64,7 @@ func (t *WebrtcTransport) loadRandomPeerConnection() (*webrtc.PeerConnection, er
 	})
 
 	if pc == nil {
-		return nil, ErrPeerConnectionNotFoundFn(randomSession)
+		return nil, ErrNotConnectedPeerConnection
 	}
 
 	return pc, nil
@@ -110,18 +116,20 @@ func (t *WebrtcTransport) ensureUniqueConnectedPeerConnection(sess Session) bool
 	t.peerConnections.Range(func(k Session, v *webrtc.PeerConnection) bool {
 		if k != sess && v.ConnectionState() == webrtc.PeerConnectionStateConnected {
 			unique = false
-			logger.WithField("connectedSession", k.String()).Tracef("connected peer connection existed, close it")
+
 			pc, err := t.loadPeerConnection(sess)
 			if err != nil {
 				logger.WithError(err).Debugf("failed to load peer connection")
 				return false
 			}
-			pc.Close()
+			go pc.Close()
 
 			return false
 		}
 		return true
 	})
+
+	logger.WithField("unique", unique).Tracef("unique check")
 
 	return unique
 }

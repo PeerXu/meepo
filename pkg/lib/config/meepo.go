@@ -2,6 +2,7 @@ package config
 
 type Meepo struct {
 	Daemon    bool        `yaml:"daemon"`
+	Pprof     string      `yaml:"pprof"`
 	Identity  Identity    `yaml:"identity,omitempty"`
 	API       API         `yaml:"api,omitempty"`
 	Socks5    Socks5      `yaml:"socks5,omitempty"`

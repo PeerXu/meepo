@@ -1,7 +1,9 @@
 package addr
 
-import "fmt"
+import (
+	"github.com/PeerXu/meepo/pkg/lib/errors"
+)
 
 var (
-	ErrInvalidAddrString = fmt.Errorf("invalid addr string")
+	ErrInvalidAddrString, ErrInvalidAddrStringFn = errors.NewErrorAndErrorFunc[string]("invalid addr string")
 )

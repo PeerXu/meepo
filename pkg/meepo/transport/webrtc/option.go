@@ -40,6 +40,8 @@ const (
 	CHANNEL_MODE_KCP = "kcp"
 
 	SALT = "meepo"
+
+	IGNORE_DATA_CHANNEL_LABEL = "_ignore_"
 )
 
 func defaultNewWebrtcTransportOptions() option.Option {

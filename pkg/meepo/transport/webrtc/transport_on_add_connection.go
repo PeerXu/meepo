@@ -6,6 +6,7 @@ import (
 	"github.com/pion/webrtc/v3"
 
 	"github.com/PeerXu/meepo/pkg/lib/logging"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 )
 
 type AddPeerConnectionRequest struct {
@@ -26,7 +27,10 @@ func (t *WebrtcTransport) addRemotePeerConnection(ctx context.Context, sess Sess
 		"session": sess.String(),
 	})
 
-	if err := t.Call(ctx, SYS_METHOD_ADD_PEER_CONNECTION, &AddPeerConnectionRequest{}, &res); err != nil {
+	if err := t.Call(ctx, SYS_METHOD_ADD_PEER_CONNECTION, &AddPeerConnectionRequest{
+		Session: int32(sess),
+		Offer:   offer,
+	}, &res, well_known_option.WithScope("sys")); err != nil {
 		logger.WithError(err).Debugf("failed to add peer connection")
 		return webrtc.SessionDescription{}, err
 	}
@@ -65,7 +69,12 @@ func (t *WebrtcTransport) addSinkPeerConnection(sess Session, offer webrtc.Sessi
 		return
 	}
 
-	t.registerPeerConnection(sess, pc)
+	if err = t.registerPeerConnection(sess, pc); err != nil {
+		defer pc.Close()
+		logger.WithError(err).Debugf("failed to register peer connection")
+		return
+	}
+
 	pc.OnConnectionStateChange(t.onSinkConnectionStateChange(sess))
 	pc.OnDataChannel(t.onDataChannel(sess))
 

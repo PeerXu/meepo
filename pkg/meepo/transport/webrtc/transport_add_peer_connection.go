@@ -20,10 +20,14 @@ func (t *WebrtcTransport) addPeerConnection(sess Session) error {
 		return err
 	}
 
-	t.registerPeerConnection(sess, pc)
+	if err := t.registerPeerConnection(sess, pc); err != nil {
+		defer pc.Close()
+		logger.WithError(err).Debugf("failed to register peer connection")
+		return err
+	}
+
 	pc.OnConnectionStateChange(t.onSourceConnectionStateChange(sess))
 	pc.OnDataChannel(t.onDataChannel(sess))
-
 	go t.sourceGather(sess, t.sourceGatherFunc)
 
 	logger.Tracef("add peer connection")

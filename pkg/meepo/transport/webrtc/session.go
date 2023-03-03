@@ -24,7 +24,7 @@ func (t *WebrtcTransport) newSession() Session {
 }
 
 func newSession(randSrc rand.Source) Session {
-	return Session(randSrc.Int63() & (math.MaxInt64 - 1))
+	return Session(randSrc.Int63() & (math.MaxInt32 - 1))
 }
 
 func (t *WebrtcTransport) nextSession(sess Session) Session {

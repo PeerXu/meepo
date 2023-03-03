@@ -1,6 +1,8 @@
 package logging
 
 import (
+	"time"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/PeerXu/meepo/pkg/lib/option"
@@ -25,6 +27,12 @@ func NewLogger(opts ...NewLoggerOption) (Logger, error) {
 	}
 
 	logger := logrus.New()
+
+	formatter := new(logrus.TextFormatter)
+	formatter.TimestampFormat = time.RFC3339Nano
+	formatter.FullTimestamp = true
+	logger.SetFormatter(formatter)
+
 	logger.SetLevel(lvl)
 
 	return logrus.NewEntry(logger), nil

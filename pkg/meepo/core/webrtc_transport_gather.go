@@ -68,6 +68,7 @@ func (mp *Meepo) genGatherOnNewFunc(target addr.Addr, gtksFn getTrackersFunc, op
 			"target":  target.String(),
 			"session": sess.String(),
 		})
+
 		req, err := mp.newNewTransportRequest(target, sess, offer, opt)
 		if err != nil {
 			logger.WithError(err).Debugf("failed to new NewTransport request")

@@ -24,6 +24,7 @@ func (t *WebrtcTransport) closeRemoteTransport(ctx context.Context) (err error) 
 	return
 }
 
+// dont close peer connection now
 func (t *WebrtcTransport) onClose(ctx context.Context, _req any) (res any, err error) {
 	res = &CloseResponse{}
 
@@ -39,11 +40,18 @@ func (t *WebrtcTransport) onClose(ctx context.Context, _req any) (res any, err e
 		close(t.ready)
 	})
 
-	logger.WithError(t.closeAllChannels(ctx)).Tracef("close all channels")
+	if er := t.closeAllChannels(ctx); er != nil {
+		err = er
+		logger.WithError(err).Debugf("failed to close all channels")
 
-	if err = t.onCloseCb(t); err != nil {
+	}
+
+	if er := t.onCloseCb(t); er != nil {
+		err = er
 		logger.WithError(err).Debugf("failed on close callback")
 	}
+
+	logger.Tracef("transport closed")
 
 	return
 }

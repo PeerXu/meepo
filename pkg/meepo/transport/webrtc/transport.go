@@ -49,7 +49,7 @@ type WebrtcTransport struct {
 	beforeNewChannelHook   transport_core.BeforeNewChannelHook
 	logger                 logging.Logger
 	closed                 matomic.GenericsValue[bool]
-	connectedOnce          matomic.GenericsValue[bool]
+	connectingOnce         matomic.GenericsValue[bool]
 	role                   string
 	currentChannelID       uint32
 
@@ -160,11 +160,12 @@ func NewWebrtcSinkTransport(opts ...meepo_interface.NewTransportOption) (meepo_i
 	}
 	sess := Session(sessI32)
 	t.registerPeerConnection(sess, pc)
+	nextSess := t.nextSession(sess)
 
 	pc.OnConnectionStateChange(t.onSinkConnectionStateChange(sess))
 	pc.OnDataChannel(t.onDataChannel(sess))
 	go t.sinkGather(sess, offer, gatherDoneOnNewFunc)
-	go t.addPeerConnection(t.nextSession(sess))
+	go t.addPeerConnection(nextSess)
 
 	return t, nil
 }
@@ -259,7 +260,7 @@ func newCommonWebrtcTransport(o option.Option) (*WebrtcTransport, error) {
 		beforeNewChannelHook:   beforeNewChannelHook,
 		logger:                 logger,
 		closed:                 matomic.NewValue[bool](),
-		connectedOnce:          matomic.NewValue[bool](),
+		connectingOnce:         matomic.NewValue[bool](),
 		readyErrVal:            matomic.NewValue[error](),
 		readyTimeout:           readyTimeout,
 		ready:                  make(chan struct{}),
@@ -301,7 +302,7 @@ func newCommonWebrtcTransport(o option.Option) (*WebrtcTransport, error) {
 	}
 
 	t.closed.Store(false)
-	t.connectedOnce.Store(false)
+	t.connectingOnce.Store(false)
 	go t.tryCloseFailedTransport()
 
 	return t, nil

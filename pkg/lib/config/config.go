@@ -29,6 +29,7 @@ func Default() *Config {
 	return &Config{
 		Meepo: Meepo{
 			Daemon: true,
+			Pprof:  "",
 			Identity: Identity{
 				NoFile: false,
 				File:   "",

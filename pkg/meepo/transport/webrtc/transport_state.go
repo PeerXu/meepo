@@ -31,16 +31,16 @@ func (t *WebrtcTransport) State() meepo_interface.TransportState {
 	}
 
 	if !t.isReady() {
-		return meepo_interface.TRANSPORT_STATE_NEW
-	}
+		if t.isConnectingOnce() {
+			return meepo_interface.TRANSPORT_STATE_CONNECTING
+		}
 
-	if !t.isConnectedOnce() {
-		return meepo_interface.TRANSPORT_STATE_CONNECTING
+		return meepo_interface.TRANSPORT_STATE_NEW
 	}
 
 	return meepo_interface.TRANSPORT_STATE_DISCONNECTED
 }
 
-func (t *WebrtcTransport) isConnectedOnce() bool {
-	return t.connectedOnce.Load()
+func (t *WebrtcTransport) isConnectingOnce() bool {
+	return t.connectingOnce.Load()
 }

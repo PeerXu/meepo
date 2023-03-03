@@ -23,6 +23,7 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	marshaler_json "github.com/PeerXu/meepo/pkg/lib/marshaler/json"
+	"github.com/PeerXu/meepo/pkg/lib/pprof"
 	"github.com/PeerXu/meepo/pkg/lib/rpc"
 	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
 	rpc_http "github.com/PeerXu/meepo/pkg/lib/rpc/http"
@@ -65,6 +66,11 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	}
 
 	summonLogger := logger.WithField("#method", "meepoSummon")
+
+	if cfg.Meepo.Pprof != "" {
+		pprof.Setup(cfg.Meepo.Pprof)
+		summonLogger.Debugf("pprof listen on %s", cfg.Meepo.Pprof)
+	}
 
 	var pubk ed25519.PublicKey
 	var prik ed25519.PrivateKey
@@ -318,6 +324,7 @@ func init() {
 	fs := serveCmd.Flags()
 
 	fs.BoolVarP(&config.Get().Meepo.Daemon, "daemon", "d", true, "run as daemon")
+	fs.StringVar(&config.Get().Meepo.Pprof, "pprof", "", "profile listen address")
 
 	webrtcCfg := &config.Get().Meepo.Webrtc
 	fs.Uint32Var(&webrtcCfg.RecvBufferSize, "sockBuf", C.WEBRTC_RECEIVE_BUFFER_SIZE, "receive buffer in bytes/per webrtc connection")
@@ -349,6 +356,7 @@ func init() {
 		commandKey string
 	}{
 		{"meepo.daemon", "daemon"},
+		{"meepo.pprof", "pprof"},
 
 		{"meepo.identity.no_file", "no-identity-file"},
 		{"meepo.identity.file", "identity-file"},

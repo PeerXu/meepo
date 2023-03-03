@@ -19,12 +19,14 @@ func (t *WebrtcTransport) sourceGather(sess Session, gather GatherFunc) {
 		if err != nil {
 			pc, er := t.loadPeerConnection(sess)
 			if er != nil {
-				logger.WithError(err).Debugf("failed to get peer connection")
+				logger.WithError(er).Debugf("failed to get peer connection")
 				return
 			}
 			pc.Close()
 		}
 	}()
+
+	t.connectingOnce.Store(true)
 
 	pc, err := t.loadPeerConnection(sess)
 	if err != nil {
@@ -32,7 +34,7 @@ func (t *WebrtcTransport) sourceGather(sess Session, gather GatherFunc) {
 		return
 	}
 
-	ignore, err := pc.CreateDataChannel("_IGNORE_", nil)
+	ignore, err := pc.CreateDataChannel(IGNORE_DATA_CHANNEL_LABEL, nil)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to create hacked data channel")
 		return
@@ -75,6 +77,8 @@ func (t *WebrtcTransport) sinkGather(sess Session, offer webrtc.SessionDescripti
 	logger := t.GetLogger().WithFields(logging.Fields{
 		"#method": "sinkGather",
 	})
+
+	t.connectingOnce.Store(true)
 
 	pc, err := t.loadPeerConnection(sess)
 	if err != nil {

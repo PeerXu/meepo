@@ -28,15 +28,15 @@ func (t *WebrtcTransport) onSinkConnectionStateChange(sess Session) func(webrtc.
 		case webrtc.PeerConnectionStateConnected:
 			atomic.StoreInt64(&t.stat.failedSinkConnections, 0)
 			if t.ensureUniqueConnectedPeerConnection(sess) {
-				logger.Tracef("peer connection is unique")
-
-				go t.tryNewSysDataChannel(sess)
-				if t.enableMux {
-					go t.tryNewMuxDataChannel()
-				}
-				if t.enableKcp {
-					go t.tryNewKcpDataChannel()
-				}
+				go func() {
+					t.tryNewSysDataChannel(sess)
+					if t.enableMux {
+						t.tryNewMuxDataChannel(sess)
+					}
+					if t.enableKcp {
+						t.tryNewKcpDataChannel(sess)
+					}
+				}()
 			}
 		case webrtc.PeerConnectionStateDisconnected:
 
@@ -49,6 +49,7 @@ func (t *WebrtcTransport) onSinkConnectionStateChange(sess Session) func(webrtc.
 			} else {
 				go logger.WithError(pc.Close()).Tracef("close peer connection")
 			}
+			fallthrough
 		case webrtc.PeerConnectionStateClosed:
 			t.unregisterPeerConnection(sess)
 			if t.isClosable() {
@@ -75,9 +76,7 @@ func (t *WebrtcTransport) onSourceConnectionStateChange(sess Session) func(webrt
 
 		case webrtc.PeerConnectionStateConnected:
 			atomic.StoreInt64(&t.stat.failedSourceConnections, 0)
-			if t.ensureUniqueConnectedPeerConnection(sess) {
-				logger.Tracef("peer connection is unique")
-			}
+			t.ensureUniqueConnectedPeerConnection(sess)
 		case webrtc.PeerConnectionStateDisconnected:
 
 		case webrtc.PeerConnectionStateFailed:
@@ -87,8 +86,13 @@ func (t *WebrtcTransport) onSourceConnectionStateChange(sess Session) func(webrt
 			if err != nil {
 				logger.WithError(err).Debugf("failed to get load peer connection")
 			} else {
-				go logger.WithError(pc.Close()).Tracef("close peer connection")
+				if er := pc.Close(); er != nil {
+					logger.WithError(er).Debugf("failed to close peer connection")
+				} else {
+					logger.Tracef("close peer connection")
+				}
 			}
+			fallthrough
 		case webrtc.PeerConnectionStateClosed:
 			t.unregisterPeerConnection(sess)
 			if t.isClosable() {
@@ -173,21 +177,23 @@ func (t *WebrtcTransport) nextDataChannelLabel(scope string) string {
 	return fmt.Sprintf("%s#%016x", scope, t.randSrc.Int63())
 }
 
-func (t *WebrtcTransport) tryNewMuxDataChannel() {
-	t.tryNewDataChannelTpl("mux", t.muxLabel, t.muxMtx, t.GetLogger().WithFields(logging.Fields{
+func (t *WebrtcTransport) tryNewMuxDataChannel(sess Session) {
+	t.tryNewDataChannelTpl("mux", sess, t.muxLabel, t.muxMtx, t.GetLogger().WithFields(logging.Fields{
 		"#method": "tryNewMuxDataChannel",
+		"session": sess.String(),
 		"label":   t.muxLabel,
 	}), &t.muxDataChannel, t.onMuxDataChannelOpen, true)()
 }
 
-func (t *WebrtcTransport) tryNewKcpDataChannel() {
-	t.tryNewDataChannelTpl("kcp", t.kcpLabel, t.kcpMtx, t.GetLogger().WithFields(logging.Fields{
+func (t *WebrtcTransport) tryNewKcpDataChannel(sess Session) {
+	t.tryNewDataChannelTpl("kcp", sess, t.kcpLabel, t.kcpMtx, t.GetLogger().WithFields(logging.Fields{
 		"#method": "tryNewKcpDataChannel",
+		"session": sess.String(),
 		"label":   t.kcpLabel,
 	}), &t.kcpDataChannel, t.onKcpDataChannelOpen, false)()
 }
 
-func (t *WebrtcTransport) tryNewDataChannelTpl(name string, label string, mtx lock.Locker, logger logging.Logger, dcPtr **webrtc.DataChannel, onOpen func(dc *webrtc.DataChannel), ordered bool) func() {
+func (t *WebrtcTransport) tryNewDataChannelTpl(name string, sess Session, label string, mtx lock.Locker, logger logging.Logger, dcPtr **webrtc.DataChannel, onOpen func(Session, *webrtc.DataChannel), ordered bool) func() {
 	return func() {
 		var err error
 
@@ -206,7 +212,7 @@ func (t *WebrtcTransport) tryNewDataChannelTpl(name string, label string, mtx lo
 			*dcPtr = nil
 		}
 
-		pc, err := t.loadRandomPeerConnection()
+		pc, err := t.loadPeerConnection(sess)
 		if err != nil {
 			// TODO: dont close transport when failed to load pc
 			defer t.Close(t.context())
@@ -221,7 +227,7 @@ func (t *WebrtcTransport) tryNewDataChannelTpl(name string, label string, mtx lo
 			return
 		}
 
-		ndc.OnOpen(func() { onOpen(ndc) })
+		ndc.OnOpen(func() { onOpen(sess, ndc) })
 		logger.Tracef("new %s data channel", name)
 
 		*dcPtr = ndc

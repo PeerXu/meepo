@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-func (t *WebrtcTransport) DoRequest(ctx context.Context, m Message) (err error) {
+func (t *WebrtcTransport) doRequest(ctx context.Context, m Message) (err error) {
 	logger := t.GetLogger().WithField("#method", "doRequest").WithFields(t.wrapMessage(m))
 
 	t.polls.Store(t.parseResponseSession(m.Session), &LockableChannel{

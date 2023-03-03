@@ -23,6 +23,7 @@ var (
 	ErrInvalidConnectionState, ErrInvalidConnectionStateFn   = errors.NewErrorAndErrorFunc[string]("invalid connection state")
 	ErrChannelNotFound, ErrChannelNotFoundFn                 = errors.NewErrorAndErrorFunc[uint16]("channel not found")
 	ErrPeerConnectionNotFound, ErrPeerConnectionNotFoundFn   = errors.NewErrorAndErrorFunc[Session]("peer connection not found")
+	ErrPeerConnectionFound, ErrPeerConnectionFoundFn         = errors.NewErrorAndErrorFunc[Session]("peer connection found")
 	ErrDataChannelNotFound, ErrDataChannelNotFoundFn         = errors.NewErrorAndErrorFunc[Session]("data channel not found")
 	ErrReadWriteCloserNotFound, ErrReadWriteCloserNotFoundFn = errors.NewErrorAndErrorFunc[Session]("readWriteCloser not found")
 )

@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/pion/webrtc/v3"
+
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
@@ -73,16 +75,26 @@ func (t *WebrtcTransport) isClosed() bool {
 }
 
 func (t *WebrtcTransport) isClosable() bool {
+	logger := t.GetLogger().WithField("#method", "isClosable")
+
 	if t.isClosed() {
+		logger.Tracef("transport closed")
 		return false
 	}
 
 	if t.countPeerConnections() > 0 {
+		var sessions []string
+		t.peerConnections.Range(func(k Session, v *webrtc.PeerConnection) bool {
+			sessions = append(sessions, k.String())
+			return true
+		})
+		logger.WithField("sessions", sessions).Tracef("peer connection counts greater than 0")
 		return false
 	}
 
 	if t.State() == meepo_interface.TRANSPORT_STATE_NEW {
 		if t.stat.failedSourceConnections == 0 || t.stat.failedSinkConnections == 0 {
+			logger.Tracef("waitting for source/sink connection fails")
 			return false
 		}
 	}
