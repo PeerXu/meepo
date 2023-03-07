@@ -24,7 +24,7 @@ require (
 	github.com/things-go/go-socks5 v0.0.2
 	github.com/vmihailenco/msgpack/v5 v5.3.5
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3
-	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	golang.org/x/net v0.7.0
+	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
