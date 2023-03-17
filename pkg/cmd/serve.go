@@ -65,7 +65,23 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	fs := cmd.Flags()
 	summonLogger := logger.WithField("#method", "meepoSummon")
+
+	aclFlag := fs.Lookup("acl")
+	switch cfg.Meepo.Mode {
+	case C.MODE_MAIN:
+	case C.MODE_MINOR:
+		if aclFlag.Changed || cfg.Meepo.Acl != C.ACL_BLOCK_ALL {
+			summonLogger.Warningf("failed to apply acl in minor mode, please use main mode to apply acl")
+			return nil
+		}
+	case C.MODE_DEV:
+		if aclFlag.Changed || cfg.Meepo.Acl != C.ACL_ALLOW_ALL {
+			summonLogger.Warningf("failed to apply acl in dev mode, force set to allow all request")
+			cfg.Meepo.Acl = C.ACL_ALLOW_ALL
+		}
+	}
 
 	if cfg.Meepo.Pprof != "" {
 		pprof.Setup(cfg.Meepo.Pprof)
@@ -324,6 +340,8 @@ func init() {
 	fs := serveCmd.Flags()
 
 	fs.BoolVarP(&config.Get().Meepo.Daemon, "daemon", "d", true, "run as daemon")
+	fs.StringVar(&config.Get().Meepo.Acl, "acl", "", "access control list")
+
 	fs.StringVar(&config.Get().Meepo.Pprof, "pprof", "", "profile listen address")
 
 	webrtcCfg := &config.Get().Meepo.Webrtc
@@ -356,6 +374,8 @@ func init() {
 		commandKey string
 	}{
 		{"meepo.daemon", "daemon"},
+		{"meepo.acl", "acl"},
+
 		{"meepo.pprof", "pprof"},
 
 		{"meepo.identity.no_file", "no-identity-file"},

@@ -1,6 +1,6 @@
 package constant
 
-const (
+var (
 	WEBRTC_RECEIVE_BUFFER_SIZE uint32 = 33554432
 
 	TRACKER_ADDR = "62vv3lwalqmdb2657f7ax73fem7gkgzmin3w7qyy0sjjfae0f3p"
@@ -10,7 +10,9 @@ const (
 
 	SOCKS5_HOST = "127.0.0.1:12341"
 
-	ACL = `- allow: "*"`
+	ACL_REPLACEME = `REPLACE_ME`
+	ACL_BLOCK_ALL = `- block: "*"`
+	ACL_ALLOW_ALL = `- allow: "*"`
 
 	LOG_LEVEL = "info"
 
@@ -27,4 +29,8 @@ const (
 	KCP_RCVWND       int    = 512
 	KCP_DATA_SHARD   int    = 10
 	KCP_PARITY_SHARD int    = 10
+
+	MODE_MAIN  = "main"
+	MODE_MINOR = "minor"
+	MODE_DEV   = "dev"
 )

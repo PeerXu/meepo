@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	ErrInvalidRule, ErrInvalidRuleFn     = errors.NewErrorAndErrorFunc[string]("invalid rule")
 	ErrInvalidEntity, ErrInvalidEntityFn = errors.NewErrorAndErrorFunc[string]("invalid entity")
 	ErrNotPermitted                      = fmt.Errorf("not permitted")
 )

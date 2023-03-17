@@ -137,8 +137,7 @@ func (mp *Meepo) onNewTransport(in *crypto_core.Packet) (answer webrtc.SessionDe
 		mp.transportsMtx.Lock()
 		defer mp.transportsMtx.Unlock()
 		defer t.Close(mp.context())
-		delete(mp.transports, srcAddr)
-
+		mp.removeTransportNL(srcAddr)
 		err = er
 		logger.WithError(err).Debugf("failed to gather")
 		return

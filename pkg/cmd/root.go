@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/PeerXu/meepo/pkg/lib/config"
+	"github.com/PeerXu/meepo/pkg/lib/constant"
 )
 
 var cfgFile string
@@ -29,6 +30,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&config.Get().Meepo.Log.Level, "log-level", "error", "Log level")
 	viper.BindPFlag("meepo.log.level", rootCmd.PersistentFlags().Lookup("log-level"))
 
-	rootCmd.PersistentFlags().StringVarP(&config.Get().Meepo.API.Host, "host", "H", "127.0.0.1:12345", "Meepo API server address")
+	rootCmd.PersistentFlags().StringVarP(&config.Get().Meepo.API.Host, "host", "H", constant.API_HOST, "Meepo API server address")
 	viper.BindPFlag("meepo.api.host", rootCmd.PersistentFlags().Lookup("host"))
 }

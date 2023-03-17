@@ -15,11 +15,8 @@ func (mp *Meepo) onRemoveWebrtcTransportNL(t Transport) error {
 		"addr":    t.Addr().String(),
 	})
 
-	delete(mp.transports, t.Addr())
-	logger.Tracef("delete transport")
-
-	delete(mp.trackers, t.Addr())
-	logger.Tracef("delete tracker")
+	mp.removeTransportNL(t.Addr())
+	mp.removeTrackerNL(t.Addr())
 
 	if tk, found := mp.defaultTrackers[t.Addr()]; found {
 		mp.trackers[tk.Addr()] = tk
@@ -40,13 +37,6 @@ func (mp *Meepo) onRemovePipeTransport(t Transport) error {
 }
 
 func (mp *Meepo) onRemovePipeTransportNL(t Transport) error {
-	logger := mp.GetLogger().WithFields(logging.Fields{
-		"#method": "onRemovePipeTransportNL",
-		"addr":    t.Addr().String(),
-	})
-
-	delete(mp.transports, t.Addr())
-	logger.Tracef("delete transport")
-
+	mp.removeTransportNL(t.Addr())
 	return nil
 }

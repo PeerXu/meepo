@@ -17,6 +17,27 @@ func (c *Config) Init() {
 	if len(c.Meepo.Trackers) == 0 && c.Meepo.Tracker != nil {
 		c.Meepo.Trackers = append(c.Meepo.Trackers, c.Meepo.Tracker)
 	}
+
+	if c.Meepo.Mode != C.MODE_MAIN &&
+		c.Meepo.Mode != C.MODE_MINOR &&
+		c.Meepo.Mode != C.MODE_DEV {
+		c.Meepo.Mode = C.MODE_MINOR
+	}
+
+	switch c.Meepo.Mode {
+	case C.MODE_MAIN:
+		if c.Meepo.Acl == C.ACL_REPLACEME {
+			c.Meepo.Acl = C.ACL_BLOCK_ALL
+		}
+	case C.MODE_MINOR:
+		if c.Meepo.Acl == C.ACL_REPLACEME {
+			c.Meepo.Acl = C.ACL_BLOCK_ALL
+		}
+	case C.MODE_DEV:
+		if c.Meepo.Acl == C.ACL_REPLACEME {
+			c.Meepo.Acl = C.ACL_ALLOW_ALL
+		}
+	}
 }
 
 var cfg Config
@@ -29,6 +50,7 @@ func Default() *Config {
 	return &Config{
 		Meepo: Meepo{
 			Daemon: true,
+			Mode:   C.MODE_MINOR,
 			Pprof:  "",
 			Identity: Identity{
 				NoFile: false,
@@ -47,7 +69,7 @@ func Default() *Config {
 			Socks5: Socks5{
 				Host: C.SOCKS5_HOST,
 			},
-			Acl: C.ACL,
+			Acl: C.ACL_REPLACEME,
 			Log: Log{
 				Level: C.LOG_LEVEL,
 			},

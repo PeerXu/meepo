@@ -48,6 +48,11 @@ func TestAcl(t *testing.T) {
 			},
 			[]string{"b,tcp,10.0.0.1:22"},
 		},
+		{
+			`#allow=*,*,10.1.1.1:22;#block=*`,
+			[]string{"a,tcp,10.1.1.1:22"},
+			[]string{"a,tcp,10.1.1.1:33"},
+		},
 	} {
 		acl, err := FromString(c.s)
 		require.Nil(t, err)
