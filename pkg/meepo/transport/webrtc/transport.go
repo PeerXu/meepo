@@ -106,7 +106,6 @@ func NewWebrtcSourceTransport(opts ...meepo_interface.NewTransportOption) (meepo
 		return nil, err
 	}
 
-	t.role = "source"
 	t.currentChannelID = 0
 
 	gatherOnNewFunc, err := GetGatherOnNewFunc(o)
@@ -136,7 +135,6 @@ func NewWebrtcSinkTransport(opts ...meepo_interface.NewTransportOption) (meepo_i
 		return nil, err
 	}
 
-	t.role = "sink"
 	t.currentChannelID = 1
 
 	offer, err := GetOffer(o)
@@ -241,8 +239,14 @@ func newCommonWebrtcTransport(o option.Option) (*WebrtcTransport, error) {
 		return nil, err
 	}
 
+	role, err := GetRole(o)
+	if err != nil {
+		return nil, err
+	}
+
 	t := &WebrtcTransport{
 		addr:                   addr,
+		role:                   role,
 		newPeerConnectionFunc:  newPeerConnectionFunc,
 		gatherFunc:             gatherFunc,
 		peerConnections:        msync.NewMap[Session, *webrtc.PeerConnection](),

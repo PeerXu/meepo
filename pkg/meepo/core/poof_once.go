@@ -2,7 +2,6 @@ package meepo_core
 
 import (
 	"math/rand"
-	"sync"
 
 	"github.com/PeerXu/meepo/pkg/lib/lock"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
@@ -41,23 +40,18 @@ func (mp *Meepo) poofOnce() {
 		"level":  lvl.String(),
 	})
 
-	tks, _, err := mp.getCloserTrackers(targetAddr, mp.poofCount, nil)
+	tks, _, err := mp.getCloserTrackers(targetAddr, mp.poofRequestCandidates, nil)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to get closer trackers")
 		return
 	}
 
-	var wg sync.WaitGroup
-	decreased := false
 	var handledCandidates []Addr
 	mtx := lock.NewLock(well_known_option.WithName("poofOnceMtx"))
 	for _, tk := range tks {
-		wg.Add(1)
 		go func(tk Tracker) {
-			defer wg.Done()
-
 			logger := logger.WithField("tracker", tk.Addr().String())
-			candidates, err := tk.GetCandidates(targetAddr, mp.poofCount, []Addr{mp.Addr()})
+			candidates, err := tk.GetCandidates(targetAddr, mp.poofRequestCandidates, []Addr{mp.Addr()})
 			if err != nil {
 				logger.WithError(err).Debugf("failed to get candidates")
 				return
@@ -85,20 +79,9 @@ func (mp *Meepo) poofOnce() {
 					Tracker:   tk.Addr(),
 				}
 				logger.WithField("candidate", candidate.String()).Tracef("create navi request")
-
-				mp.decreasePoofInterval()
-				decreased = true
-				logger.Tracef("decrease poof interval")
 			}
 		}(tk)
 	}
-	go func() {
-		wg.Wait()
-		if !decreased {
-			mp.increasePoofInterval()
-			logger.Tracef("increase poof interval")
-		}
-	}()
 }
 
 func (mp *Meepo) briefHealthReport(logger logging.Logger, hr *meepo_routing_table_interface.HealthReport) {

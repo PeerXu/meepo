@@ -1,7 +1,12 @@
 package constant
 
+import "time"
+
 var (
 	WEBRTC_RECEIVE_BUFFER_SIZE uint32 = 33554432
+
+	POOF_INTERVAL           = 31 * time.Second
+	POOF_REQUEST_CANDIDATES = 3
 
 	TRACKER_ADDR = "62vv3lwalqmdb2657f7ax73fem7gkgzmin3w7qyy0sjjfae0f3p"
 	TRACKER_HOST = "tkd-0.meepo.dev:12346"

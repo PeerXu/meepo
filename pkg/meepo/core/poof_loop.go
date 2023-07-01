@@ -8,14 +8,15 @@ import (
 
 func (mp *Meepo) poofLoop() {
 	logger := mp.GetLogger().WithField("#method", "poofLoop")
-	defer logger.Tracef("exit poof loop")
-	ticker := time.NewTicker(mp.poofInterval)
-	for true {
+	defer logger.Tracef("exit")
+	timer := time.NewTicker(mp.getPoofInterval())
+	for {
+		pi := mp.getPoofInterval()
 		logger := logger.WithFields(logging.Fields{
-			"poofInterval": mp.poofInterval,
-			"nextPoofAt":   time.Now().Add(mp.poofInterval),
+			"poofInterval": pi,
+			"nextPoofAt":   time.Now().Add(pi),
 		})
-		ticker.Reset(mp.poofInterval)
+		timer.Reset(pi)
 
 		if mp.isClosed() {
 			return
@@ -24,10 +25,8 @@ func (mp *Meepo) poofLoop() {
 		go mp.poofOnce()
 
 		select {
-		case <-ticker.C:
-			logger.Tracef("poof by ticker tick")
-		case <-mp.poofNowCh:
-			logger.Tracef("poof by someone kick")
+		case <-timer.C:
+			logger.Tracef("poof by ticker timer")
 		}
 	}
 }

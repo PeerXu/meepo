@@ -44,16 +44,12 @@ type Meepo struct {
 	trackers        map[Addr]Tracker
 	defaultTrackers map[Addr]Tracker
 
-	routingTable       meepo_routing_table_interface.RoutingTable
-	dhtAlpha           int
-	poofMtx            lock.Locker
-	poofInterval       time.Duration
-	poofMinInterval    time.Duration
-	poofMaxInterval    time.Duration
-	poofIntervalFactor float64
-	poofNowCh          chan struct{}
-	poofCount          int
-	naviRequests       chan *NaviRequest
+	routingTable          meepo_routing_table_interface.RoutingTable
+	dhtAlpha              int
+	poofMtx               lock.Locker
+	poofInterval          time.Duration
+	poofRequestCandidates int
+	naviRequests          chan *NaviRequest
 
 	acl acl.Acl
 
@@ -145,22 +141,7 @@ func NewMeepo(opts ...NewMeepoOption) (meepo_interface.Meepo, error) {
 		return nil, err
 	}
 
-	poofMinInterval, err := GetPoofMinInterval(o)
-	if err != nil {
-		return nil, err
-	}
-
-	poofMaxInterval, err := GetPoofMaxIntreval(o)
-	if err != nil {
-		return nil, err
-	}
-
-	poofIntervalFactor, err := GetPoofIntervalFactor(o)
-	if err != nil {
-		return nil, err
-	}
-
-	poofCount, err := GetPoofCount(o)
+	poofRequestCandidates, err := GetPoofRequestCandidates(o)
 	if err != nil {
 		return nil, err
 	}
@@ -200,34 +181,30 @@ func NewMeepo(opts ...NewMeepoOption) (meepo_interface.Meepo, error) {
 	webrtcAPI := webrtc.NewAPI(webrtc.WithSettingEngine(se))
 
 	mp := &Meepo{
-		addr:                addr,
-		webrtcAPI:           webrtcAPI,
-		webrtcConfiguration: webrtcConfiguration,
-		teleportationsMtx:   lock.NewLock(well_known_option.WithName("teleportationsMtx")),
-		teleportations:      make(map[string]Teleportation),
-		transportsMtx:       lock.NewLock(well_known_option.WithName("transportsMtx")),
-		transports:          make(map[Addr]Transport),
-		trackersMtx:         lock.NewLock(well_known_option.WithName("trackersMtx")),
-		trackers:            trackers,
-		defaultTrackers:     defaultTrackers,
-		routingTable:        mrt,
-		dhtAlpha:            dhtAlpha,
-		poofMtx:             lock.NewLock(well_known_option.WithName("poofMtx")),
-		poofInterval:        poofInterval,
-		poofMinInterval:     poofMinInterval,
-		poofMaxInterval:     poofMaxInterval,
-		poofIntervalFactor:  poofIntervalFactor,
-		poofNowCh:           make(chan struct{}),
-		poofCount:           poofCount,
-		naviRequests:        make(chan *NaviRequest),
-		acl:                 acl,
-		signer:              signer,
-		cryptor:             cryptor,
-		randSrc:             randSrc,
-		marshaler:           mr,
-		unmarshaler:         umr,
-		logger:              logger,
-		closed:              make(chan struct{}),
+		addr:                  addr,
+		webrtcAPI:             webrtcAPI,
+		webrtcConfiguration:   webrtcConfiguration,
+		teleportationsMtx:     lock.NewLock(well_known_option.WithName("teleportationsMtx")),
+		teleportations:        make(map[string]Teleportation),
+		transportsMtx:         lock.NewLock(well_known_option.WithName("transportsMtx")),
+		transports:            make(map[Addr]Transport),
+		trackersMtx:           lock.NewLock(well_known_option.WithName("trackersMtx")),
+		trackers:              trackers,
+		defaultTrackers:       defaultTrackers,
+		routingTable:          mrt,
+		dhtAlpha:              dhtAlpha,
+		poofMtx:               lock.NewLock(well_known_option.WithName("poofMtx")),
+		poofInterval:          poofInterval,
+		poofRequestCandidates: poofRequestCandidates,
+		naviRequests:          make(chan *NaviRequest),
+		acl:                   acl,
+		signer:                signer,
+		cryptor:               cryptor,
+		randSrc:               randSrc,
+		marshaler:             mr,
+		unmarshaler:           umr,
+		logger:                logger,
+		closed:                make(chan struct{}),
 	}
 
 	mp.enableMux, _ = well_known_option.GetEnableMux(o)

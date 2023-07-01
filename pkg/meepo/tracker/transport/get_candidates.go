@@ -6,7 +6,7 @@ import (
 	tracker_interface "github.com/PeerXu/meepo/pkg/meepo/tracker/interface"
 )
 
-func (tk *TransportTracker) GetCandidates(target addr.Addr, count int, excludes []addr.Addr) (candidates []addr.Addr, err error) {
+func (tk *TransportTracker) GetCandidates(target addr.Addr, requests int, excludes []addr.Addr) (candidates []addr.Addr, err error) {
 	ctx := tk.context()
 	var excludesStrSlice []string
 	for _, x := range excludes {
@@ -14,7 +14,7 @@ func (tk *TransportTracker) GetCandidates(target addr.Addr, count int, excludes 
 	}
 	req := &tracker_interface.GetCandidatesRequest{
 		Target:   target.String(),
-		Count:    count,
+		Requests: requests,
 		Excludes: excludesStrSlice,
 	}
 	var res tracker_interface.GetCandidatesResponse

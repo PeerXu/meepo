@@ -2,7 +2,7 @@ package tracker_interface
 
 type GetCandidatesRequest struct {
 	Target   string
-	Count    int
+	Requests int
 	Excludes []string
 }
 

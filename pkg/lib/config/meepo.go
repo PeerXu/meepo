@@ -4,6 +4,7 @@ type Meepo struct {
 	Daemon    bool        `yaml:"daemon"`
 	Mode      string      `yaml:"mode"`
 	Pprof     string      `yaml:"pprof"`
+	Poof      Poof        `yaml:"poof"`
 	Identity  Identity    `yaml:"identity,omitempty"`
 	API       API         `yaml:"api,omitempty"`
 	Socks5    Socks5      `yaml:"socks5,omitempty"`

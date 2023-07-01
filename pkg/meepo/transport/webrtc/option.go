@@ -17,6 +17,7 @@ type GatherDoneFunc func(Session, webrtc.SessionDescription, error)
 type NewPeerConnectionFunc func() (*webrtc.PeerConnection, error)
 
 const (
+	OPTION_ROLE                      = "role"
 	OPTION_TEMP_DATA_CHANNEL_TIMEOUT = "tempDataChannelTimeout"
 	OPTION_OFFER                     = "offer"
 	OPTION_ANSWER                    = "answer"
@@ -64,11 +65,13 @@ func defaultNewWebrtcTransportOptions() option.Option {
 
 func defaultNewSourceTransportOptions() option.Option {
 	m := defaultNewWebrtcTransportOptions()
+	m[OPTION_ROLE] = "source"
 	return option.NewOption(m)
 }
 
 func defaultNewSinkTransportOptions() option.Option {
 	m := defaultNewWebrtcTransportOptions()
+	m[OPTION_ROLE] = "sink"
 	return option.NewOption(m)
 }
 
@@ -79,6 +82,7 @@ func defaultNewChannelOptions() option.Option {
 }
 
 var (
+	WithRole, GetRole                                     = option.New[string](OPTION_ROLE)
 	WithTempDataChannelTimeout, GetTempDataChannelTimeout = option.New[time.Duration](OPTION_TEMP_DATA_CHANNEL_TIMEOUT)
 	WithOffer, GetOffer                                   = option.New[webrtc.SessionDescription](OPTION_OFFER)
 	WithAnswer, GetAnswer                                 = option.New[webrtc.SessionDescription](OPTION_ANSWER)

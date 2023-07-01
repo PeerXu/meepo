@@ -12,14 +12,11 @@ import (
 )
 
 const (
-	OPTION_DHT_ALPHA            = "dhtAlpha"
-	OPTION_POOF_INTERVAL        = "poofInterval"
-	OPTION_POOF_MIN_INTERVAL    = "poofMinInterval"
-	OPTION_POOF_MAX_INTERVAL    = "poofMaxInterval"
-	OPTION_POOF_INTERVAL_FACTOR = "poofIntervalFactor"
-	OPTION_POOF_COUNT           = "poofCount"
-	OPTION_ENABLE_POOF          = "enablePoof"
-	OPTION_GET_TRACKERS_FUNC    = "getTrackersFunc"
+	OPTION_DHT_ALPHA               = "dhtAlpha"
+	OPTION_POOF_INTERVAL           = "poofInterval"
+	OPTION_POOF_REQUEST_CANDIDATES = "poofRequestCandidates"
+	OPTION_ENABLE_POOF             = "enablePoof"
+	OPTION_GET_TRACKERS_FUNC       = "getTrackersFunc"
 
 	METHOD_PING                = "ping"
 	METHOD_PERMIT              = "permit"
@@ -49,29 +46,23 @@ type GetTeleportationOption = meepo_interface.GetTeleportationOption
 type TeleportOption = meepo_interface.TeleportOption
 
 var (
-	WithDHTAlpha, GetDHTAlpha                     = option.New[int](OPTION_DHT_ALPHA)
-	WithPoofInterval, GetPoofInterval             = option.New[time.Duration](OPTION_POOF_INTERVAL)
-	WithPoofMinInterval, GetPoofMinInterval       = option.New[time.Duration](OPTION_POOF_MIN_INTERVAL)
-	WithPoofMaxInterval, GetPoofMaxIntreval       = option.New[time.Duration](OPTION_POOF_MAX_INTERVAL)
-	WithPoofIntervalFactor, GetPoofIntervalFactor = option.New[float64](OPTION_POOF_INTERVAL_FACTOR)
-	WithPoofCount, GetPoofCount                   = option.New[int](OPTION_POOF_COUNT)
-	WithEnablePoof, GetEnablePoof                 = option.New[bool](OPTION_ENABLE_POOF)
-	WithGetTrackersFunc, GetGetTrackersFunc       = option.New[getTrackersFunc](OPTION_GET_TRACKERS_FUNC)
+	WithDHTAlpha, GetDHTAlpha                           = option.New[int](OPTION_DHT_ALPHA)
+	WithPoofInterval, GetPoofInterval                   = option.New[time.Duration](OPTION_POOF_INTERVAL)
+	WithPoofRequestCandidates, GetPoofRequestCandidates = option.New[int](OPTION_POOF_REQUEST_CANDIDATES)
+	WithEnablePoof, GetEnablePoof                       = option.New[bool](OPTION_ENABLE_POOF)
+	WithGetTrackersFunc, GetGetTrackersFunc             = option.New[getTrackersFunc](OPTION_GET_TRACKERS_FUNC)
 )
 
 func defaultNewMeepoOptions() option.Option {
 	return option.NewOption(map[string]any{
 		OPTION_ENABLE_POOF:                         true,
 		OPTION_DHT_ALPHA:                           8,
-		OPTION_POOF_INTERVAL:                       31 * time.Second,
-		OPTION_POOF_MIN_INTERVAL:                   31 * time.Second,
-		OPTION_POOF_MAX_INTERVAL:                   601 * time.Second,
-		OPTION_POOF_INTERVAL_FACTOR:                float64(1.5),
-		OPTION_POOF_COUNT:                          3,
+		OPTION_POOF_INTERVAL:                       C.POOF_INTERVAL,
+		OPTION_POOF_REQUEST_CANDIDATES:             C.POOF_REQUEST_CANDIDATES,
 		meepo_routing_table_core.OPTION_GREEN_LINE: 5,
 		well_known_option.OPTION_RAND_SOURCE:       mrand.NewSource(time.Now().UnixNano()),
 
-		well_known_option.OPTION_WEBRTC_RECEIVE_BUFFER_SIZE: uint32(33554432),
+		well_known_option.OPTION_WEBRTC_RECEIVE_BUFFER_SIZE: C.WEBRTC_RECEIVE_BUFFER_SIZE,
 
 		well_known_option.OPTION_ENABLE_MUX:     true,
 		well_known_option.OPTION_MUX_VER:        C.SMUX_VERSION,

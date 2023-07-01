@@ -29,7 +29,7 @@ func (mp *Meepo) hdrOnGetCandidates(ctx context.Context, _req any) (any, error) 
 		}
 		excludes = append(excludes, exclude)
 	}
-	candidates, err := mp.onGetCandidates(target, req.Count, excludes)
+	candidates, err := mp.onGetCandidates(target, req.Requests, excludes)
 	if err != nil {
 		return nil, err
 	}

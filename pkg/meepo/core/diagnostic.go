@@ -90,8 +90,8 @@ func (mp *Meepo) Diagnostic() (meepo_interface.DiagnosticReport, error) {
 			},
 		},
 		"poof": map[string]any{
-			"interval": mp.poofInterval,
-			"count":    mp.poofCount,
+			"interval":          mp.getPoofInterval(),
+			"requestCandidates": mp.poofRequestCandidates,
 		},
 		"mux": map[string]any{
 			"enable":    mp.enableMux,
