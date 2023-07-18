@@ -7,7 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/teserakt-io/golang-ed25519/extra25519"
@@ -78,7 +78,7 @@ func LoadEd25519Key(filename string) (pubk ed25519.PublicKey, prik ed25519.Priva
 		return
 	}
 
-	buf, err := ioutil.ReadFile(filename)
+	buf, err := os.ReadFile(filename)
 	if err != nil {
 		return
 	}

@@ -16,7 +16,7 @@ func (mp *Meepo) naviLoop() {
 			return
 		}
 
-		queued := time.Now().Sub(req.CreatedAt)
+		queued := time.Since(req.CreatedAt)
 		if queued > mp.naviRequestQueueTimeout {
 			logger.WithFields(logging.Fields{
 				"requestSession": req.Session,

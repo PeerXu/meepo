@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -29,7 +28,7 @@ func initConfig() {
 	if cfgFile != "" {
 		var dstBuf []byte
 
-		buf, err = ioutil.ReadFile(cfgFile)
+		buf, err = os.ReadFile(cfgFile)
 		cobra.CheckErr(err)
 
 		src := make(map[string]any)
@@ -159,7 +158,7 @@ func unzip(in []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	res, err := ioutil.ReadAll(r)
+	res, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}

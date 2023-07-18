@@ -6,5 +6,5 @@ import (
 )
 
 func Setup(lisStr string) {
-	go http.ListenAndServe(lisStr, nil)
+	go http.ListenAndServe(lisStr, nil) // nolint:errcheck
 }

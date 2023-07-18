@@ -119,7 +119,7 @@ func NewWebrtcSourceTransport(opts ...meepo_interface.NewTransportOption) (meepo
 	}
 
 	sess := t.newSession()
-	t.registerPeerConnection(sess, pc)
+	t.registerPeerConnection(sess, pc) // nolint:errcheck
 
 	pc.OnConnectionStateChange(t.onSourceConnectionStateChange(sess))
 	pc.OnDataChannel(t.onDataChannel(sess))
@@ -157,13 +157,13 @@ func NewWebrtcSinkTransport(opts ...meepo_interface.NewTransportOption) (meepo_i
 		return nil, err
 	}
 	sess := Session(sessI32)
-	t.registerPeerConnection(sess, pc)
+	t.registerPeerConnection(sess, pc) // nolint:errcheck
 	nextSess := t.nextSession(sess)
 
 	pc.OnConnectionStateChange(t.onSinkConnectionStateChange(sess))
 	pc.OnDataChannel(t.onDataChannel(sess))
 	go t.sinkGather(sess, offer, gatherDoneOnNewFunc)
-	go t.addPeerConnection(nextSess)
+	go t.addPeerConnection(nextSess) // nolint:errcheck
 
 	return t, nil
 }

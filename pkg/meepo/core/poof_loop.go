@@ -24,9 +24,9 @@ func (mp *Meepo) poofLoop() {
 
 		go mp.poofOnce()
 
-		select {
-		case <-timer.C:
-			logger.Tracef("poof by ticker timer")
-		}
+		// TODO: tick by others
+		// poof by timer
+		<-timer.C
+		logger.Tracef("poof by ticker timer")
 	}
 }

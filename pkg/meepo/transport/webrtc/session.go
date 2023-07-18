@@ -1,12 +1,9 @@
 package transport_webrtc
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"math/rand"
-
-	mcontext "github.com/PeerXu/meepo/pkg/lib/context"
 )
 
 const (
@@ -33,9 +30,4 @@ func (t *WebrtcTransport) nextSession(sess Session) Session {
 
 func nextSession(sess Session) Session {
 	return Session(int32(sess) + 1)
-}
-
-func getSessionFromContext(ctx context.Context) Session {
-	sess, _ := mcontext.Value[Session](ctx, OPTION_SESSION)
-	return sess
 }

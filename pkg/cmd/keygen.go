@@ -4,7 +4,6 @@ import (
 	"crypto/ed25519"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/mikesmitty/edkey"
@@ -47,7 +46,7 @@ func meepoKeygen(cmd *cobra.Command, args []string) error {
 		Bytes: edkey.MarshalED25519PrivateKey(prik),
 	})
 
-	if err = ioutil.WriteFile(filename, buf, 0600); err != nil {
+	if err = os.WriteFile(filename, buf, 0600); err != nil {
 		return err
 	}
 

@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -104,7 +104,7 @@ func (x *HttpCaller) doRequest(ctx context.Context, in *crypto_interface.Packet)
 	}
 	defer res.Body.Close()
 
-	buf, err = ioutil.ReadAll(res.Body)
+	buf, err = io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}

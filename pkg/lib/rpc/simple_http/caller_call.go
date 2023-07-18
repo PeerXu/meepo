@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -75,7 +75,7 @@ func (c *SimpleHttpCaller) doRequest(ctx context.Context, in *SimpleDoRequest) (
 	}
 	defer res.Body.Close()
 
-	buf, err = ioutil.ReadAll(res.Body)
+	buf, err = io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}

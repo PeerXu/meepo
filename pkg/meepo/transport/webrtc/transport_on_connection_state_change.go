@@ -161,7 +161,7 @@ func (t *WebrtcTransport) isSysDataChannelAlive(sess Session) bool {
 		"session": sess,
 	})
 
-	ctx := context.WithValue(t.context(), OPTION_SESSION, sess)
+	ctx := context.WithValue(t.context(), OPTION_SESSION, sess) // nolint:staticcheck
 	ttl, err := t.ping(ctx)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to ping")
