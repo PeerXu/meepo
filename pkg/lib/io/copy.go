@@ -2,10 +2,12 @@ package io
 
 import (
 	"io"
+	"os"
+	"strconv"
 	"sync"
 )
 
-const copyBufSize = 32 * 1024
+const defualtCopyBufSize = 1024 * 1024
 
 var copyBufPool *sync.Pool
 
@@ -16,6 +18,15 @@ func Copy(dst io.Writer, src io.Reader) (written int64, err error) {
 }
 
 func init() {
+	var copyBufSize int
+	var err error
+	copyBufSizeStr := os.Getenv("MPO_EXPERIMENTAL_COPY_BUF_SIZE")
+	if copyBufSizeStr != "" {
+		copyBufSize, err = strconv.Atoi(copyBufSizeStr)
+		if err != nil {
+			panic(err)
+		}
+	}
 	copyBufPool = &sync.Pool{
 		New: func() any { return make([]byte, copyBufSize) },
 	}
