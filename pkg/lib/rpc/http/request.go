@@ -7,10 +7,6 @@ import (
 	crypto_interface "github.com/PeerXu/meepo/pkg/lib/crypto/interface"
 )
 
-var (
-	EMPTY_REQUEST = &DoRequest{}
-)
-
 type DoRequest struct {
 	Raw         *crypto_interface.Packet `json:"-"`
 	Source      []byte                   `json:"-"`
@@ -73,4 +69,10 @@ func (s *HttpCaller) MarshalDoRequest(req *DoRequest) (*crypto_core.Packet, erro
 	logger.Tracef("marshal DoRequest")
 
 	return out, nil
+}
+
+func (s *HttpServer) newEmptyRequest() *DoRequest {
+	return &DoRequest{
+		Source: make([]byte, 32),
+	}
 }

@@ -122,7 +122,7 @@ func (t *WebrtcTransport) ensureUniqueConnectedPeerConnection(sess Session) bool
 				logger.WithError(err).Debugf("failed to load peer connection")
 				return false
 			}
-			go pc.Close()
+			go t.closePeerConnection(sess, pc)
 
 			return false
 		}

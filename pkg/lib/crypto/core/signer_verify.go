@@ -5,16 +5,14 @@ import (
 )
 
 func (x *signer) Verify(p *Packet) error {
-	sig := p.Signature
-	defer func() {
-		p.Signature = sig
-	}()
-	p.Signature = make([]byte, ed25519.SignatureSize)
-	msg, err := MarshalPacket(p)
+	q := *p
+	s := p.Signature
+	q.Signature = make([]byte, ed25519.SignatureSize)
+	msg, err := MarshalPacket(&q)
 	if err != nil {
 		return err
 	}
-	if !ed25519.Verify(ed25519.PublicKey(p.Source), msg, sig) {
+	if !ed25519.Verify(ed25519.PublicKey(q.Source), msg, s) {
 		return ErrInvalidSignature
 	}
 	return nil

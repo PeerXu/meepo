@@ -17,7 +17,7 @@ func (x *HttpServer) HttpDo(c *gin.Context) {
 
 	if err = c.BindJSON(&in); err != nil {
 		logger.WithError(err).Debugf("failed to unmarshal request")
-		x.WriteResponseWithError(c, http.StatusBadRequest, err, EMPTY_REQUEST)
+		x.WriteResponseWithError(c, http.StatusBadRequest, err, x.newEmptyRequest())
 		return
 	}
 
@@ -26,7 +26,7 @@ func (x *HttpServer) HttpDo(c *gin.Context) {
 	req, err := x.UnmarshalDoRequest(&in)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to unmarshal do request")
-		x.WriteResponseWithError(c, http.StatusBadRequest, err, EMPTY_REQUEST)
+		x.WriteResponseWithError(c, http.StatusBadRequest, err, x.newEmptyRequest())
 		return
 	}
 

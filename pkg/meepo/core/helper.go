@@ -2,6 +2,7 @@ package meepo_core
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/PeerXu/meepo/pkg/lib/addr"
@@ -103,7 +104,7 @@ func (mp *Meepo) newTeleportationID() string {
 	defer mp.teleportationsMtx.Unlock()
 
 	for {
-		id := fmt.Sprintf("%08x", mp.randSrc.Int63()&0xffffffff)
+		id := mp.randHexString(8)
 		_, found := mp.teleportations[id]
 		if !found {
 			return id
@@ -112,7 +113,7 @@ func (mp *Meepo) newTeleportationID() string {
 }
 
 func (mp *Meepo) newLabel(ns string) string {
-	return fmt.Sprintf("%s#%016x", ns, mp.randSrc.Int63())
+	return fmt.Sprintf("%s#%s", ns, mp.randHexString(16))
 }
 
 func (mp *Meepo) newMuxLabel() string {
@@ -121,6 +122,16 @@ func (mp *Meepo) newMuxLabel() string {
 
 func (mp *Meepo) newKcpLabel() string {
 	return mp.newLabel("kcp")
+}
+
+func (mp *Meepo) randHexString(sz int) string {
+	if sz%2 != 0 {
+		panic("random hex string size must be even")
+	}
+
+	buf := make([]byte, sz/2)
+	mp.rand.Read(buf)
+	return hex.EncodeToString(buf)
 }
 
 // nolint:unused

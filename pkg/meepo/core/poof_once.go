@@ -2,6 +2,7 @@ package meepo_core
 
 import (
 	"math/rand"
+	"time"
 
 	"github.com/PeerXu/meepo/pkg/lib/lock"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
@@ -74,13 +75,24 @@ func (mp *Meepo) poofOnce() {
 				}
 
 				handledCandidates = append(handledCandidates, candidate)
-				mp.naviRequests <- &NaviRequest{
-					Candidate: candidate,
-					Tracker:   tk.Addr(),
-				}
-				logger.WithField("candidate", candidate.String()).Tracef("create navi request")
+				req := mp.newNaviRequest(tk.Addr(), candidate)
+				mp.naviRequests <- req
+				logger.WithFields(logging.Fields{
+					"candidate":      candidate.String(),
+					"requestSession": req.Session,
+					"createdAt":      req.CreatedAt,
+				}).Tracef("create navi request")
 			}
 		}(tk)
+	}
+}
+
+func (mp *Meepo) newNaviRequest(tracker Addr, candidate Addr) *NaviRequest {
+	return &NaviRequest{
+		Session:   mp.randHexString(8),
+		Tracker:   tracker,
+		Candidate: candidate,
+		CreatedAt: time.Now(),
 	}
 }
 

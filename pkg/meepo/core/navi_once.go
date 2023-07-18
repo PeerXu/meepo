@@ -1,12 +1,17 @@
 package meepo_core
 
-import "github.com/PeerXu/meepo/pkg/lib/logging"
+import (
+	"errors"
+
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+)
 
 func (mp *Meepo) naviOnce(req *NaviRequest) {
 	logger := mp.GetLogger().WithFields(logging.Fields{
-		"#method":   "naviOnce",
-		"tracker":   req.Tracker.String(),
-		"candidate": req.Tracker.String(),
+		"#method":        "naviOnce",
+		"requestSession": req.Session,
+		"tracker":        req.Tracker.String(),
+		"candidate":      req.Tracker.String(),
 	})
 
 	t, err := mp.NewTransport(mp.context(), req.Candidate, WithGetTrackersFunc(func(addr Addr) ([]Tracker, bool, error) {
@@ -17,6 +22,11 @@ func (mp *Meepo) naviOnce(req *NaviRequest) {
 		return []Tracker{tk}, true, nil
 	}))
 	if err != nil {
+		if errors.Is(err, ErrTransportExist) {
+			logger.Tracef("transport exists")
+			return
+		}
+
 		logger.WithError(err).Debugf("failed to new transport")
 		return
 	}

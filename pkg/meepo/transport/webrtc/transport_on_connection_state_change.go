@@ -26,7 +26,7 @@ func (t *WebrtcTransport) onSinkConnectionStateChange(sess Session) func(webrtc.
 		case webrtc.PeerConnectionStateConnecting:
 
 		case webrtc.PeerConnectionStateConnected:
-			atomic.StoreInt64(&t.stat.failedSinkConnections, 0)
+			atomic.StoreInt32(&t.stat.failedSinkConnections, 0)
 			if t.ensureUniqueConnectedPeerConnection(sess) {
 				go func() {
 					t.tryNewSysDataChannel(sess)
@@ -41,7 +41,7 @@ func (t *WebrtcTransport) onSinkConnectionStateChange(sess Session) func(webrtc.
 		case webrtc.PeerConnectionStateDisconnected:
 
 		case webrtc.PeerConnectionStateFailed:
-			atomic.AddInt64(&t.stat.failedSinkConnections, 1)
+			atomic.AddInt32(&t.stat.failedSinkConnections, 1)
 
 			pc, err := t.loadPeerConnection(sess)
 			if err != nil {
@@ -75,12 +75,12 @@ func (t *WebrtcTransport) onSourceConnectionStateChange(sess Session) func(webrt
 		case webrtc.PeerConnectionStateConnecting:
 
 		case webrtc.PeerConnectionStateConnected:
-			atomic.StoreInt64(&t.stat.failedSourceConnections, 0)
+			atomic.StoreInt32(&t.stat.failedSourceConnections, 0)
 			t.ensureUniqueConnectedPeerConnection(sess)
 		case webrtc.PeerConnectionStateDisconnected:
 
 		case webrtc.PeerConnectionStateFailed:
-			atomic.AddInt64(&t.stat.failedSourceConnections, 1)
+			atomic.AddInt32(&t.stat.failedSourceConnections, 1)
 
 			pc, err := t.loadPeerConnection(sess)
 			if err != nil {

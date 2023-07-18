@@ -32,9 +32,9 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 	mp.transportsMtx.Lock()
 	defer mp.transportsMtx.Unlock()
 
-	if _, found := mp.transports[target]; found {
+	if mp.existTransportNL(target) {
 		err = ErrTransportExistFn(target.String())
-		logger.WithError(err).Debugf("tansport exist")
+		logger.WithError(err).Debugf("transport exists")
 		return nil, err
 	}
 

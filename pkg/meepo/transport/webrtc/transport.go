@@ -94,8 +94,8 @@ type WebrtcTransport struct {
 	cs    map[uint16]meepo_interface.Channel
 
 	stat struct {
-		failedSourceConnections int64
-		failedSinkConnections   int64
+		failedSourceConnections int32
+		failedSinkConnections   int32
 	}
 }
 
