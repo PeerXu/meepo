@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Meepo Webassembly SSH Client Demo</title>
+    <link rel="stylesheet" href="xterm.css" />
+    <script src="xterm.js"></script>
+</head>
+
+<body>
+    <div id="container">
+        <div>
+            <label>trackerdURL:</label>
+            <input id="trackerdURL" value="" />
+        </div>
+        <div>
+            <label>trackerdAddr:</label>
+            <input id="trackerdAddr" value="" />
+        </div>
+        <div>
+            <label>target:</label>
+            <input id="target" value="" />
+        </div>
+        <div>
+            <label>sshHost:</label>
+            <input id="sshHost" value="" />
+        </div>
+        <div>
+            <label>sshPort:</label>
+            <input id="sshPort" value="" />
+        </div>
+        <div>
+            <label>sshUser:</label>
+            <input id="sshUser" value="" />
+        </div>
+        <div>
+            <label>sshPassword:</label>
+            <input id="sshPassword" value="" type="password" />
+        </div>
+        <div>
+            <label>id:</label>
+            <span id="id">PLACEHOLDER</span>
+        </div>
+        <div>
+            <label>transportState:</label>
+            <span id="transportState">unknown</span>
+        </div>
+        <div>
+            <label>channelState:</label>
+            <span id="channelState">unknown</span>
+        </div>
+        <div>
+            <button id="doit">doit</button>
+        </div>
+        <div id="terminal"></div>
+        <div>
+            <label>powered by:</label>
+            <a href="http://github.com/PeerXu/meepo">Meepo</a>
+        </div>
+    </div>
+
+    <script>
+     let sp = new URLSearchParams(document.location.search);
+     let bindInputValue = (id, valOrFn) => {
+         if (typeof(valFn) !== "function") {
+             valOrFn = ((v) => () => v)(valOrFn);
+         }
+         let v = sp.get(id);
+         if (!v) {
+             v = valOrFn();
+         }
+         document.getElementById(id).value = v;
+     };
+     let params = {
+         trackerdURL: "http://127.0.0.1:12346",
+         trackerdAddr: "674btywe1byb8bmmt8uqfrc7vntbzq9rc0elmm62bsqfhuxtwwu",
+         target: "",
+         sshHost: "127.0.0.1",
+         sshPort: "22",
+         sshUser: "",
+         sshPassword: "",
+     };
+     for (const k in params) {
+         bindInputValue(k, params[k]);
+     }
+    </script>
+
+    <script>
+     var term = new Terminal();
+     term.open(document.getElementById("terminal"));
+     term.onData(b => document.writeToChannel(b));
+     document.term = term;
+    </script>
+    <script src="wasm_exec.js"></script>
+    <script>
+     if (!WebAssembly.instantiateStreaming) {
+         WebAssembly.instaniateStreaming = async (resp, importObject) => {
+             const source = await (await resp).arrayBuffer();
+             return await WebAssembly.instantiate(source, importObject);
+         };
+     }
+
+     const go = new Go();
+     let mod, inst;
+     WebAssembly.instantiateStreaming(fetch("ssh.wasm"), go.importObject).then(async (result) => {
+         mod = result.module;
+         inst = result.instance;
+         console.clear();
+         await go.run(inst);
+         inst = await WebAssembly.instantiate(mod, go.importObject);
+     }).catch((err) => {
+         console.log(err);
+     });
+    </script>
+
+</body>
+
+</html>

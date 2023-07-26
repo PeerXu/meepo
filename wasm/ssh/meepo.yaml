@@ -1,0 +1,20 @@
+meepo:
+  daemon: false
+  mode: main
+
+  identity:
+    file: wasm/ssh/mpo_id_ed25519
+
+  acl: |-
+    - allow: "*"
+
+  log:
+    level: trace
+
+  trackerd:
+    name: rpc
+    serverName: http
+    host: 0.0.0.0:12346
+
+  tracker:
+    name: skip

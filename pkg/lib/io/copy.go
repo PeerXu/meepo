@@ -18,7 +18,7 @@ func Copy(dst io.Writer, src io.Reader) (written int64, err error) {
 }
 
 func init() {
-	var copyBufSize int
+	copyBufSize := defualtCopyBufSize
 	var err error
 	copyBufSizeStr := os.Getenv("MPO_EXPERIMENTAL_COPY_BUF_SIZE")
 	if copyBufSizeStr != "" {
