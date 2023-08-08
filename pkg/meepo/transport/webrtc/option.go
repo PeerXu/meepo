@@ -49,7 +49,7 @@ func defaultNewWebrtcTransportOptions() option.Option {
 	return option.NewOption(map[string]any{
 		OPTION_GATHER_TIMEOUT:                61 * time.Second,
 		OPTION_TEMP_DATA_CHANNEL_TIMEOUT:     17 * time.Second,
-		well_known_option.OPTION_RAND_SOURCE: mrand.NewSource(time.Now().Unix()),
+		well_known_option.OPTION_RAND_SOURCE: mrand.GetSource(),
 		transport_core.OPTION_READY_TIMEOUT:  601 * time.Second,
 
 		well_known_option.OPTION_ENABLE_MUX:     true,

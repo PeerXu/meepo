@@ -63,7 +63,7 @@ func defaultNewMeepoOptions() option.Option {
 		OPTION_POOF_REQUEST_CANDIDATES:             C.POOF_REQUEST_CANDIDATES,
 		OPTION_NAVI_REQUEST_QUEUE_TIMEOUT:          13 * time.Second,
 		meepo_routing_table_core.OPTION_GREEN_LINE: 5,
-		well_known_option.OPTION_RAND_SOURCE:       mrand.NewSource(time.Now().UnixNano()),
+		well_known_option.OPTION_RAND_SOURCE:       mrand.GetSource(),
 
 		well_known_option.OPTION_WEBRTC_RECEIVE_BUFFER_SIZE: C.WEBRTC_RECEIVE_BUFFER_SIZE,
 
