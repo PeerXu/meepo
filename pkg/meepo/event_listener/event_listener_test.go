@@ -11,7 +11,7 @@ import (
 	meepo_eventloop_interface "github.com/PeerXu/meepo/pkg/meepo/eventloop/interface"
 )
 
-func TestEventListener(t *testing.T) {
+func TestEventListener0(t *testing.T) {
 	cnt := 0
 	el, err := meepo_event_listener.NewEventListener()
 	require.Nil(t, err)
@@ -28,4 +28,51 @@ func TestEventListener(t *testing.T) {
 	el.Unlisten(id2)
 	el.Handle(meepo_eventloop_core.NewEvent("x.y.z", nil))
 	assert.Equal(t, 2, cnt)
+}
+
+func TestEventListener(t *testing.T) {
+	for _, st := range []struct {
+		rules  []string
+		events []struct {
+			name string
+			skip bool
+		}
+	}{
+		{[]string{
+			"a",
+			"b",
+			"c",
+		}, []struct {
+			name string
+			skip bool
+		}{
+			{"a", false},
+			{"b", false},
+			{"c", false},
+			{"d", true},
+		}},
+	} {
+		lis, err := meepo_event_listener.NewEventListener()
+		require.Nil(t, err)
+
+		var expects []int
+		for i := 0; i < len(st.events); i++ {
+			if !st.events[i].skip {
+				expects = append(expects, i)
+			}
+		}
+
+		var actuals []int
+		for _, r := range st.rules {
+			lis.Listen(r, func(evt meepo_eventloop_interface.Event) {
+				actuals = append(actuals, evt.Get("index").(int))
+			})
+		}
+
+		for i := 0; i < len(st.events); i++ {
+			lis.Handle(meepo_eventloop_core.NewEvent(st.events[i].name, map[string]any{"index": i}))
+		}
+
+		assert.Equal(t, expects, actuals)
+	}
 }
