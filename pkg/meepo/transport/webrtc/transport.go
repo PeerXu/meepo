@@ -28,6 +28,9 @@ const (
 )
 
 type WebrtcTransport struct {
+	transport_core.TransportHooks
+	transport_core.ChannelHooks
+
 	addr meepo_interface.Addr
 
 	newPeerConnectionFunc NewPeerConnectionFunc
@@ -44,9 +47,7 @@ type WebrtcTransport struct {
 	gatherTimeout          time.Duration
 	randSrc                rand.Source
 	dialer                 dialer.Dialer
-	onCloseCb              transport_core.OnTransportCloseFunc
 	onReadyCb              transport_core.OnTransportReadyFunc
-	beforeNewChannelHook   transport_core.BeforeNewChannelHook
 	logger                 logging.Logger
 	closed                 matomic.GenericsValue[bool]
 	connectingOnce         matomic.GenericsValue[bool]
@@ -125,6 +126,10 @@ func NewWebrtcSourceTransport(opts ...meepo_interface.NewTransportOption) (meepo
 	pc.OnDataChannel(t.onDataChannel(sess))
 	go t.sourceGather(sess, gatherOnNewFunc)
 
+	if h := t.AfterNewTransportHook; h != nil {
+		h(t)
+	}
+
 	return t, nil
 }
 
@@ -165,6 +170,10 @@ func NewWebrtcSinkTransport(opts ...meepo_interface.NewTransportOption) (meepo_i
 	go t.sinkGather(sess, offer, gatherDoneOnNewFunc)
 	go t.addPeerConnection(nextSess) // nolint:errcheck
 
+	if h := t.AfterNewTransportHook; h != nil {
+		h(t)
+	}
+
 	return t, nil
 }
 
@@ -177,6 +186,12 @@ func newCommonWebrtcTransport(o option.Option) (*WebrtcTransport, error) {
 	addr, err := well_known_option.GetAddr(o)
 	if err != nil {
 		return nil, err
+	}
+
+	if h, _ := transport_core.GetBeforeNewTransportHook(o); h != nil {
+		if err = h(addr); err != nil {
+			return nil, err
+		}
 	}
 
 	gatherFunc, err := GetGatherFunc(o)
@@ -204,17 +219,7 @@ func newCommonWebrtcTransport(o option.Option) (*WebrtcTransport, error) {
 		return nil, err
 	}
 
-	onTransportClose, err := transport_core.GetOnTransportCloseFunc(o)
-	if err != nil {
-		return nil, err
-	}
-
 	onTransportReady, err := transport_core.GetOnTransportReadyFunc(o)
-	if err != nil {
-		return nil, err
-	}
-
-	beforeNewChannelHook, err := transport_core.GetBeforeNewChannelHook(o)
 	if err != nil {
 		return nil, err
 	}
@@ -259,9 +264,7 @@ func newCommonWebrtcTransport(o option.Option) (*WebrtcTransport, error) {
 		gatherTimeout:          gatherTimeout,
 		randSrc:                randSrc,
 		dialer:                 dialer,
-		onCloseCb:              onTransportClose,
 		onReadyCb:              onTransportReady,
-		beforeNewChannelHook:   beforeNewChannelHook,
 		logger:                 logger,
 		closed:                 matomic.NewValue[bool](),
 		connectingOnce:         matomic.NewValue[bool](),
@@ -277,6 +280,9 @@ func newCommonWebrtcTransport(o option.Option) (*WebrtcTransport, error) {
 		csMtx:                  lock.NewLock(well_known_option.WithName("csMtx")),
 		cs:                     make(map[uint16]meepo_interface.Channel),
 	}
+
+	transport_core.ApplyTransportHooks(o, &t.TransportHooks)
+	transport_core.ApplyChannelHooks(o, &t.ChannelHooks)
 
 	t.enableMux, _ = well_known_option.GetEnableMux(o)
 	if t.enableMux {

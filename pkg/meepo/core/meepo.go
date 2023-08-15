@@ -17,6 +17,9 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/option"
 	"github.com/PeerXu/meepo/pkg/lib/routing_table"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
+	meepo_event_listener "github.com/PeerXu/meepo/pkg/meepo/event_listener"
+	meepo_eventloop_core "github.com/PeerXu/meepo/pkg/meepo/eventloop/core"
+	meepo_eventloop_interface "github.com/PeerXu/meepo/pkg/meepo/eventloop/interface"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	meepo_routing_table_core "github.com/PeerXu/meepo/pkg/meepo/routing_table/core"
 	meepo_routing_table_interface "github.com/PeerXu/meepo/pkg/meepo/routing_table/interface"
@@ -53,6 +56,8 @@ type Meepo struct {
 	naviRequestQueueTimeout time.Duration
 
 	acl acl.Acl
+
+	eventloop meepo_eventloop_interface.EventLoop
 
 	enableMux    bool
 	muxVer       int
@@ -179,6 +184,11 @@ func NewMeepo(opts ...NewMeepoOption) (meepo_interface.Meepo, error) {
 		return nil, err
 	}
 
+	eventloop := meepo_eventloop_core.NewEventLoop()
+	if eventListener, _ := meepo_event_listener.GetEventListener(o); eventListener != nil {
+		eventloop.AddHandler(eventListener)
+	}
+
 	se, err := newWebrtcSettingEngine(o)
 	if err != nil {
 		return nil, err
@@ -212,6 +222,7 @@ func NewMeepo(opts ...NewMeepoOption) (meepo_interface.Meepo, error) {
 		unmarshaler:             umr,
 		logger:                  logger,
 		closed:                  make(chan struct{}),
+		eventloop:               eventloop,
 	}
 
 	mp.enableMux, _ = well_known_option.GetEnableMux(o)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
+	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
 
 type NewChannelRequest struct {
@@ -56,9 +57,11 @@ func (t *WebrtcTransport) onNewChannel(ctx context.Context, _req any) (res any, 
 	t.tempDataChannelsMtx.Lock()
 	defer t.tempDataChannelsMtx.Unlock()
 
-	if err = t.beforeNewChannelHook(t, req.Network, req.Address); err != nil {
-		logger.WithError(err).Debugf("failed to before new channel hook")
-		return
+	if h := t.BeforeNewChannelHook; h != nil {
+		if err = h(req.Network, req.Address, transport_core.WithIsSink(true)); err != nil {
+			logger.WithError(err).Debugf("before new channel hook failed")
+			return nil, err
+		}
 	}
 
 	if _, found := t.cs[req.ChannelID]; found {
@@ -82,7 +85,8 @@ func (t *WebrtcTransport) onNewChannel(ctx context.Context, _req any) (res any, 
 
 	tdc.req = req
 
-	go t.handleNewChannel(req.Label)
+	go t.handleNewChannel(req.Label, "onNewChannel")
+
 	logger.Tracef("on new channel")
 
 	return

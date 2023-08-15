@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	meepo_event_listener "github.com/PeerXu/meepo/pkg/meepo/event_listener"
 	meepo_eventloop_core "github.com/PeerXu/meepo/pkg/meepo/eventloop/core"
@@ -12,7 +13,9 @@ import (
 
 func TestEventListener(t *testing.T) {
 	cnt := 0
-	el := meepo_event_listener.NewEventListener()
+	el, err := meepo_event_listener.NewEventListener()
+	require.Nil(t, err)
+
 	f := func(e meepo_eventloop_interface.Event) {
 		assert.Equal(t, e.Name(), "x.y.z")
 		cnt++

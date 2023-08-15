@@ -11,6 +11,7 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/option"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
+	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
 
 func (t *WebrtcTransport) NewChannel(ctx context.Context, network string, address string, opts ...meepo_interface.NewChannelOption) (meepo_interface.Channel, error) {
@@ -21,6 +22,13 @@ func (t *WebrtcTransport) NewChannel(ctx context.Context, network string, addres
 		"network": network,
 		"address": address,
 	})
+
+	if h := t.BeforeNewChannelHook; h != nil {
+		if err := h(network, address, transport_core.WithIsSource(true)); err != nil {
+			logger.WithError(err).Debugf("before new channel hook failed")
+			return nil, err
+		}
+	}
 
 	mode, err := well_known_option.GetMode(o)
 	if err != nil {
@@ -91,12 +99,19 @@ func (t *WebrtcTransport) NewChannel(ctx context.Context, network string, addres
 			mode:         mode,
 		},
 		dc: dc,
-		onClose: func(c meepo_interface.Channel) error {
+		beforeCloseChannelHook: func(c meepo_interface.Channel, opts ...transport_core.HookOption) error {
+			if h := t.BeforeCloseChannelHook; h != nil {
+				if err := h(c, opts...); err != nil {
+					return err
+				}
+			}
+
 			t.csMtx.Lock()
 			defer t.csMtx.Unlock()
 			delete(t.cs, c.ID())
 			return nil
 		},
+		afterCloseChannelHook: t.AfterCloseChannelHook,
 	}
 
 	// TODO: channel done
@@ -117,6 +132,10 @@ func (t *WebrtcTransport) NewChannel(ctx context.Context, network string, addres
 		c.conn = rwc
 		t.cs[channelID] = c
 		c.readyOnce.Do(func() { close(c.ready) })
+	}
+
+	if h := t.AfterNewChannelHook; h != nil {
+		h(c, transport_core.WithIsSource(true))
 	}
 
 	logger.Tracef("new channel")

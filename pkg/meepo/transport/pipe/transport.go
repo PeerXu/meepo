@@ -19,12 +19,14 @@ const (
 )
 
 type PipeTransport struct {
+	transport_core.TransportHooks
+	transport_core.ChannelHooks
+
 	addr meepo_interface.Addr
 
 	state            atomic.Value
 	currentChannelID uint32
 	dialer           dialer.Dialer
-	onClose          transport_core.OnTransportCloseFunc
 	onReady          transport_core.OnTransportReadyFunc
 	logger           logging.Logger
 
@@ -50,12 +52,13 @@ func NewPipeTransport(opts ...meepo_interface.NewTransportOption) (meepo_interfa
 		return nil, err
 	}
 
-	dialer, err := dialer.GetDialer(o)
-	if err != nil {
-		return nil, err
+	if h, _ := transport_core.GetBeforeNewTransportHook(o); h != nil {
+		if err = h(addr); err != nil {
+			return nil, err
+		}
 	}
 
-	onTransportClose, err := transport_core.GetOnTransportCloseFunc(o)
+	dialer, err := dialer.GetDialer(o)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +81,6 @@ func NewPipeTransport(opts ...meepo_interface.NewTransportOption) (meepo_interfa
 	t := &PipeTransport{
 		addr:        addr,
 		dialer:      dialer,
-		onClose:     onTransportClose,
 		onReady:     onTransportReady,
 		logger:      logger,
 		csMtx:       lock.NewLock(well_known_option.WithName("csMtx")),
@@ -88,13 +90,21 @@ func NewPipeTransport(opts ...meepo_interface.NewTransportOption) (meepo_interfa
 		marshaler:   mr,
 		unmarshaler: umr,
 	}
+
+	transport_core.ApplyTransportHooks(o, &t.TransportHooks)
+	transport_core.ApplyChannelHooks(o, &t.ChannelHooks)
+
 	t.setState(meepo_interface.TRANSPORT_STATE_NEW)
-	defer onTransportReady(t) // nolint:errcheck
 	go func() {
+		defer onTransportReady(t) // nolint:errcheck
 		t.setState(meepo_interface.TRANSPORT_STATE_NEW)
 		t.setState(meepo_interface.TRANSPORT_STATE_CONNECTING)
 		t.setState(meepo_interface.TRANSPORT_STATE_CONNECTED)
 	}()
+
+	if h := t.AfterNewTransportHook; h != nil {
+		h(t)
+	}
 
 	return t, nil
 }

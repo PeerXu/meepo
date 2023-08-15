@@ -24,7 +24,7 @@ func (t *WebrtcTransport) kcpSessionAcceptLoop() {
 				logger.Tracef("create temp data channel")
 			} else {
 				tdc.rwc = stm
-				go t.handleNewChannel(label)
+				go t.handleNewChannel(label, "kcpSessionAcceptLoop")
 			}
 		}(stm)
 	}

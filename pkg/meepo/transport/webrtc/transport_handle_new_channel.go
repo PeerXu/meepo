@@ -7,12 +7,14 @@ import (
 	mio "github.com/PeerXu/meepo/pkg/lib/io"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
+	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
 
-func (t *WebrtcTransport) handleNewChannel(label string) {
+func (t *WebrtcTransport) handleNewChannel(label string, fromMethod string) {
 	logger := t.GetLogger().WithFields(logging.Fields{
-		"#method": "handleNewChannel",
-		"label":   label,
+		"#method":     "handleNewChannel",
+		"label":       label,
+		"#fromMethod": fromMethod,
 	})
 
 	t.tempDataChannelsMtx.Lock()
@@ -63,12 +65,21 @@ func (t *WebrtcTransport) handleNewChannel(label string) {
 		},
 		dc:  dc,
 		rwc: rwc,
-		onClose: func(c meepo_interface.Channel) error {
+		beforeCloseChannelHook: func(c meepo_interface.Channel, opts ...transport_core.HookOption) error {
+			if h := t.BeforeCloseChannelHook; h != nil {
+				if err := h(c, opts...); err != nil {
+					return err
+				}
+			}
+
 			t.csMtx.Lock()
 			defer t.csMtx.Unlock()
 			delete(t.cs, c.ID())
+
 			return nil
+
 		},
+		afterCloseChannelHook: t.AfterCloseChannelHook,
 	}
 	t.cs[c.ID()] = c
 
@@ -123,6 +134,10 @@ func (t *WebrtcTransport) handleNewChannel(label string) {
 		case <-done2:
 		}
 	}()
+
+	if h := t.AfterNewChannelHook; h != nil {
+		h(c, transport_core.WithIsSink(true))
+	}
 
 	logger.Tracef("handle new channel")
 }

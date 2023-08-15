@@ -16,8 +16,10 @@ type PipeChannel struct {
 	state    atomic.Value
 	conn     meepo_interface.Conn
 	sinkAddr net.Addr
-	onClose  transport_core.OnChannelCloseFunc
 	logger   logging.Logger
+
+	beforeCloseChannelHook transport_core.BeforeCloseChannelHook
+	afterCloseChannelHook  transport_core.AfterCloseChannelHook
 
 	readyErr     error
 	readyTimeout time.Duration

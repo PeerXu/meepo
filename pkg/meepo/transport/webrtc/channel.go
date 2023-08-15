@@ -29,10 +29,12 @@ type WebrtcChannel struct {
 
 type WebrtcSourceChannel struct {
 	*WebrtcChannel
-	dc      *webrtc.DataChannel
-	rwc     dialer_interface.Conn
-	conn    meepo_interface.Conn
-	onClose transport_core.OnChannelCloseFunc
+	dc   *webrtc.DataChannel
+	rwc  dialer_interface.Conn
+	conn meepo_interface.Conn
+
+	beforeCloseChannelHook transport_core.BeforeCloseChannelHook
+	afterCloseChannelHook  transport_core.AfterCloseChannelHook
 }
 
 type WebrtcSinkChannel struct {
@@ -40,5 +42,7 @@ type WebrtcSinkChannel struct {
 	dc      *webrtc.DataChannel
 	rwc     dialer_interface.Conn
 	connVal atomic.Value
-	onClose transport_core.OnChannelCloseFunc
+
+	beforeCloseChannelHook transport_core.BeforeCloseChannelHook
+	afterCloseChannelHook  transport_core.AfterCloseChannelHook
 }

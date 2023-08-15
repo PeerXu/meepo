@@ -6,6 +6,7 @@ import (
 
 	"github.com/PeerXu/meepo/pkg/lib/acl"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
+	"github.com/PeerXu/meepo/pkg/lib/option"
 	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
@@ -51,6 +52,13 @@ func (mp *Meepo) onPermit(target, network, address string) error {
 	return nil
 }
 
-func (mp *Meepo) beforeNewChannelHook(t Transport, network, address string) error {
-	return mp.onPermit(t.Addr().String(), network, address)
+func (mp *Meepo) beforeNewChannelHook(t Transport, network, address string, opts ...transport_core.HookOption) error {
+	o := option.Apply(opts...)
+
+	isSink, _ := transport_core.GetIsSink(o)
+	if isSink {
+		return mp.onPermit(t.Addr().String(), network, address)
+	}
+
+	return nil
 }

@@ -1,15 +1,17 @@
 package meepo_core
 
-import "github.com/PeerXu/meepo/pkg/lib/logging"
+import (
+	"github.com/PeerXu/meepo/pkg/lib/logging"
+)
 
-func (mp *Meepo) onRemoveWebrtcTransport(t Transport) error {
+func (mp *Meepo) onRemoveWebrtcTransport(t Transport) {
 	mp.transportsMtx.Lock()
 	defer mp.transportsMtx.Unlock()
 
-	return mp.onRemoveWebrtcTransportNL(t)
+	mp.onRemoveWebrtcTransportNL(t)
 }
 
-func (mp *Meepo) onRemoveWebrtcTransportNL(t Transport) error {
+func (mp *Meepo) onRemoveWebrtcTransportNL(t Transport) {
 	logger := mp.GetLogger().WithFields(logging.Fields{
 		"#method": "onRemoveWebrtcTransportNL",
 		"addr":    t.Addr().String(),
@@ -25,18 +27,15 @@ func (mp *Meepo) onRemoveWebrtcTransportNL(t Transport) error {
 		mp.routingTable.RemoveID(Addr2ID(t.Addr())) // nolint:errcheck
 		logger.Tracef("remove addr from routing table")
 	}
-
-	return nil
 }
 
-func (mp *Meepo) onRemovePipeTransport(t Transport) error {
+func (mp *Meepo) onRemovePipeTransport(t Transport) {
 	mp.transportsMtx.Lock()
 	defer mp.transportsMtx.Unlock()
 
-	return mp.onRemovePipeTransportNL(t)
+	mp.onRemovePipeTransportNL(t)
 }
 
-func (mp *Meepo) onRemovePipeTransportNL(t Transport) error {
+func (mp *Meepo) onRemovePipeTransportNL(t Transport) {
 	mp.removeTransportNL(t.Addr())
-	return nil
 }

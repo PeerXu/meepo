@@ -91,7 +91,7 @@ func (t *WebrtcTransport) onDataChannelOpen(dc *webrtc.DataChannel) func() {
 			return
 		}
 
-		go t.handleNewChannel(dc.Label())
+		go t.handleNewChannel(dc.Label(), "onDataChannelOpen")
 		logger.Tracef("on data channel open")
 	}
 }

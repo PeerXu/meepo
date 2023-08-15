@@ -9,11 +9,11 @@ import (
 func (t *PipeTransport) Close(ctx context.Context) error {
 	logger := t.GetLogger().WithField("#method", "Close")
 
-	defer t.setState(meepo_interface.TRANSPORT_STATE_CLOSED)
-
-	if err := t.onClose(t); err != nil {
-		logger.WithError(err).Debugf("failed to onClose")
-		return err
+	if h := t.BeforeCloseTransportHook; h != nil {
+		if err := h(t); err != nil {
+			logger.WithError(err).Debugf("before close transport hook failed")
+			return err
+		}
 	}
 
 	cs, err := t.ListChannels(ctx)
@@ -27,6 +27,12 @@ func (t *PipeTransport) Close(ctx context.Context) error {
 			logger.WithError(err).Debugf("failed to close channel")
 			return err
 		}
+	}
+
+	t.setState(meepo_interface.TRANSPORT_STATE_CLOSED)
+
+	if h := t.AfterCloseTransportHook; h != nil {
+		h(t)
 	}
 
 	logger.Tracef("transport closed")

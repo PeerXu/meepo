@@ -19,6 +19,12 @@ func (t *WebrtcTransport) Close(ctx context.Context) (err error) {
 	}
 	t.closed.Store(true)
 
+	if h := t.BeforeCloseTransportHook; h != nil {
+		if er := h(t); er != nil {
+			logger.WithError(er).Debugf("before close transport hook failed")
+		}
+	}
+
 	t.readyOnce.Do(func() {
 		t.readyErrVal.Store(transport_core.ErrTransportClosed)
 		close(t.ready)
@@ -39,9 +45,8 @@ func (t *WebrtcTransport) Close(ctx context.Context) (err error) {
 		logger.WithError(err).Debugf("failed to close all peer connections")
 	}
 
-	if er := t.onCloseCb(t); er != nil {
-		err = er
-		logger.WithError(err).Debugf("failed on close callback")
+	if h := t.AfterCloseTransportHook; h != nil {
+		h(t)
 	}
 
 	logger.Tracef("transport closed")

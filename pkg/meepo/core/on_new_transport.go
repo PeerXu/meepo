@@ -11,6 +11,8 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
+	meepo_eventloop_core "github.com/PeerXu/meepo/pkg/meepo/eventloop/core"
+	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	tracker_interface "github.com/PeerXu/meepo/pkg/meepo/tracker/interface"
 	"github.com/PeerXu/meepo/pkg/meepo/transport"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
@@ -24,6 +26,8 @@ func (mp *Meepo) hdrOnNewTransport(ctx context.Context, req any) (any, error) {
 }
 
 func (mp *Meepo) onNewTransport(in *crypto_core.Packet) (answer webrtc.SessionDescription, err error) {
+	var t Transport
+
 	logger := mp.GetLogger().WithFields(logging.Fields{
 		"#method": "onNewTransport",
 	})
@@ -91,8 +95,23 @@ func (mp *Meepo) onNewTransport(in *crypto_core.Packet) (answer webrtc.SessionDe
 			done <- struct{}{}
 		}),
 		transport_webrtc.WithGatherFunc(mp.genGatherFunc(srcAddr)),
-		transport_core.WithBeforeNewChannelHook(mp.beforeNewChannelHook),
-		transport_core.WithOnTransportCloseFunc(mp.onRemoveWebrtcTransport),
+		transport_core.WithAfterNewTransportHook(func(t meepo_interface.Transport, opts ...transport_core.HookOption) {
+			mp.onAddWebrtcTransportNL(t)
+			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_TRANSPORT_ACTION_NEW, nil))
+		}),
+		transport_core.WithAfterCloseTransportHook(func(t meepo_interface.Transport, opts ...transport_core.HookOption) {
+			mp.onRemoveWebrtcTransport(t)
+			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_TRANSPORT_ACTION_CLOSE, nil))
+		}),
+		transport_core.WithBeforeNewChannelHook(func(network, address string, opts ...transport_core.HookOption) error {
+			return mp.beforeNewChannelHook(t, network, address, opts...)
+		}),
+		transport_core.WithAfterNewChannelHook(func(c meepo_interface.Channel, opts ...transport_core.HookOption) {
+			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_CHANNEL_ACTION_NEW, nil))
+		}),
+		transport_core.WithAfterCloseChannelHook(func(c meepo_interface.Channel, opts ...transport_core.HookOption) {
+			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_CHANNEL_ACTION_CLOSE, nil))
+		}),
 		transport_core.WithOnTransportReadyFunc(mp.onReadyWebrtcTransport),
 		well_known_option.WithEnableMux(req.EnableMux),
 		well_known_option.WithEnableKcp(req.EnableKcp),
@@ -121,14 +140,12 @@ func (mp *Meepo) onNewTransport(in *crypto_core.Packet) (answer webrtc.SessionDe
 		)
 	}
 
-	t, err := transport.NewTransport(transport_webrtc.TRANSPORT_WEBRTC_SINK, opts...)
+	t, err = transport.NewTransport(transport_webrtc.TRANSPORT_WEBRTC_SINK, opts...)
 	if err != nil {
 		defer mp.transportsMtx.Unlock()
 		logger.WithError(err).Debugf("failed to new transport")
 		return
 	}
-
-	mp.onAddWebrtcTransportNL(t) // nolint:errcheck
 
 	mp.transportsMtx.Unlock()
 

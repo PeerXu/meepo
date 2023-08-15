@@ -7,7 +7,7 @@ import (
 
 func (el *eventListener) Listen(name string, fn meepo_eventloop_interface.HandleFunc) string {
 	c := DefaultChainParser.Parse(name)
-	return listen(c, el.t, el.s, fn)
+	return listen(c, el.tree, el.set, fn)
 }
 
 func listen(c Chain, t Tree, s Set, fn meepo_eventloop_interface.HandleFunc) string {

@@ -2,6 +2,7 @@ package transport_webrtc
 
 import (
 	"context"
+	"errors"
 
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
@@ -35,20 +36,25 @@ func (t *WebrtcTransport) onClose(ctx context.Context, _req any) (res any, err e
 	}
 	t.closed.Store(true)
 
+	if h := t.BeforeCloseTransportHook; h != nil {
+		if er := h(t); er != nil {
+			logger.WithError(er).Debugf("before close transport hook failed")
+			err = errors.Join(err, er)
+		}
+	}
+
 	t.readyOnce.Do(func() {
 		t.readyErrVal.Store(transport_core.ErrTransportClosed)
 		close(t.ready)
 	})
 
 	if er := t.closeAllChannels(ctx); er != nil {
-		err = er
 		logger.WithError(err).Debugf("failed to close all channels")
-
+		err = errors.Join(err, er)
 	}
 
-	if er := t.onCloseCb(t); er != nil {
-		err = er
-		logger.WithError(err).Debugf("failed on close callback")
+	if h := t.AfterCloseTransportHook; h != nil {
+		h(t)
 	}
 
 	logger.Tracef("transport closed")

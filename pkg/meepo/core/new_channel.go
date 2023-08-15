@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/PeerXu/meepo/pkg/lib/logging"
+	meepo_eventloop_core "github.com/PeerXu/meepo/pkg/meepo/eventloop/core"
 )
 
 func (mp *Meepo) NewChannel(ctx context.Context, target Addr, network, address string, opts ...NewChannelOption) (Channel, error) {
@@ -25,6 +26,8 @@ func (mp *Meepo) NewChannel(ctx context.Context, target Addr, network, address s
 		logger.WithError(err).Debugf("failed to new channel")
 		return nil, err
 	}
+
+	mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_CHANNEL_ACTION_NEW, nil))
 
 	logger.Tracef("new channel")
 

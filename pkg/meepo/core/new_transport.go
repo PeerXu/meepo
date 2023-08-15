@@ -11,6 +11,8 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	"github.com/PeerXu/meepo/pkg/lib/option"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
+	meepo_eventloop_core "github.com/PeerXu/meepo/pkg/meepo/eventloop/core"
+	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	tracker_interface "github.com/PeerXu/meepo/pkg/meepo/tracker/interface"
 	"github.com/PeerXu/meepo/pkg/meepo/transport"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
@@ -21,6 +23,7 @@ import (
 func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTransportOption) (Transport, error) {
 	var name string
 	var err error
+	var t Transport
 
 	o := option.ApplyWithDefault(mp.defaultNewTransportOptions(), opts...)
 	gtkFn, _ := GetGetTrackersFunc(o)
@@ -38,9 +41,9 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 		return nil, err
 	}
 
-	var onAddTransport func(Transport) error
+	var onAddTransport func(Transport)
 	var onReadyTransport func(Transport) error
-	var onRemoveTransport func(Transport) error
+	var onRemoveTransport func(Transport)
 	switch target {
 	case mp.Addr():
 		name = transport_pipe.TRANSPORT_PIPE
@@ -84,7 +87,6 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 			transport_webrtc.WithGatherOnNewFunc(mp.genGatherOnNewFunc(target, gtkFn, gatherOpt)),
 			transport_webrtc.WithGatherFunc(mp.genGatherFunc(target)),
 			transport_webrtc.WithNewPeerConnectionFunc(mp.newPeerConnection),
-			transport_core.WithBeforeNewChannelHook(mp.beforeNewChannelHook),
 		)
 
 		onAddTransport = mp.onAddWebrtcTransportNL
@@ -96,19 +98,33 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 		dialer.WithDialer(dialer.GetGlobalDialer()),
 		well_known_option.WithAddr(target),
 		well_known_option.WithLogger(mp.GetRawLogger()),
-		transport_core.WithOnTransportCloseFunc(onRemoveTransport),
+		transport_core.WithAfterNewTransportHook(func(t transport_core.Transport, _ ...transport_core.HookOption) {
+			onAddTransport(t)
+			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_TRANSPORT_ACTION_NEW, nil))
+		}),
+		transport_core.WithAfterCloseTransportHook(func(t transport_core.Transport, _ ...transport_core.HookOption) {
+			onRemoveTransport(t)
+			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_TRANSPORT_ACTION_CLOSE, nil))
+		}),
+		transport_core.WithBeforeNewChannelHook(func(network, address string, opts ...transport_core.HookOption) error {
+			return mp.beforeNewChannelHook(t, network, address, opts...)
+		}),
+		transport_core.WithAfterNewChannelHook(func(c meepo_interface.Channel, opts ...transport_core.HookOption) {
+			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_CHANNEL_ACTION_NEW, nil))
+		}),
+		transport_core.WithAfterCloseChannelHook(func(c meepo_interface.Channel, opts ...transport_core.HookOption) {
+			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_CHANNEL_ACTION_CLOSE, nil))
+		}),
 		transport_core.WithOnTransportReadyFunc(onReadyTransport),
 		marshaler.WithMarshaler(mp.marshaler),
 		marshaler.WithUnmarshaler(mp.unmarshaler),
 	)
 
-	t, err := transport.NewTransport(name, opts...)
+	t, err = transport.NewTransport(name, opts...)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to new transport")
 		return nil, err
 	}
-
-	onAddTransport(t) // nolint:errcheck
 
 	logger.Tracef("new transport")
 
