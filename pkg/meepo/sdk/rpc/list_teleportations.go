@@ -7,6 +7,6 @@ import (
 )
 
 func (s *RPCSDK) ListTeleportations() (tpvs []sdk_interface.TeleportationView, err error) {
-	err = s.caller.Call(s.context(), sdk_core.METHOD_LIST_TELEPORTATIONS, rpc_core.NO_REQUEST(), &tpvs)
+	err = s.caller.Call(s.context(), sdk_core.METHOD_LIST_TELEPORTATIONS, rpc_core.NO_REQUEST, &tpvs)
 	return
 }

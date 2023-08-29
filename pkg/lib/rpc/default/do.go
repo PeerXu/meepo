@@ -10,8 +10,8 @@ import (
 func (h DefaultHandler) Do(ctx context.Context, method string, req rpc_interface.HandleRequest) (rpc_interface.HandleResponse, error) {
 	fn, ok := h[method]
 	if !ok {
-		return nil, rpc_core.ErrUnsupportedHandlerFn(method)
+		return nil, rpc_core.ErrUnsupportedMethodFn(method)
 	}
 
-	return fn(ctx, req)
+	return fn.(rpc_interface.HandleFunc)(ctx, req)
 }

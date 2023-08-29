@@ -1,13 +1,15 @@
 package meepo_core
 
 import (
+	"context"
+
 	"github.com/pion/webrtc/v3"
 
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
 
-func (mp *Meepo) Diagnostic() (meepo_interface.DiagnosticReport, error) {
+func (mp *Meepo) Diagnostic(ctx context.Context) (meepo_interface.DiagnosticReport, error) {
 	logger := mp.GetLogger().WithField("#method", "Diagnostic")
 
 	healthReport := mp.routingTable.HealthReport()

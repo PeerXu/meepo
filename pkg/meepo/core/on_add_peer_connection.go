@@ -16,8 +16,6 @@ type AddPeerConnectionHandler interface {
 	OnAddPeerConnection(transport_webrtc.Session, webrtc.SessionDescription) (webrtc.SessionDescription, error)
 }
 
-func (mp *Meepo) newOnAddPeerConnectionRequest() any { return &crypto_core.Packet{} }
-
 func (mp *Meepo) hdrOnAddPeerConnection(ctx context.Context, req any) (any, error) {
 	return mp.onAddPeerConnection(req.(*crypto_core.Packet))
 }

@@ -8,7 +8,7 @@ import (
 
 func (s *RPCSDK) Diagnostic() (sdk_interface.DiagnosticReportView, error) {
 	res := make(sdk_interface.DiagnosticReportView)
-	err := s.caller.Call(s.context(), sdk_core.METHOD_DIAGNOSTIC, rpc_core.NO_REQUEST(), &res)
+	err := s.caller.Call(s.context(), sdk_core.METHOD_DIAGNOSTIC, rpc_core.NO_REQUEST, &res)
 	if err != nil {
 		return nil, err
 	}

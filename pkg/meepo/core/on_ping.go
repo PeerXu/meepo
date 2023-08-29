@@ -3,8 +3,8 @@ package meepo_core
 import (
 	"context"
 
-	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
 
@@ -17,8 +17,6 @@ type (
 		Nonce uint32
 	}
 )
-
-func (mp *Meepo) newOnPingRequest() any { return &PingRequest{} }
 
 func (mp *Meepo) hdrOnPing(ctx context.Context, _req any) (any, error) {
 	req := _req.(*PingRequest)

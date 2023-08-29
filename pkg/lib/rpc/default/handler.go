@@ -5,10 +5,10 @@ import (
 	rpc_interface "github.com/PeerXu/meepo/pkg/lib/rpc/interface"
 )
 
-type DefaultHandler map[string]rpc_interface.HandleFunc
+type DefaultHandler map[string]any
 
 func NewDefaultHandler(opts ...rpc_interface.NewHandlerOption) (rpc_interface.Handler, error) {
-	return DefaultHandler(make(map[string]rpc_interface.HandleFunc)), nil
+	return DefaultHandler(make(map[string]any)), nil
 }
 
 func init() {

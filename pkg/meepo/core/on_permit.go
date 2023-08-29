@@ -16,8 +16,6 @@ type PermitRequest struct {
 	Address string
 }
 
-func (mp *Meepo) newOnPermitRequest() any { return &PermitRequest{} }
-
 func (mp *Meepo) hdrOnPermit(ctx context.Context, _req any) (any, error) {
 	req := _req.(*PermitRequest)
 	t := transport_core.ContextGetTransport(ctx)
@@ -27,7 +25,7 @@ func (mp *Meepo) hdrOnPermit(ctx context.Context, _req any) (any, error) {
 		return nil, err
 	}
 
-	return rpc_core.NO_CONTENT(), nil
+	return rpc_core.NO_CONTENT, nil
 }
 
 func (mp *Meepo) onPermit(target, network, address string) error {

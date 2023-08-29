@@ -11,7 +11,7 @@ func (mp *Meepo) hdrAPIDiagnostic(ctx context.Context, _ any) (any, error) {
 		"#method": "hdrAPIDiagnostic",
 	})
 
-	rp, err := mp.Diagnostic()
+	rp, err := mp.Diagnostic(ctx)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to diagnostic")
 		return nil, err

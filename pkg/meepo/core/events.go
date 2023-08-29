@@ -6,4 +6,7 @@ const (
 
 	EVENT_CHANNEL_ACTION_NEW   = "mpo.channel.action.new"
 	EVENT_CHANNEL_ACTION_CLOSE = "mpo.channel.action.close"
+
+	EVENT_TELEPORTATION_ACTION_NEW   = "mpo.teleportation.action.new"
+	EVENT_TELEPORTATION_ACTION_CLOSE = "mpo.teleportation.action.close"
 )

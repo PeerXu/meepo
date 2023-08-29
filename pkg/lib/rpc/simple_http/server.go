@@ -4,12 +4,14 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/gorilla/websocket"
+
 	"github.com/PeerXu/meepo/pkg/lib/logging"
-	"github.com/PeerXu/meepo/pkg/lib/option"
-	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	marshaler_interface "github.com/PeerXu/meepo/pkg/lib/marshaler/interface"
+	"github.com/PeerXu/meepo/pkg/lib/option"
 	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 )
 
 type SimpleHttpServer struct {
@@ -18,6 +20,7 @@ type SimpleHttpServer struct {
 	handler     rpc_core.Handler
 	listener    net.Listener
 	httpd       *http.Server
+	upgrader    *websocket.Upgrader
 	errors      chan error
 	logger      logging.Logger
 }
@@ -58,6 +61,7 @@ func NewSimpleHttpServer(opts ...rpc_core.NewServerOption) (rpc_core.Server, err
 		handler:     handler,
 		listener:    listener,
 		httpd:       httpd,
+		upgrader:    &websocket.Upgrader{},
 		logger:      logger,
 	}
 	httpd.Handler = s.Routers()

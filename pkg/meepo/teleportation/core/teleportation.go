@@ -3,12 +3,12 @@ package teleportation_core
 import (
 	"net"
 
+	"github.com/PeerXu/meepo/pkg/lib/addr"
 	"github.com/PeerXu/meepo/pkg/lib/listenerer"
 	listenerer_interface "github.com/PeerXu/meepo/pkg/lib/listenerer/interface"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/option"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
-	"github.com/PeerXu/meepo/pkg/lib/addr"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 )
 
@@ -17,15 +17,16 @@ type (
 )
 
 type teleportation struct {
-	id         string
-	mode       string
-	logger     logging.Logger
-	listener   listenerer_interface.Listener
-	addr       addr.Addr
-	sourceAddr net.Addr
-	sinkAddr   net.Addr
-	onAccept   OnTeleportationAcceptFunc
-	onClose    OnTeleportationCloseFunc
+	id                           string
+	mode                         string
+	logger                       logging.Logger
+	listener                     listenerer_interface.Listener
+	addr                         addr.Addr
+	sourceAddr                   net.Addr
+	sinkAddr                     net.Addr
+	onAccept                     OnTeleportationAcceptFunc
+	beforeCloseTeleportationHook BeforeCloseTeleportationHook
+	afterCloseTeleportationHook  AfterCloseTeleportationHook
 }
 
 func NewTeleportation(opts ...NewTeleportationOption) (meepo_interface.Teleportation, error) {
@@ -71,24 +72,35 @@ func NewTeleportation(opts ...NewTeleportationOption) (meepo_interface.Teleporta
 		return nil, err
 	}
 
-	onCloseFn, err := GetOnTeleportationCloseFunc(o)
-	if err != nil {
-		return nil, err
+	beforeNewTeleportationHook, _ := GetBeforeNewTeleportationHook(o)
+	afterNewTeleportationHook, _ := GetAfterNewTeleportationHook(o)
+	beforeCloseTeleportationHook, _ := GetBeforeCloseTeleportationHook(o)
+	afterCloseTeleportationHook, _ := GetAfterCloseTeleportationHook(o)
+
+	if h := beforeNewTeleportationHook; h != nil {
+		if err = h(mode, sourceAddr.Network(), sourceAddr.String(), sinkAddr.Network(), sinkAddr.String()); err != nil {
+			return nil, err
+		}
 	}
 
 	tp := &teleportation{
-		id:         id,
-		mode:       mode,
-		logger:     logger,
-		addr:       addr,
-		listener:   listener,
-		sourceAddr: sourceAddr,
-		sinkAddr:   sinkAddr,
-		onAccept:   onAcceptFn,
-		onClose:    onCloseFn,
+		id:                           id,
+		mode:                         mode,
+		logger:                       logger,
+		addr:                         addr,
+		listener:                     listener,
+		sourceAddr:                   sourceAddr,
+		sinkAddr:                     sinkAddr,
+		onAccept:                     onAcceptFn,
+		beforeCloseTeleportationHook: beforeCloseTeleportationHook,
+		afterCloseTeleportationHook:  afterCloseTeleportationHook,
 	}
 
 	go tp.acceptLoop()
+
+	if h := afterNewTeleportationHook; h != nil {
+		h(tp)
+	}
 
 	return tp, nil
 }

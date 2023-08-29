@@ -13,8 +13,6 @@ type (
 	GetCandidatesResponse = tracker_interface.GetCandidatesResponse
 )
 
-func (mp *Meepo) newOnGetCandidatesRequest() any { return &GetCandidatesRequest{} }
-
 func (mp *Meepo) hdrOnGetCandidates(ctx context.Context, _req any) (any, error) {
 	req := _req.(*GetCandidatesRequest)
 	target, err := addr.FromString(req.Target)

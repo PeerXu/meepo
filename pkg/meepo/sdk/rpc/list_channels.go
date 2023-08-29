@@ -7,6 +7,6 @@ import (
 )
 
 func (s *RPCSDK) ListChannels() (cvs []sdk_interface.ChannelView, err error) {
-	err = s.caller.Call(s.context(), sdk_core.METHOD_LIST_CHANNELS, rpc_core.NO_REQUEST(), &cvs)
+	err = s.caller.Call(s.context(), sdk_core.METHOD_LIST_CHANNELS, rpc_core.NO_REQUEST, &cvs)
 	return
 }

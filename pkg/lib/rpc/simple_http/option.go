@@ -7,8 +7,12 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 )
 
+type ctxSession string
+
 const (
 	OPTION_BASE_URL = "baseURL"
+
+	CONTEXT_SESSION ctxSession = "session"
 )
 
 var (

@@ -6,7 +6,11 @@ import (
 
 type CallOption = option.ApplyOption
 
+type CallStreamOption = option.ApplyOption
+
 type HandleOption = option.ApplyOption
+
+type HandleStreamOption = option.ApplyOption
 
 type NewCallerOption = option.ApplyOption
 

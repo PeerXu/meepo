@@ -28,6 +28,27 @@ func WrapHandleFunc(newRequest func() any, fn func(context.Context, any) (any, e
 	}
 }
 
+func WrapHandleFuncGenerics[T any](fn func(context.Context, any) (any, error)) meepo_interface.HandleFunc {
+	return func(ctx context.Context, in meepo_interface.HandleRequest) (out meepo_interface.HandleResponse, err error) {
+		var res any
+		var req T
+
+		if err = marshaler.Unmarshal(ctx, in, &req); err != nil {
+			return nil, err
+		}
+
+		if res, err = fn(ctx, &req); err != nil {
+			return nil, err
+		}
+
+		if out, err = marshaler.Marshal(ctx, res); err != nil {
+			return nil, err
+		}
+
+		return
+	}
+}
+
 type key string
 
 const (

@@ -3,6 +3,7 @@ package meepo_core
 import (
 	"context"
 
+	crypto_core "github.com/PeerXu/meepo/pkg/lib/crypto/core"
 	"github.com/PeerXu/meepo/pkg/lib/rpc"
 	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
 	rpc_interface "github.com/PeerXu/meepo/pkg/lib/rpc/interface"
@@ -11,49 +12,49 @@ import (
 	tracker_core "github.com/PeerXu/meepo/pkg/meepo/tracker/core"
 )
 
+func wrapHandleFunc[T any](name string, h rpc_interface.Handler, fn func(context.Context, any) (any, error)) {
+	h.Handle(name, rpc_core.WrapHandleFuncGenerics[T](fn))
+}
+
 func (mp *Meepo) AsTrackerdHandler() rpc_interface.Handler {
 	h, _ := rpc.NewHandler("default")
-	h.Handle(tracker_core.METHOD_NEW_TRANSPORT, rpc_core.WrapHandleFunc(mp.newOnNewTransportRequest, mp.hdrOnNewTransport))
-	h.Handle(tracker_core.METHOD_GET_CANDIDATES, rpc_core.WrapHandleFunc(mp.newOnGetCandidatesRequest, mp.hdrOnGetCandidates))
-	h.Handle(tracker_core.METHOD_ADD_PEER_CONNECTION, rpc_core.WrapHandleFunc(mp.newOnAddPeerConnectionRequest, mp.hdrOnAddPeerConnection))
+
+	wrapHandleFunc[crypto_core.Packet](tracker_core.METHOD_NEW_TRANSPORT, h, mp.hdrOnNewTransport)
+	wrapHandleFunc[GetCandidatesRequest](tracker_core.METHOD_GET_CANDIDATES, h, mp.hdrOnGetCandidates)
+	wrapHandleFunc[crypto_core.Packet](tracker_core.METHOD_ADD_PEER_CONNECTION, h, mp.hdrOnAddPeerConnection)
+
 	return h
 }
 
 func (mp *Meepo) AsAPIHandler() rpc_interface.Handler {
 	h, _ := rpc.NewHandler("default")
 
-	for _, s := range []struct {
-		name       string
-		newRequest func() any
-		fn         func(context.Context, any) (any, error)
-	}{
-		// system
-		{sdk_core.METHOD_GET_VERSION, rpc_core.NO_REQUEST, mp.hdrAPIGetVersion},
-		{sdk_core.METHOD_WHOAMI, rpc_core.NO_REQUEST, mp.hdrAPIWhoami},
-		{sdk_core.METHOD_PING, func() any { return &sdk_interface.PingRequest{} }, mp.hdrAPIPing},
-		{sdk_core.METHOD_DIAGNOSTIC, rpc_core.NO_REQUEST, mp.hdrAPIDiagnostic},
+	// system
+	wrapHandleFunc[rpc_core.EMPTY](sdk_core.METHOD_GET_VERSION, h, mp.hdrAPIGetVersion)
+	wrapHandleFunc[rpc_core.EMPTY](sdk_core.METHOD_WHOAMI, h, mp.hdrAPIWhoami)
+	wrapHandleFunc[sdk_interface.PingRequest](sdk_core.METHOD_PING, h, mp.hdrAPIPing)
+	wrapHandleFunc[rpc_core.EMPTY](sdk_core.METHOD_DIAGNOSTIC, h, mp.hdrAPIDiagnostic)
 
-		// teleportation
-		{sdk_core.METHOD_NEW_TELEPORTATION, func() any { return &sdk_interface.NewTeleportationRequest{} }, mp.hdrAPINewTeleportation},
-		{sdk_core.METHOD_CLOSE_TELEPORTATION, func() any { return &sdk_interface.CloseTeleportationRequest{} }, mp.hdrAPICloseTeleportation},
-		{sdk_core.METHOD_GET_TELEPORTATION, func() any { return &sdk_interface.GetTeleportationRequest{} }, mp.hdrAPIGetTeleportation},
-		{sdk_core.METHOD_LIST_TELEPORTATIONS, rpc_core.NO_REQUEST, mp.hdrAPIListTeleportations},
-		{sdk_core.METHOD_TELEPORT, func() any { return &sdk_interface.TeleportRequest{} }, mp.hdrAPITeleport},
+	h.HandleStream("watchEvents", mp.hdrStreamAPIWatchEvents)
 
-		// transport
-		{sdk_core.METHOD_NEW_TRANSPORT, func() any { return &sdk_interface.NewTransportRequest{} }, mp.hdrAPINewTransport},
-		{sdk_core.METHOD_CLOSE_TRANSPORT, func() any { return &sdk_interface.CloseTransportRequest{} }, mp.hdrAPICloseTransport},
-		{sdk_core.METHOD_GET_TRANSPORT, func() any { return &sdk_interface.GetTransportRequest{} }, mp.hdrAPIGetTransport},
-		{sdk_core.METHOD_LIST_TRANSPORTS, rpc_core.NO_REQUEST, mp.hdrAPIListTransports},
+	// teleportation
+	wrapHandleFunc[sdk_interface.NewTeleportationRequest](sdk_core.METHOD_NEW_TELEPORTATION, h, mp.hdrAPINewTeleportation)
+	wrapHandleFunc[sdk_interface.CloseTeleportationRequest](sdk_core.METHOD_CLOSE_TELEPORTATION, h, mp.hdrAPICloseTeleportation)
+	wrapHandleFunc[sdk_interface.GetTeleportationRequest](sdk_core.METHOD_GET_TELEPORTATION, h, mp.hdrAPIGetTeleportation)
+	wrapHandleFunc[rpc_core.EMPTY](sdk_core.METHOD_LIST_TELEPORTATIONS, h, mp.hdrAPIListTeleportations)
+	wrapHandleFunc[sdk_interface.TeleportRequest](sdk_core.METHOD_TELEPORT, h, mp.hdrAPITeleport)
 
-		// channel
-		{sdk_core.METHOD_CLOSE_CHANNEL, func() any { return &sdk_interface.CloseChannelRequest{} }, mp.hdrAPICloseChannel},
-		{sdk_core.METHOD_GET_CHANNEL, func() any { return &sdk_interface.GetChannelRequest{} }, mp.hdrAPIGetChannel},
-		{sdk_core.METHOD_LIST_CHANNELS, rpc_core.NO_REQUEST, mp.hdrAPIListChannels},
-		{sdk_core.METHOD_LIST_CHANNELS_BY_TARGET, func() any { return &sdk_interface.ListChannelsByTarget{} }, mp.hdrAPIListChannelsByTarget},
-	} {
-		h.Handle(s.name, rpc_core.WrapHandleFunc(s.newRequest, s.fn))
-	}
+	// transport
+	wrapHandleFunc[sdk_interface.NewTransportRequest](sdk_core.METHOD_NEW_TRANSPORT, h, mp.hdrAPINewTransport)
+	wrapHandleFunc[sdk_interface.CloseTransportRequest](sdk_core.METHOD_CLOSE_TRANSPORT, h, mp.hdrAPICloseTransport)
+	wrapHandleFunc[sdk_interface.GetTransportRequest](sdk_core.METHOD_GET_TRANSPORT, h, mp.hdrAPIGetTransport)
+	wrapHandleFunc[rpc_core.EMPTY](sdk_core.METHOD_LIST_TRANSPORTS, h, mp.hdrAPIListTransports)
+
+	// channel
+	wrapHandleFunc[sdk_interface.CloseChannelRequest](sdk_core.METHOD_CLOSE_CHANNEL, h, mp.hdrAPICloseChannel)
+	wrapHandleFunc[sdk_interface.GetChannelRequest](sdk_core.METHOD_GET_CHANNEL, h, mp.hdrAPIGetChannel)
+	wrapHandleFunc[rpc_core.EMPTY](sdk_core.METHOD_LIST_CHANNELS, h, mp.hdrAPIListChannels)
+	wrapHandleFunc[sdk_interface.ListChannelsByTarget](sdk_core.METHOD_LIST_CHANNELS_BY_TARGET, h, mp.hdrAPIListChannelsByTarget)
 
 	return h
 }

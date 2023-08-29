@@ -3,8 +3,8 @@ package meepo_core
 import (
 	"context"
 
-	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
+	"github.com/PeerXu/meepo/pkg/lib/logging"
 	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
@@ -37,5 +37,5 @@ func (mp *Meepo) hdrAPICloseChannel(ctx context.Context, _req any) (any, error) 
 
 	logger.Infof("channel closed")
 
-	return rpc_core.NO_CONTENT(), nil
+	return rpc_core.NO_CONTENT, nil
 }

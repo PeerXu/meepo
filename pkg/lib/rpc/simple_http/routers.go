@@ -11,5 +11,6 @@ func (s *SimpleHttpServer) Routers() http.Handler {
 	v1Router := r.Group("/v1")
 	v1ActionRouter := v1Router.Group("/actions")
 	v1ActionRouter.POST("/simpleDo", s.HttpSimpleDo)
+	v1ActionRouter.GET("/simpleDoStream", s.HttpSimpleDoStream)
 	return r
 }

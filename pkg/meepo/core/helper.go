@@ -3,6 +3,7 @@ package meepo_core
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 
 	"github.com/PeerXu/meepo/pkg/lib/addr"
@@ -132,6 +133,13 @@ func (mp *Meepo) randHexString(sz int) string {
 	buf := make([]byte, sz/2)
 	mp.rand.Read(buf)
 	return hex.EncodeToString(buf)
+}
+
+func (mp *Meepo) viewToMap(x any) map[string]any {
+	buf, _ := json.Marshal(x)
+	y := make(map[string]any)
+	json.Unmarshal(buf, &y) // nolint:errcheck
+	return y
 }
 
 // nolint:unused

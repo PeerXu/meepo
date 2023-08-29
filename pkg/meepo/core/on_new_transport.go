@@ -19,8 +19,6 @@ import (
 	transport_webrtc "github.com/PeerXu/meepo/pkg/meepo/transport/webrtc"
 )
 
-func (mp *Meepo) newOnNewTransportRequest() any { return &crypto_core.Packet{} }
-
 func (mp *Meepo) hdrOnNewTransport(ctx context.Context, req any) (any, error) {
 	return mp.onNewTransport(req.(*crypto_core.Packet))
 }

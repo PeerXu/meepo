@@ -57,7 +57,8 @@ type Meepo struct {
 
 	acl acl.Acl
 
-	eventloop meepo_eventloop_interface.EventLoop
+	eventloop     meepo_eventloop_interface.EventLoop
+	eventListener meepo_event_listener.EventListener
 
 	enableMux    bool
 	muxVer       int
@@ -184,10 +185,16 @@ func NewMeepo(opts ...NewMeepoOption) (meepo_interface.Meepo, error) {
 		return nil, err
 	}
 
-	eventloop := meepo_eventloop_core.NewEventLoop()
-	if eventListener, _ := meepo_event_listener.GetEventListener(o); eventListener != nil {
-		eventloop.AddHandler(eventListener)
+	eventloop, err := meepo_eventloop_core.GetEventLoop(o)
+	if err != nil {
+		return nil, err
 	}
+
+	eventListener, err := meepo_event_listener.GetEventListener(o)
+	if err != nil {
+		return nil, err
+	}
+	eventloop.AddHandler(eventListener)
 
 	se, err := newWebrtcSettingEngine(o)
 	if err != nil {
@@ -223,6 +230,7 @@ func NewMeepo(opts ...NewMeepoOption) (meepo_interface.Meepo, error) {
 		logger:                  logger,
 		closed:                  make(chan struct{}),
 		eventloop:               eventloop,
+		eventListener:           eventListener,
 	}
 
 	mp.enableMux, _ = well_known_option.GetEnableMux(o)

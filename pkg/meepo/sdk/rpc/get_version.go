@@ -8,7 +8,7 @@ import (
 
 func (s *RPCSDK) GetVersion() (*version.V, error) {
 	var v version.V
-	err := s.caller.Call(s.context(), sdk_core.METHOD_GET_VERSION, rpc_core.NO_REQUEST(), &v)
+	err := s.caller.Call(s.context(), sdk_core.METHOD_GET_VERSION, rpc_core.NO_REQUEST, &v)
 	if err != nil {
 		return nil, err
 	}

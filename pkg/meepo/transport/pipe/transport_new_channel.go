@@ -61,6 +61,7 @@ func (t *PipeTransport) NewChannel(ctx context.Context, network string, address 
 		readyTimeout:          readyTimeout,
 		ready:                 make(chan struct{}),
 	}
+	c.setState(meepo_interface.CHANNEL_STATE_NEW)
 	t.cs[c.ID()] = c
 	go func() {
 		defer c.readyOnce.Do(func() { close(c.ready) })

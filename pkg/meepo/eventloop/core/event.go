@@ -1,6 +1,8 @@
 package meepo_eventloop_core
 
 import (
+	"time"
+
 	meepo_eventloop_interface "github.com/PeerXu/meepo/pkg/meepo/eventloop/interface"
 )
 
@@ -9,9 +11,10 @@ const (
 )
 
 type basicEvent struct {
-	name string
-	id   string
-	data meepo_eventloop_interface.Data
+	name       string
+	id         string
+	happenedAt time.Time
+	data       meepo_eventloop_interface.Data
 }
 
 func (e *basicEvent) Name() string {
@@ -20,6 +23,10 @@ func (e *basicEvent) Name() string {
 
 func (e *basicEvent) ID() string {
 	return e.id
+}
+
+func (e *basicEvent) HappenedAt() time.Time {
+	return e.happenedAt
 }
 
 func (e *basicEvent) Data() meepo_eventloop_interface.Data {
@@ -35,8 +42,9 @@ func (e *basicEvent) Get(key string) any {
 
 func NewEvent(name string, data meepo_eventloop_interface.Data) meepo_eventloop_interface.Event {
 	return &basicEvent{
-		name: name,
-		id:   randomID(BASIC_EVENT_ID_SIZE),
-		data: data,
+		name:       name,
+		id:         randomID(BASIC_EVENT_ID_SIZE),
+		happenedAt: time.Now(),
+		data:       data,
 	}
 }

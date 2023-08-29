@@ -8,6 +8,8 @@ type CallOption = option.ApplyOption
 
 type HandleOption = option.ApplyOption
 
+type WatchEventsOption = option.ApplyOption
+
 type NewTransportOption = option.ApplyOption
 
 type ListTransportsOption = option.ApplyOption
@@ -29,7 +31,13 @@ type GetTeleportationOption = option.ApplyOption
 type TeleportOption = option.ApplyOption
 
 const (
-	OPTION_MEEPO = "meepo"
+	OPTION_MEEPO         = "meepo"
+	OPTION_SESSION       = "session"
+	OPTION_EVENT_CHANNEL = "eventChannel"
 )
 
-var WithMeepo, GetMeepo = option.New[Meepo](OPTION_MEEPO)
+var (
+	WithMeepo, GetMeepo               = option.New[Meepo](OPTION_MEEPO)
+	WithSession, GetSession           = option.New[string](OPTION_SESSION)
+	WithEventChannel, GetEventChannel = option.New[chan Event](OPTION_EVENT_CHANNEL)
+)

@@ -38,6 +38,46 @@ func TestEventListener(t *testing.T) {
 			skip bool
 		}
 	}{
+		// TEMPLATE
+		{[]string{}, []struct {
+			name string
+			skip bool
+		}{}},
+
+		{[]string{
+			"x.*.z",
+		}, []struct {
+			name string
+			skip bool
+		}{
+			{"x.y.z", false},
+			{"x.a.z", false},
+			{"x.y.z.0", true},
+			{"a.y.z", true},
+		}},
+
+		{[]string{
+			"x.*",
+		}, []struct {
+			name string
+			skip bool
+		}{
+			{"x.y", false},
+			{"x.z", false},
+			{"x.y.z", true},
+			{"a.b.c", true},
+		}},
+
+		{[]string{
+			"x",
+		}, []struct {
+			name string
+			skip bool
+		}{
+			{"x", false},
+			{"y", true},
+		},
+		},
 		{[]string{
 			"a",
 			"b",
@@ -50,6 +90,17 @@ func TestEventListener(t *testing.T) {
 			{"b", false},
 			{"c", false},
 			{"d", true},
+		}},
+		{[]string{
+			"x.*",
+		}, []struct {
+			name string
+			skip bool
+		}{
+			{"x.y", false},
+			{"x.z", false},
+			{"a", true},
+			{"a.b", true},
 		}},
 	} {
 		lis, err := meepo_event_listener.NewEventListener()

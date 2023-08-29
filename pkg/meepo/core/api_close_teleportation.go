@@ -29,5 +29,5 @@ func (mp *Meepo) hdrAPICloseTeleportation(ctx context.Context, _req any) (any, e
 
 	logger.Infof("teleportation closed")
 
-	return rpc_core.NO_CONTENT(), nil
+	return rpc_core.NO_CONTENT, nil
 }

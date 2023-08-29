@@ -8,6 +8,7 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/option"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
+	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	teleportation_core "github.com/PeerXu/meepo/pkg/meepo/teleportation/core"
 )
 
@@ -75,16 +76,19 @@ func (mp *Meepo) NewTeleportation(ctx context.Context, target Addr, sourceNetwor
 		teleportation_core.WithSourceAddr(sourceAddr),
 		teleportation_core.WithSinkAddr(sinkAddr),
 		teleportation_core.WithOnTeleportationAcceptFunc(mp.onTeleportationAccept),
-		teleportation_core.WithOnTeleportationCloseFunc(mp.onTeleportationClose),
+		teleportation_core.WithAfterNewTeleportationHook(func(tp meepo_interface.Teleportation, opts ...teleportation_core.HookOption) {
+			mp.onTeleportationNew(tp)
+			mp.emitTeleportationNew(tp)
+		}),
+		teleportation_core.WithAfterCloseTeleportationHook(func(tp Teleportation, opts ...teleportation_core.HookOption) {
+			mp.onTeleportationClose(tp)
+			mp.emitTeleportationClose(tp)
+		}),
 	)
 	if err != nil {
 		logger.WithError(err).Debugf("failed to new teleportation")
 		return nil, err
 	}
-
-	mp.teleportationsMtx.Lock()
-	defer mp.teleportationsMtx.Unlock()
-	mp.teleportations[tp.ID()] = tp
 
 	logger.Tracef("new teleportation")
 

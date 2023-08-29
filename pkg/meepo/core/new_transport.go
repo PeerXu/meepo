@@ -11,7 +11,6 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	"github.com/PeerXu/meepo/pkg/lib/option"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
-	meepo_eventloop_core "github.com/PeerXu/meepo/pkg/meepo/eventloop/core"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	tracker_interface "github.com/PeerXu/meepo/pkg/meepo/tracker/interface"
 	"github.com/PeerXu/meepo/pkg/meepo/transport"
@@ -100,20 +99,20 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 		well_known_option.WithLogger(mp.GetRawLogger()),
 		transport_core.WithAfterNewTransportHook(func(t transport_core.Transport, _ ...transport_core.HookOption) {
 			onAddTransport(t)
-			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_TRANSPORT_ACTION_NEW, nil))
+			mp.emitTransportActionNew(t)
 		}),
 		transport_core.WithAfterCloseTransportHook(func(t transport_core.Transport, _ ...transport_core.HookOption) {
 			onRemoveTransport(t)
-			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_TRANSPORT_ACTION_CLOSE, nil))
+			mp.emitTransportActionClose(t)
 		}),
 		transport_core.WithBeforeNewChannelHook(func(network, address string, opts ...transport_core.HookOption) error {
 			return mp.beforeNewChannelHook(t, network, address, opts...)
 		}),
 		transport_core.WithAfterNewChannelHook(func(c meepo_interface.Channel, opts ...transport_core.HookOption) {
-			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_CHANNEL_ACTION_NEW, nil))
+			mp.emitChannelActionNew(c)
 		}),
 		transport_core.WithAfterCloseChannelHook(func(c meepo_interface.Channel, opts ...transport_core.HookOption) {
-			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_CHANNEL_ACTION_CLOSE, nil))
+			mp.emitChannelActionClose(c)
 		}),
 		transport_core.WithOnTransportReadyFunc(onReadyTransport),
 		marshaler.WithMarshaler(mp.marshaler),

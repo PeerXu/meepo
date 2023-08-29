@@ -8,11 +8,19 @@ import (
 )
 
 type Addr = addr.Addr
+type Event struct {
+	Session    string         `json:"session"`
+	Name       string         `json:"name"`
+	ID         string         `json:"id"`
+	HappenedAt string         `json:"happenedAt"`
+	Data       map[string]any `json:"data"`
+}
 
 type Meepo interface {
 	Addr() Addr
-	Close(ctx context.Context) error
-	Diagnostic() (DiagnosticReport, error)
+	Close(context.Context) error
+	Diagnostic(context.Context) (DiagnosticReport, error)
+	WatchEvents(context.Context, []string, ...WatchEventsOption) (chan Event, error)
 
 	Transporter
 

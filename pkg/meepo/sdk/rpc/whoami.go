@@ -9,7 +9,7 @@ import (
 func (s *RPCSDK) Whoami() (addr.Addr, error) {
 	var a addr.Addr
 	var addrStr string
-	err := s.caller.Call(s.context(), sdk_core.METHOD_WHOAMI, rpc_core.NO_REQUEST(), &addrStr)
+	err := s.caller.Call(s.context(), sdk_core.METHOD_WHOAMI, rpc_core.NO_REQUEST, &addrStr)
 	if err != nil {
 		return a, err
 	}

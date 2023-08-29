@@ -7,6 +7,8 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/option"
 	mrand "github.com/PeerXu/meepo/pkg/lib/rand"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
+	meepo_event_listener "github.com/PeerXu/meepo/pkg/meepo/event_listener"
+	meepo_eventloop_core "github.com/PeerXu/meepo/pkg/meepo/eventloop/core"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	meepo_routing_table_core "github.com/PeerXu/meepo/pkg/meepo/routing_table/core"
 )
@@ -56,6 +58,8 @@ var (
 )
 
 func defaultNewMeepoOptions() option.Option {
+	evtLis, _ := meepo_event_listener.NewEventListener()
+
 	return option.NewOption(map[string]any{
 		OPTION_ENABLE_POOF:                         true,
 		OPTION_DHT_ALPHA:                           8,
@@ -64,6 +68,8 @@ func defaultNewMeepoOptions() option.Option {
 		OPTION_NAVI_REQUEST_QUEUE_TIMEOUT:          13 * time.Second,
 		meepo_routing_table_core.OPTION_GREEN_LINE: 5,
 		well_known_option.OPTION_RAND_SOURCE:       mrand.GetSource(),
+		meepo_eventloop_core.OPTION_EVENTLOOP:      meepo_eventloop_core.NewEventLoop(),
+		meepo_event_listener.OPTION_EVENT_LISTENER: evtLis,
 
 		well_known_option.OPTION_WEBRTC_RECEIVE_BUFFER_SIZE: C.WEBRTC_RECEIVE_BUFFER_SIZE,
 
@@ -82,6 +88,12 @@ func defaultNewMeepoOptions() option.Option {
 		well_known_option.OPTION_KCP_RCVWND:       C.KCP_RCVWND,
 		well_known_option.OPTION_KCP_DATA_SHARD:   C.KCP_DATA_SHARD,
 		well_known_option.OPTION_KCP_PARITY_SHARD: C.KCP_PARITY_SHARD,
+	})
+}
+
+func (mp *Meepo) defaultWatchEventsOptions() option.Option {
+	return option.NewOption(map[string]any{
+		meepo_interface.OPTION_SESSION: mrand.DefaultStringGenerator.Generate(8),
 	})
 }
 
