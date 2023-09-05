@@ -3,8 +3,11 @@ package transport_webrtc
 import (
 	"context"
 
+	matomic "github.com/PeerXu/meepo/pkg/lib/atomic"
+	"github.com/PeerXu/meepo/pkg/lib/dialer"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
+	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
 
@@ -70,21 +73,59 @@ func (t *WebrtcTransport) onNewChannel(ctx context.Context, _req any) (res any, 
 		return
 	}
 
+	sinkChannel := &WebrtcSinkChannel{
+		// upstream required
+		WebrtcChannel: &WebrtcChannel{
+			// dc required
+			id:            req.ChannelID,
+			sinkAddr:      dialer.NewAddr(req.Network, req.Address),
+			logger:        t.GetRawLogger(),
+			s:             matomic.NewValue[meepo_interface.ChannelState](),
+			readyTimeout:  t.readyTimeout,
+			readyCh:       make(chan struct{}),
+			mode:          req.Mode,
+			onStateChange: t.onChannelStateChange,
+			beforeCloseChannelHook: func(c meepo_interface.Channel, opts ...transport_core.HookOption) error {
+				if h := t.BeforeCloseChannelHook; h != nil {
+					if err := h(c, opts...); err != nil {
+						return err
+					}
+				}
+
+				t.removeChannel(c)
+
+				return nil
+			},
+			afterCloseChannelHook: t.AfterCloseChannelHook,
+		},
+		downstreamVal: matomic.NewValue[meepo_interface.Conn](),
+	}
+
+	t.addChannel(sinkChannel)
+	sinkChannel.setState(meepo_interface.CHANNEL_STATE_NEW)
+
 	tdc, found := t.tempDataChannels[req.Label]
 	if !found {
-		t.tempDataChannels[req.Label] = &tempDataChannel{req: req}
+
+		t.tempDataChannels[req.Label] = &tempDataChannel{
+			request:     req,
+			sinkChannel: sinkChannel,
+		}
+
 		go t.removeTimeoutTempDataChannel(req.Label)
 		logger.Tracef("create temp data channel")
 		return
 	}
 
-	if tdc.rwc == nil {
+	tdc.request = req
+	tdc.sinkChannel = sinkChannel
+
+	if tdc.upstream == nil {
 		logger.Tracef("wait for data channel open")
 		return
 	}
 
-	tdc.req = req
-
+	sinkChannel.setState(meepo_interface.CHANNEL_STATE_CONNECTING)
 	go t.handleNewChannel(req.Label, "onNewChannel")
 
 	logger.Tracef("on new channel")

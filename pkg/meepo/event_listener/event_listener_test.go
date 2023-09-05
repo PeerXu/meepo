@@ -45,6 +45,17 @@ func TestEventListener(t *testing.T) {
 		}{}},
 
 		{[]string{
+			"*",
+		}, []struct {
+			name string
+			skip bool
+		}{
+			{"x", false},
+			{"y", false},
+			{"z", false},
+			{"a.b.c", false},
+		}},
+		{[]string{
 			"x.*.z",
 		}, []struct {
 			name string
@@ -64,7 +75,7 @@ func TestEventListener(t *testing.T) {
 		}{
 			{"x.y", false},
 			{"x.z", false},
-			{"x.y.z", true},
+			{"x.y.z", false},
 			{"a.b.c", true},
 		}},
 
@@ -124,6 +135,6 @@ func TestEventListener(t *testing.T) {
 			lis.Handle(meepo_eventloop_core.NewEvent(st.events[i].name, map[string]any{"index": i}))
 		}
 
-		assert.Equal(t, expects, actuals)
+		assert.Equal(t, expects, actuals, "rules=%v events=%v", st.rules, st.events)
 	}
 }

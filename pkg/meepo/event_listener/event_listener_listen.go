@@ -11,6 +11,8 @@ func (el *eventListener) Listen(name string, fn meepo_eventloop_interface.Handle
 }
 
 func listen(c Chain, t Tree, s Set, fn meepo_eventloop_interface.HandleFunc) string {
+	var key string
+
 	chainHead := c.Head()
 	chainRest := c.Rest()
 
@@ -18,8 +20,15 @@ func listen(c Chain, t Tree, s Set, fn meepo_eventloop_interface.HandleFunc) str
 		return listen(chainRest, t.SubTree(chainHead), s, fn)
 	}
 
+	if chainHead == WILDCARD {
+		key = TAIL_WILDCARD
+	} else {
+		key = chainHead
+	}
+
 	id := mrand.DefaultStringGenerator.Generate(8)
-	t.RegHandleFunc(chainHead, id, fn)
+	t.RegHandleFunc(key, id, fn)
 	s.Add(id)
+
 	return id
 }

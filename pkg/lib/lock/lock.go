@@ -85,6 +85,6 @@ func (x *tracedLock) TryLock() (ok bool) {
 }
 
 func init() {
-	lockTracingStr := os.Getenv("MPO_DEBUG_LOCK_TRACING")
+	lockTracingStr := os.Getenv("MPO_EXPERIMENTAL_LOCK_TRACING")
 	enableLockTracing, _ = strconv.ParseBool(lockTracingStr)
 }

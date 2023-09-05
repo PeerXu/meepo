@@ -12,12 +12,14 @@ import (
 
 	mio "github.com/PeerXu/meepo/pkg/lib/io"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
+	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 )
 
 type tempDataChannel struct {
-	dc  *webrtc.DataChannel
-	rwc io.ReadWriteCloser
-	req *NewChannelRequest
+	datachannel *webrtc.DataChannel
+	upstream    io.ReadWriteCloser
+	request     *NewChannelRequest
+	sinkChannel *WebrtcSinkChannel
 }
 
 func (t *WebrtcTransport) onDataChannel(sess Session) func(*webrtc.DataChannel) {
@@ -52,13 +54,13 @@ func (t *WebrtcTransport) onDataChannel(sess Session) func(*webrtc.DataChannel) 
 
 		tdc, found := t.tempDataChannels[dc.Label()]
 		if !found {
-			t.tempDataChannels[dc.Label()] = &tempDataChannel{dc: dc}
+			t.tempDataChannels[dc.Label()] = &tempDataChannel{datachannel: dc}
 			go t.removeTimeoutTempDataChannel(dc.Label())
 			logger.Tracef("create temp data channel")
 			return
 		}
 
-		tdc.dc = dc
+		tdc.datachannel = dc
 		logger.Tracef("assign webrtc.DataChannel to temp data channel")
 	}
 }
@@ -81,17 +83,19 @@ func (t *WebrtcTransport) onDataChannelOpen(dc *webrtc.DataChannel) func() {
 			return
 		}
 
-		if tdc.rwc, err = dc.Detach(); err != nil {
+		if tdc.upstream, err = dc.Detach(); err != nil {
 			logger.WithError(err).Debugf("failed to detach data channel")
 			return
 		}
 
-		if tdc.req == nil {
+		if tdc.request == nil {
 			logger.Tracef("wait for new channel request")
 			return
 		}
 
+		tdc.sinkChannel.setState(meepo_interface.CHANNEL_STATE_CONNECTING)
 		go t.handleNewChannel(dc.Label(), "onDataChannelOpen")
+
 		logger.Tracef("on data channel open")
 	}
 }
@@ -113,18 +117,25 @@ func (t *WebrtcTransport) removeTimeoutTempDataChannel(label string) {
 	}
 	delete(t.tempDataChannels, label)
 
-	if tdc.rwc != nil {
-		if err := tdc.rwc.Close(); err != nil {
-			logger.WithError(err).Debugf("failed to close temp rwc")
+	if stm := tdc.upstream; stm != nil {
+		if err := stm.Close(); err != nil {
+			logger.WithError(err).Debugf("failed to close temp upstream")
 		}
-		tdc.rwc = nil
+		tdc.upstream = nil
 	}
 
-	if tdc.dc != nil {
-		if err := tdc.dc.Close(); err != nil {
+	if dc := tdc.datachannel; dc != nil {
+		if err := dc.Close(); err != nil {
 			logger.WithError(err).Debugf("failed to close temp data channel")
 		}
-		tdc.dc = nil
+		tdc.datachannel = nil
+	}
+
+	if c := tdc.sinkChannel; c != nil {
+		if err := c.Close(t.context()); err != nil {
+			logger.WithError(err).Debugf("failed to close temp sink channel")
+		}
+		tdc.sinkChannel = nil
 	}
 
 	logger.Tracef("remove timeout data channel")
@@ -334,7 +345,10 @@ func (t *WebrtcTransport) channelDone(n int32) {
 	logger.WithField("rest", x).Tracef("do channel done")
 	if x <= 0 {
 		t.readyOnce.Do(func() {
-			t.onReadyCb(t) // nolint:errcheck
+			if h := t.onReady; h != nil {
+				h(t) // nolint:errcheck
+			}
+
 			close(t.ready)
 		})
 	}

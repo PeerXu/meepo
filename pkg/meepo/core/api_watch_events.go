@@ -147,8 +147,9 @@ func (mp *Meepo) hdrStreamAPIWatchEvents_commandsLoop(ctx context.Context, logge
 			var sessions []string
 
 			sessMap.Range(func(session string, cancel context.CancelFunc) bool {
-				sessions = append(sessions, session)
 				cancel()
+				sessMap.Delete(session)
+				sessions = append(sessions, session)
 				return true
 			})
 

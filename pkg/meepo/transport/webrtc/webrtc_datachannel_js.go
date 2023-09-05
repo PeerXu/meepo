@@ -10,13 +10,14 @@ func (t *WebrtcTransport) afterRawSourceChannelCreate(dc *webrtc.DataChannel, c 
 
 		t.csMtx.Lock()
 		defer t.csMtx.Unlock()
-		t.cs[c.ID()] = c
+
+		t.addChannelNL(c)
 
 		if c.conn, err = dc.Detach(); err != nil {
 			panic(err)
 		}
 
-		c.readyOnce.Do(func() { close(c.ready) })
+		c.ready()
 	}
 	dc.OnOpen(f)
 

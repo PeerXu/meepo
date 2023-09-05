@@ -27,7 +27,8 @@ func (mp *Meepo) NewTeleportation(ctx context.Context, target Addr, sourceNetwor
 	if err != nil {
 		return nil, err
 	}
-	if mp.Addr().Equal(target) {
+	if mp.Addr().Equal(target) && mode != "raw" {
+		logger.Warningf("assign mode to raw when target equal to self address")
 		mode = "raw"
 	}
 	logger = logger.WithField("mode", mode)

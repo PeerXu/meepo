@@ -2,7 +2,7 @@ package sync
 
 import "sync"
 
-type GenericsMap[K any, V any] interface {
+type GenericMap[K any, V any] interface {
 	Store(key K, value V)
 	Delete(key K)
 	Load(key K) (value V, ok bool)
@@ -11,19 +11,19 @@ type GenericsMap[K any, V any] interface {
 	Range(f func(key K, value V) bool)
 }
 
-type genericsMap[K, V any] struct {
+type genericMap[K, V any] struct {
 	*sync.Map
 }
 
-func NewMap[K any, V any]() GenericsMap[K, V] {
-	return &genericsMap[K, V]{&sync.Map{}}
+func NewMap[K any, V any]() GenericMap[K, V] {
+	return &genericMap[K, V]{&sync.Map{}}
 }
 
-func (m *genericsMap[K, V]) Store(key K, value V) {
+func (m *genericMap[K, V]) Store(key K, value V) {
 	m.Map.Store(key, value)
 }
 
-func (m *genericsMap[K, V]) Load(key K) (value V, ok bool) {
+func (m *genericMap[K, V]) Load(key K) (value V, ok bool) {
 	v, ok := m.Map.Load(key)
 	if !ok {
 		return
@@ -31,11 +31,11 @@ func (m *genericsMap[K, V]) Load(key K) (value V, ok bool) {
 	return v.(V), ok
 }
 
-func (m *genericsMap[K, V]) Delete(key K) {
+func (m *genericMap[K, V]) Delete(key K) {
 	m.Map.Delete(key)
 }
 
-func (m *genericsMap[K, V]) LoadAndDelete(key K) (value V, loaded bool) {
+func (m *genericMap[K, V]) LoadAndDelete(key K) (value V, loaded bool) {
 	v, loaded := m.Map.LoadAndDelete(key)
 	if !loaded {
 		return
@@ -43,7 +43,7 @@ func (m *genericsMap[K, V]) LoadAndDelete(key K) (value V, loaded bool) {
 	return v.(V), loaded
 }
 
-func (m *genericsMap[K, V]) LoadOrStore(key K, value V) (actual V, loaded bool) {
+func (m *genericMap[K, V]) LoadOrStore(key K, value V) (actual V, loaded bool) {
 	a, loaded := m.Map.LoadOrStore(key, value)
 	if !loaded {
 		return
@@ -51,7 +51,7 @@ func (m *genericsMap[K, V]) LoadOrStore(key K, value V) (actual V, loaded bool) 
 	return a.(V), loaded
 }
 
-func (m *genericsMap[K, V]) Range(f func(K, V) bool) {
+func (m *genericMap[K, V]) Range(f func(K, V) bool) {
 	m.Map.Range(func(key any, value any) bool {
 		return f(key.(K), value.(V))
 	})

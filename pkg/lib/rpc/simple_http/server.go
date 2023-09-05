@@ -61,7 +61,7 @@ func NewSimpleHttpServer(opts ...rpc_core.NewServerOption) (rpc_core.Server, err
 		handler:     handler,
 		listener:    listener,
 		httpd:       httpd,
-		upgrader:    &websocket.Upgrader{},
+		upgrader:    upgrader,
 		logger:      logger,
 	}
 	httpd.Handler = s.Routers()

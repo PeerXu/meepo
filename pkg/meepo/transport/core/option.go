@@ -10,6 +10,8 @@ import (
 const (
 	OPTION_TRANSPORT                   = "transport"
 	OPTION_ON_TRANSPORT_READY          = "onTransportReady"
+	OPTION_ON_TRANSPORT_STATE_CHANGE   = "onTransportStateChange"
+	OPTION_ON_CHANNEL_STATE_CHANGE     = "onChannelStateChange"
 	OPTION_BEFORE_NEW_TRANSPORT_HOOK   = "beforeNewTransportHook"
 	OPTION_AFTER_NEW_TRANSPORT_HOOK    = "afterNewTransportHook"
 	OPTION_BEFORE_CLOSE_TRANSPORT_HOOK = "beforeCloseTransportHook"
@@ -23,9 +25,9 @@ const (
 	OPTION_IS_SINK                     = "isSink"
 )
 
-type OnTransportReadyFunc = func(Transport) error
-
-type OnChannelCloseFunc = func(Channel) error
+type OnTransportReadyFunc = func(Transport)
+type OnTransportStateChangeFunc = func(Transport)
+type OnChannelStateChangeFunc = func(Channel)
 
 type BeforeNewTransportHook = func(meepo_interface.Addr, ...HookOption) error
 type AfterNewTransportHook = func(Transport, ...HookOption)
@@ -41,6 +43,9 @@ type NewTransportOption = option.ApplyOption
 
 var (
 	WithOnTransportReadyFunc, GetOnTransportReadyFunc = option.New[OnTransportReadyFunc](OPTION_ON_TRANSPORT_READY)
+
+	WithOnTransportStateChangeFunc, GetOnTransportStateChangeFunc = option.New[OnTransportStateChangeFunc](OPTION_ON_TRANSPORT_STATE_CHANGE)
+	WithOnChannelStateChangeFunc, GetOnChannelStateChangeFunc     = option.New[OnChannelStateChangeFunc](OPTION_ON_CHANNEL_STATE_CHANGE)
 
 	WithBeforeNewTransportHook, GetBeforeNewTransportHook     = option.New[BeforeNewTransportHook](OPTION_BEFORE_NEW_TRANSPORT_HOOK)
 	WithAfterNewTransportHook, GetAfterNewTransportHook       = option.New[AfterNewTransportHook](OPTION_AFTER_NEW_TRANSPORT_HOOK)

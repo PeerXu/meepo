@@ -41,7 +41,7 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 	}
 
 	var onAddTransport func(Transport)
-	var onReadyTransport func(Transport) error
+	var onReadyTransport func(Transport)
 	var onRemoveTransport func(Transport)
 	switch target {
 	case mp.Addr():
@@ -49,7 +49,6 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 
 		onAddTransport = mp.onAddPipeTransportNL
 		onRemoveTransport = mp.onRemovePipeTransport
-		onReadyTransport = func(Transport) error { return nil }
 	default:
 		name = transport_webrtc.TRANSPORT_WEBRTC_SOURCE
 		var gatherOpt gatherOption
@@ -113,6 +112,12 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 		}),
 		transport_core.WithAfterCloseChannelHook(func(c meepo_interface.Channel, opts ...transport_core.HookOption) {
 			mp.emitChannelActionClose(c)
+		}),
+		transport_core.WithOnTransportStateChangeFunc(func(t meepo_interface.Transport) {
+			mp.emitTransportStateChange(t)
+		}),
+		transport_core.WithOnChannelStateChangeFunc(func(c meepo_interface.Channel) {
+			mp.emitChannelStateChange(target, c)
 		}),
 		transport_core.WithOnTransportReadyFunc(onReadyTransport),
 		marshaler.WithMarshaler(mp.marshaler),

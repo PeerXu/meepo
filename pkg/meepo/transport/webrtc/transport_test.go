@@ -19,8 +19,6 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/stun"
 	meepo_testing "github.com/PeerXu/meepo/pkg/lib/testing"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
-	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
-	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
 
 func TestRawTransport(t *testing.T) {
@@ -80,7 +78,6 @@ func TestRawTransport(t *testing.T) {
 		WithGatherFunc(gatherFail),
 		WithNewPeerConnectionFunc(npcFn),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
-		transport_core.WithOnTransportReadyFunc(func(meepo_interface.Transport) error { return nil }),
 		marshaler.WithMarshaler(marshaler_json.Marshaler),
 		marshaler.WithUnmarshaler(marshaler_json.Unmarshaler),
 		well_known_option.WithEnableMux(false),
@@ -99,7 +96,6 @@ func TestRawTransport(t *testing.T) {
 		WithGatherFunc(gatherFail),
 		WithNewPeerConnectionFunc(npcFn),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
-		transport_core.WithOnTransportReadyFunc(func(meepo_interface.Transport) error { return nil }),
 		marshaler.WithMarshaler(marshaler_json.Marshaler),
 		marshaler.WithUnmarshaler(marshaler_json.Unmarshaler),
 		well_known_option.WithEnableMux(false),
@@ -204,7 +200,6 @@ func TestMuxTransport(t *testing.T) {
 		WithGatherFunc(gatherFail),
 		WithNewPeerConnectionFunc(npcFn),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
-		transport_core.WithOnTransportReadyFunc(func(meepo_interface.Transport) error { return nil }),
 		marshaler.WithMarshaler(marshaler_json.Marshaler),
 		marshaler.WithUnmarshaler(marshaler_json.Unmarshaler),
 		well_known_option.WithEnableMux(true),
@@ -225,7 +220,6 @@ func TestMuxTransport(t *testing.T) {
 		WithGatherFunc(gatherFail),
 		WithNewPeerConnectionFunc(npcFn),
 		dialer.WithDialer(dialer.GetGlobalDialer()),
-		transport_core.WithOnTransportReadyFunc(func(meepo_interface.Transport) error { return nil }),
 		marshaler.WithMarshaler(marshaler_json.Marshaler),
 		marshaler.WithUnmarshaler(marshaler_json.Unmarshaler),
 		well_known_option.WithEnableMux(true),

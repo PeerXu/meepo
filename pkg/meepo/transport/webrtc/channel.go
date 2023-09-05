@@ -3,11 +3,11 @@ package transport_webrtc
 import (
 	"net"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/pion/webrtc/v3"
 
+	matomic "github.com/PeerXu/meepo/pkg/lib/atomic"
 	dialer_interface "github.com/PeerXu/meepo/pkg/lib/dialer/interface"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
@@ -19,30 +19,28 @@ type WebrtcChannel struct {
 	sinkAddr net.Addr
 	logger   logging.Logger
 
+	dc *webrtc.DataChannel
+	s  matomic.GenericValue[meepo_interface.ChannelState]
+
 	readyErr     error
 	readyTimeout time.Duration
-	ready        chan struct{}
+	readyCh      chan struct{}
 	readyOnce    sync.Once
 
 	mode string
+
+	onStateChange          transport_core.OnChannelStateChangeFunc
+	beforeCloseChannelHook transport_core.BeforeCloseChannelHook
+	afterCloseChannelHook  transport_core.AfterCloseChannelHook
 }
 
 type WebrtcSourceChannel struct {
 	*WebrtcChannel
-	dc   *webrtc.DataChannel
-	rwc  dialer_interface.Conn
 	conn meepo_interface.Conn
-
-	beforeCloseChannelHook transport_core.BeforeCloseChannelHook
-	afterCloseChannelHook  transport_core.AfterCloseChannelHook
 }
 
 type WebrtcSinkChannel struct {
 	*WebrtcChannel
-	dc      *webrtc.DataChannel
-	rwc     dialer_interface.Conn
-	connVal atomic.Value
-
-	beforeCloseChannelHook transport_core.BeforeCloseChannelHook
-	afterCloseChannelHook  transport_core.AfterCloseChannelHook
+	upstream      dialer_interface.Conn
+	downstreamVal matomic.GenericValue[meepo_interface.Conn]
 }

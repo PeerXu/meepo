@@ -3,6 +3,7 @@ package transport_pipe
 import (
 	"context"
 
+	matomic "github.com/PeerXu/meepo/pkg/lib/atomic"
 	"github.com/PeerXu/meepo/pkg/lib/dialer"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/option"
@@ -41,9 +42,11 @@ func (t *PipeTransport) NewChannel(ctx context.Context, network string, address 
 	}
 
 	c := &PipeChannel{
-		id:       channelID,
-		sinkAddr: dialer.NewAddr(network, address),
-		logger:   t.GetRawLogger().WithField("addr", t.Addr()),
+		id:            channelID,
+		state:         matomic.NewValue[meepo_interface.ChannelState](),
+		sinkAddr:      dialer.NewAddr(network, address),
+		logger:        t.GetRawLogger().WithField("addr", t.Addr()),
+		onStateChange: t.onChannelStateChange,
 		beforeCloseChannelHook: func(c meepo_interface.Channel, opts ...transport_core.HookOption) error {
 			if h := t.BeforeCloseChannelHook; h != nil {
 				if err := h(c, opts...); err != nil {

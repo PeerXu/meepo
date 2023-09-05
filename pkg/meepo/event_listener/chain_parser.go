@@ -7,7 +7,7 @@ type ChainParser struct {
 }
 
 var (
-	DefaultChainParser = &ChainParser{delimiter: "."}
+	DefaultChainParser = &ChainParser{delimiter: DELIMITER}
 )
 
 func (p *ChainParser) Parse(name string) Chain {

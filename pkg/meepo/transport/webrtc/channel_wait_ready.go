@@ -12,16 +12,13 @@ func (c *WebrtcChannel) WaitReady() error {
 	}
 
 	select {
-	case <-c.ready:
+	case <-c.readyCh:
 		if c.readyErr != nil {
 			return c.readyErr
 		}
 		return nil
 	case <-time.After(c.readyTimeout):
-		c.readyOnce.Do(func() {
-			c.readyErr = transport_core.ErrReadyTimeout
-			close(c.ready)
-		})
+		c.readyWithError(transport_core.ErrReadyTimeout)
 		return c.readyErr
 	}
 }

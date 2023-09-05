@@ -1,8 +1,7 @@
 package transport_pipe
 
 import (
-	"sync/atomic"
-
+	matomic "github.com/PeerXu/meepo/pkg/lib/atomic"
 	"github.com/PeerXu/meepo/pkg/lib/dialer"
 	"github.com/PeerXu/meepo/pkg/lib/lock"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
@@ -24,11 +23,12 @@ type PipeTransport struct {
 
 	addr meepo_interface.Addr
 
-	state            atomic.Value
-	currentChannelID uint32
-	dialer           dialer.Dialer
-	onReady          transport_core.OnTransportReadyFunc
-	logger           logging.Logger
+	state                  matomic.GenericValue[meepo_interface.TransportState]
+	currentChannelID       uint32
+	dialer                 dialer.Dialer
+	onTransportStateChange transport_core.OnTransportStateChangeFunc
+	onChannelStateChange   transport_core.OnChannelStateChangeFunc
+	logger                 logging.Logger
 
 	csMtx lock.Locker
 	cs    map[uint16]meepo_interface.Channel
@@ -63,10 +63,9 @@ func NewPipeTransport(opts ...meepo_interface.NewTransportOption) (meepo_interfa
 		return nil, err
 	}
 
-	onTransportReady, err := transport_core.GetOnTransportReadyFunc(o)
-	if err != nil {
-		return nil, err
-	}
+	onTransportReady, _ := transport_core.GetOnTransportReadyFunc(o)
+	onTransportStateChange, _ := transport_core.GetOnTransportStateChangeFunc(o)
+	onChannelStateChange, _ := transport_core.GetOnChannelStateChangeFunc(o)
 
 	mr, err := marshaler.GetMarshaler(o)
 	if err != nil {
@@ -79,16 +78,18 @@ func NewPipeTransport(opts ...meepo_interface.NewTransportOption) (meepo_interfa
 	}
 
 	t := &PipeTransport{
-		addr:        addr,
-		dialer:      dialer,
-		onReady:     onTransportReady,
-		logger:      logger,
-		csMtx:       lock.NewLock(well_known_option.WithName("csMtx")),
-		cs:          make(map[uint16]meepo_interface.Channel),
-		fnsMtx:      lock.NewLock(well_known_option.WithName("fnsMtx")),
-		fns:         make(map[string]meepo_interface.HandleFunc),
-		marshaler:   mr,
-		unmarshaler: umr,
+		addr:                   addr,
+		state:                  matomic.NewValue[meepo_interface.TransportState](),
+		dialer:                 dialer,
+		onTransportStateChange: onTransportStateChange,
+		onChannelStateChange:   onChannelStateChange,
+		logger:                 logger,
+		csMtx:                  lock.NewLock(well_known_option.WithName("csMtx")),
+		cs:                     make(map[uint16]meepo_interface.Channel),
+		fnsMtx:                 lock.NewLock(well_known_option.WithName("fnsMtx")),
+		fns:                    make(map[string]meepo_interface.HandleFunc),
+		marshaler:              mr,
+		unmarshaler:            umr,
 	}
 
 	transport_core.ApplyTransportHooks(o, &t.TransportHooks)
@@ -96,8 +97,10 @@ func NewPipeTransport(opts ...meepo_interface.NewTransportOption) (meepo_interfa
 
 	t.setState(meepo_interface.TRANSPORT_STATE_NEW)
 	go func() {
-		defer onTransportReady(t) // nolint:errcheck
-		t.setState(meepo_interface.TRANSPORT_STATE_NEW)
+		if onTransportReady != nil {
+			defer onTransportReady(t) // nolint:errcheck
+		}
+
 		t.setState(meepo_interface.TRANSPORT_STATE_CONNECTING)
 		t.setState(meepo_interface.TRANSPORT_STATE_CONNECTED)
 	}()

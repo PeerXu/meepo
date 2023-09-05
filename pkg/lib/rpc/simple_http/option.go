@@ -10,8 +10,7 @@ import (
 type ctxSession string
 
 const (
-	OPTION_BASE_URL = "baseURL"
-
+	OPTION_BASE_URL            = "baseURL"
 	CONTEXT_SESSION ctxSession = "session"
 )
 

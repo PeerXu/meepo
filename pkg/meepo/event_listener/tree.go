@@ -37,14 +37,14 @@ func (t Tree) joinTreeKey(key string) string {
 	return fmt.Sprintf("%s#tree", key)
 }
 
-func (t Tree) mustNode(key string) msync.GenericsMap[string, meepo_eventloop_interface.HandleFunc] {
+func (t Tree) mustNode(key string) msync.GenericMap[string, meepo_eventloop_interface.HandleFunc] {
 	nk := t.joinNodeKey(key)
 	v, ok := t[nk]
 	if !ok {
 		v = msync.NewMap[string, meepo_eventloop_interface.HandleFunc]()
 		t[nk] = v
 	}
-	return v.(msync.GenericsMap[string, meepo_eventloop_interface.HandleFunc])
+	return v.(msync.GenericMap[string, meepo_eventloop_interface.HandleFunc])
 }
 
 func (t Tree) mustTree(key string) Tree {

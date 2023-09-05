@@ -2,6 +2,8 @@ package transport_webrtc
 
 import (
 	"github.com/xtaci/smux"
+
+	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 )
 
 func (t *WebrtcTransport) muxSessionAcceptLoop() {
@@ -21,11 +23,12 @@ func (t *WebrtcTransport) muxSessionAcceptLoop() {
 
 			tdc, found := t.tempDataChannels[label]
 			if !found {
-				t.tempDataChannels[label] = &tempDataChannel{rwc: stm}
+				t.tempDataChannels[label] = &tempDataChannel{upstream: stm}
 				go t.removeTimeoutTempDataChannel(label)
 				logger.Tracef("create temp data channel")
 			} else {
-				tdc.rwc = stm
+				tdc.upstream = stm
+				tdc.sinkChannel.setState(meepo_interface.CHANNEL_STATE_CONNECTING)
 				go t.handleNewChannel(label, "muxSessionAcceptLoop")
 			}
 		}(stm)

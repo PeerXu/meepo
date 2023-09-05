@@ -11,7 +11,6 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
-	meepo_eventloop_core "github.com/PeerXu/meepo/pkg/meepo/eventloop/core"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	tracker_interface "github.com/PeerXu/meepo/pkg/meepo/tracker/interface"
 	"github.com/PeerXu/meepo/pkg/meepo/transport"
@@ -95,20 +94,26 @@ func (mp *Meepo) onNewTransport(in *crypto_core.Packet) (answer webrtc.SessionDe
 		transport_webrtc.WithGatherFunc(mp.genGatherFunc(srcAddr)),
 		transport_core.WithAfterNewTransportHook(func(t meepo_interface.Transport, opts ...transport_core.HookOption) {
 			mp.onAddWebrtcTransportNL(t)
-			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_TRANSPORT_ACTION_NEW, nil))
+			mp.emitTransportActionNew(t)
 		}),
 		transport_core.WithAfterCloseTransportHook(func(t meepo_interface.Transport, opts ...transport_core.HookOption) {
 			mp.onRemoveWebrtcTransport(t)
-			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_TRANSPORT_ACTION_CLOSE, nil))
+			mp.emitTransportActionClose(t)
 		}),
 		transport_core.WithBeforeNewChannelHook(func(network, address string, opts ...transport_core.HookOption) error {
 			return mp.beforeNewChannelHook(t, network, address, opts...)
 		}),
 		transport_core.WithAfterNewChannelHook(func(c meepo_interface.Channel, opts ...transport_core.HookOption) {
-			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_CHANNEL_ACTION_NEW, nil))
+			mp.emitChannelActionNew(c)
 		}),
 		transport_core.WithAfterCloseChannelHook(func(c meepo_interface.Channel, opts ...transport_core.HookOption) {
-			mp.eventloop.Emit(meepo_eventloop_core.NewEvent(EVENT_CHANNEL_ACTION_CLOSE, nil))
+			mp.emitChannelActionClose(c)
+		}),
+		transport_core.WithOnTransportStateChangeFunc(func(t meepo_interface.Transport) {
+			mp.emitTransportStateChange(t)
+		}),
+		transport_core.WithOnChannelStateChangeFunc(func(c meepo_interface.Channel) {
+			mp.emitChannelStateChange(srcAddr, c)
 		}),
 		transport_core.WithOnTransportReadyFunc(mp.onReadyWebrtcTransport),
 		well_known_option.WithEnableMux(req.EnableMux),

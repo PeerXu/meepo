@@ -3,6 +3,7 @@ package transport_webrtc
 import (
 	"context"
 
+	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
 
@@ -16,15 +17,11 @@ func (c *WebrtcSourceChannel) Close(context.Context) (err error) {
 		}
 	}
 
-	switch c.mode {
-	case CHANNEL_MODE_RAW:
-		if err = c.dc.Close(); err != nil {
-			logger.WithError(err).Debugf("failed to close webrtc.DataChannel")
-			return err
-		}
-	case CHANNEL_MODE_MUX, CHANNEL_MODE_KCP:
-		if err = c.rwc.Close(); err != nil {
-			logger.WithError(err).Debugf("failed to close ReadWriteCloser")
+	c.setState(meepo_interface.CHANNEL_STATE_CLOSING)
+
+	if conn := c.Conn(); conn != nil {
+		if err = conn.Close(); err != nil {
+			logger.WithError(err).Debugf("failed to close connection")
 			return err
 		}
 	}
@@ -32,6 +29,8 @@ func (c *WebrtcSourceChannel) Close(context.Context) (err error) {
 	if h := c.afterCloseChannelHook; h != nil {
 		h(c, transport_core.WithIsSource(true))
 	}
+
+	c.setState(meepo_interface.CHANNEL_STATE_CLOSED)
 
 	logger.Tracef("channel closed")
 
@@ -48,8 +47,10 @@ func (c *WebrtcSinkChannel) Close(context.Context) (err error) {
 		}
 	}
 
-	if conn := c.Conn(); conn != nil {
-		if err = conn.Close(); err != nil {
+	c.setState(meepo_interface.CHANNEL_STATE_CLOSING)
+
+	if downstream := c.Conn(); downstream != nil {
+		if err = downstream.Close(); err != nil {
 			logger.WithError(err).Debugf("failed to close conn")
 			return err
 		}
@@ -62,7 +63,7 @@ func (c *WebrtcSinkChannel) Close(context.Context) (err error) {
 			return err
 		}
 	case CHANNEL_MODE_MUX, CHANNEL_MODE_KCP:
-		if err = c.rwc.Close(); err != nil {
+		if err = c.upstream.Close(); err != nil {
 			logger.WithError(err).Debugf("failed to close ReadWriteCloser")
 			return err
 		}
@@ -71,6 +72,8 @@ func (c *WebrtcSinkChannel) Close(context.Context) (err error) {
 	if h := c.afterCloseChannelHook; h != nil {
 		h(c, transport_core.WithIsSink(true))
 	}
+
+	c.setState(meepo_interface.CHANNEL_STATE_CLOSED)
 
 	logger.Tracef("channel closed")
 

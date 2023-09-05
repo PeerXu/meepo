@@ -10,7 +10,7 @@ const (
 )
 
 type eventLoop struct {
-	handlers msync.GenericsMap[string, meepo_eventloop_interface.Handler]
+	handlers msync.GenericMap[string, meepo_eventloop_interface.Handler]
 }
 
 func NewEventLoop() meepo_eventloop_interface.EventLoop {

@@ -3,6 +3,10 @@ package meepo_event_listener
 import "github.com/PeerXu/meepo/pkg/lib/option"
 
 const (
+	DELIMITER     = "."
+	WILDCARD      = "*"
+	TAIL_WILDCARD = "*."
+
 	OPTION_EVENT_LISTENER = "eventListener"
 	OPTION_QUEUE_SIZE     = "queueSize"
 )
