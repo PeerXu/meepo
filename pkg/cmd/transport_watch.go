@@ -16,6 +16,7 @@ var (
 		Aliases: []string{"w"},
 		Short:   "Watch transport",
 		RunE:    meepoWatchTransport,
+		Args:    cobra.NoArgs,
 	}
 )
 
