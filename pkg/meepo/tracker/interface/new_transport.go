@@ -6,6 +6,8 @@ type NewTransportRequest struct {
 	Session int32
 	Offer   webrtc.SessionDescription
 
+	TransportSession string
+
 	EnableMux    bool
 	MuxLabel     string
 	MuxVer       int

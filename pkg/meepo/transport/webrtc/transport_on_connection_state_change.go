@@ -20,13 +20,7 @@ func (t *WebrtcTransport) onSinkConnectionStateChange(sess Session) func(webrtc.
 			"state":   s.String(),
 		})
 
-		defer func() {
-			if h := t.onTransportStateChange; h != nil {
-				if t.prevState.CompareAndSwap(t.prevState.Load(), t.State()) {
-					h(t)
-				}
-			}
-		}()
+		defer t.triggerStateChange()
 
 		switch s {
 		case webrtc.PeerConnectionStateNew:
@@ -77,13 +71,7 @@ func (t *WebrtcTransport) onSourceConnectionStateChange(sess Session) func(webrt
 			"state":   s.String(),
 		})
 
-		defer func() {
-			if h := t.onTransportStateChange; h != nil {
-				if t.prevState.CompareAndSwap(t.prevState.Load(), t.State()) {
-					h(t)
-				}
-			}
-		}()
+		defer t.triggerStateChange()
 
 		switch s {
 		case webrtc.PeerConnectionStateNew:

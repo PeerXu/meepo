@@ -14,10 +14,11 @@ import (
 func (t *WebrtcTransport) Close(ctx context.Context) (err error) {
 	logger := t.GetLogger().WithField("#method", "Close")
 
-	if t.isClosed() {
+	if !t.tryClose() {
 		return nil
 	}
-	t.closed.Store(true)
+
+	defer t.triggerStateChange()
 
 	if h := t.BeforeCloseTransportHook; h != nil {
 		if er := h(t); er != nil {
@@ -77,6 +78,10 @@ func (t *WebrtcTransport) closeAllChannels(ctx context.Context) error {
 
 func (t *WebrtcTransport) isClosed() bool {
 	return t.closed.Load()
+}
+
+func (t *WebrtcTransport) tryClose() bool {
+	return t.closed.CompareAndSwap(false, true)
 }
 
 func (t *WebrtcTransport) isClosable() bool {

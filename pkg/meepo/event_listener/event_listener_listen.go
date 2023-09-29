@@ -10,7 +10,7 @@ func (el *eventListener) Listen(name string, fn meepo_eventloop_interface.Handle
 	return listen(c, el.tree, el.set, fn)
 }
 
-func listen(c Chain, t Tree, s Set, fn meepo_eventloop_interface.HandleFunc) string {
+func listen(c Chain, t *Tree, s Set, fn meepo_eventloop_interface.HandleFunc) string {
 	var key string
 
 	chainHead := c.Head()

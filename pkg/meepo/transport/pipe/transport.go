@@ -22,6 +22,7 @@ type PipeTransport struct {
 	transport_core.ChannelHooks
 
 	addr meepo_interface.Addr
+	sess string
 
 	state                  matomic.GenericValue[meepo_interface.TransportState]
 	currentChannelID       uint32
@@ -48,6 +49,11 @@ func NewPipeTransport(opts ...meepo_interface.NewTransportOption) (meepo_interfa
 	}
 
 	addr, err := well_known_option.GetAddr(o)
+	if err != nil {
+		return nil, err
+	}
+
+	sess, err := transport_core.GetTransportSession(o)
 	if err != nil {
 		return nil, err
 	}
@@ -79,6 +85,7 @@ func NewPipeTransport(opts ...meepo_interface.NewTransportOption) (meepo_interfa
 
 	t := &PipeTransport{
 		addr:                   addr,
+		sess:                   sess,
 		state:                  matomic.NewValue[meepo_interface.TransportState](),
 		dialer:                 dialer,
 		onTransportStateChange: onTransportStateChange,

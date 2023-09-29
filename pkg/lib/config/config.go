@@ -18,22 +18,22 @@ func (c *Config) Init() {
 		c.Meepo.Trackers = append(c.Meepo.Trackers, c.Meepo.Tracker)
 	}
 
-	if c.Meepo.Mode != C.MODE_MAIN &&
-		c.Meepo.Mode != C.MODE_MINOR &&
-		c.Meepo.Mode != C.MODE_DEV {
-		c.Meepo.Mode = C.MODE_MINOR
+	if c.Meepo.Profile != C.PROFILE_MAIN &&
+		c.Meepo.Profile != C.PROFILE_MINOR &&
+		c.Meepo.Profile != C.PROFILE_DEV {
+		c.Meepo.Profile = C.PROFILE_MINOR
 	}
 
-	switch c.Meepo.Mode {
-	case C.MODE_MAIN:
+	switch c.Meepo.Profile {
+	case C.PROFILE_MAIN:
 		if c.Meepo.Acl == C.ACL_REPLACEME {
 			c.Meepo.Acl = C.ACL_BLOCK_ALL
 		}
-	case C.MODE_MINOR:
+	case C.PROFILE_MINOR:
 		if c.Meepo.Acl == C.ACL_REPLACEME {
 			c.Meepo.Acl = C.ACL_BLOCK_ALL
 		}
-	case C.MODE_DEV:
+	case C.PROFILE_DEV:
 		if c.Meepo.Acl == C.ACL_REPLACEME {
 			c.Meepo.Acl = C.ACL_ALLOW_ALL
 		}
@@ -49,9 +49,9 @@ func Get() *Config {
 func Default() *Config {
 	return &Config{
 		Meepo: Meepo{
-			Daemon: true,
-			Mode:   C.MODE_MINOR,
-			Pprof:  "",
+			Daemon:  true,
+			Profile: C.PROFILE_MINOR,
+			Pprof:   "",
 			Identity: Identity{
 				NoFile: false,
 				File:   "",

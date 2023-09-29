@@ -35,7 +35,7 @@ var (
 	KCP_DATA_SHARD   int    = 10
 	KCP_PARITY_SHARD int    = 10
 
-	MODE_MAIN  = "main"
-	MODE_MINOR = "minor"
-	MODE_DEV   = "dev"
+	PROFILE_MAIN  = "main"
+	PROFILE_MINOR = "minor"
+	PROFILE_DEV   = "dev"
 )

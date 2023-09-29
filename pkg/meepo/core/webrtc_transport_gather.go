@@ -12,6 +12,8 @@ import (
 type getTrackersFunc func(Addr) (tks []Tracker, found bool, err error)
 
 type gatherOption struct {
+	TransportSession string
+
 	EnableMux    bool
 	MuxLabel     string
 	MuxVer       int
@@ -64,9 +66,10 @@ func (mp *Meepo) genGatherFunc(target addr.Addr) transport_webrtc.GatherFunc {
 func (mp *Meepo) genGatherOnNewFunc(target addr.Addr, gtksFn getTrackersFunc, opt gatherOption) transport_webrtc.GatherFunc {
 	return func(sess transport_webrtc.Session, offer webrtc.SessionDescription) (answer webrtc.SessionDescription, err error) {
 		logger := mp.GetLogger().WithFields(logging.Fields{
-			"#method": "gatherOnNewFunc",
-			"target":  target.String(),
-			"session": sess.String(),
+			"#method":          "gatherOnNewFunc",
+			"target":           target.String(),
+			"session":          sess.String(),
+			"transportSession": opt.TransportSession,
 		})
 
 		req, err := mp.newNewTransportRequest(target, sess, offer, opt)

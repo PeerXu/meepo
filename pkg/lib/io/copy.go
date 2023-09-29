@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-const defualtCopyBufSize = 1024 * 1024
+const defualtCopyBufSize = 32 * 1024
 
 var copyBufPool *sync.Pool
 

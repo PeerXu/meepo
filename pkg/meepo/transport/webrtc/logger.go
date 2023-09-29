@@ -4,11 +4,12 @@ import "github.com/PeerXu/meepo/pkg/lib/logging"
 
 func (t *WebrtcTransport) GetLogger() logging.Logger {
 	return t.logger.WithFields(logging.Fields{
-		"#instance": "WebrtcTransport",
-		"addr":      t.Addr(),
-		"role":      t.role,
-		"enableMux": t.enableMux,
-		"enableKcp": t.enableKcp,
+		"#instance":        "WebrtcTransport",
+		"addr":             t.Addr(),
+		"transportSession": t.Session(),
+		"role":             t.role,
+		"enableMux":        t.enableMux,
+		"enableKcp":        t.enableKcp,
 	})
 }
 

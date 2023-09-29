@@ -7,7 +7,7 @@ func (el *eventListener) Handle(e meepo_eventloop_interface.Event) {
 	el.handle(c, el.tree, e)
 }
 
-func (el *eventListener) genCallback(key string, t Tree, e meepo_eventloop_interface.Event) func(id string, fn meepo_eventloop_interface.HandleFunc) bool {
+func (el *eventListener) genCallback(key string, t *Tree, e meepo_eventloop_interface.Event) func(id string, fn meepo_eventloop_interface.HandleFunc) bool {
 	return func(id string, fn meepo_eventloop_interface.HandleFunc) bool {
 		if !el.set.Has(id) {
 			t.UnregHandleFunc(key, id)
@@ -18,7 +18,7 @@ func (el *eventListener) genCallback(key string, t Tree, e meepo_eventloop_inter
 	}
 }
 
-func (el *eventListener) handle(c Chain, t Tree, e meepo_eventloop_interface.Event) {
+func (el *eventListener) handle(c Chain, t *Tree, e meepo_eventloop_interface.Event) {
 	head := c.Head()
 	rest := c.Rest()
 

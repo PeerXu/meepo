@@ -92,3 +92,15 @@ func (c *SimpleHttpCaller) JoinPath(p string) string {
 	u.Path = path.Join(u.Path, p)
 	return u.String()
 }
+
+func (c *SimpleHttpCaller) JoinWsPath(p string) string {
+	u, _ := url.Parse(c.baseURL)
+	if u.Scheme == "https" {
+		u.Scheme = "wss"
+	} else {
+		u.Scheme = "ws"
+	}
+	u.Path = path.Join(u.Path, p)
+	return u.String()
+
+}

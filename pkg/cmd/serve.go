@@ -69,18 +69,26 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	summonLogger := logger.WithField("#method", "meepoSummon")
 
 	aclFlag := fs.Lookup("acl")
-	switch cfg.Meepo.Mode {
-	case C.MODE_MAIN:
-	case C.MODE_MINOR:
+	switch cfg.Meepo.Profile {
+	case C.PROFILE_MAIN:
+	case C.PROFILE_MINOR:
 		if aclFlag.Changed || cfg.Meepo.Acl != C.ACL_BLOCK_ALL {
-			summonLogger.Warningf("failed to apply acl in minor mode, please use main mode to apply acl")
+			summonLogger.Warningf("failed to apply acl in minor profile, please use main profile to apply acl")
 			return nil
 		}
-	case C.MODE_DEV:
+	case C.PROFILE_DEV:
 		if aclFlag.Changed || cfg.Meepo.Acl != C.ACL_ALLOW_ALL {
-			summonLogger.Warningf("failed to apply acl in dev mode, force set to allow all request")
+			summonLogger.Warningf("failed to apply acl in dev profile, force set to allow all request")
 			cfg.Meepo.Acl = C.ACL_ALLOW_ALL
 		}
+	}
+
+	if trackerAddrFlag := fs.Lookup("tracker-addr"); trackerAddrFlag.Changed {
+		cfg.Meepo.Tracker.Addr = trackerAddrFlag.Value.String()
+	}
+
+	if trackerHostFlag := fs.Lookup("tracker-host"); trackerHostFlag.Changed {
+		cfg.Meepo.Tracker.Host = trackerHostFlag.Value.String()
 	}
 
 	if cfg.Meepo.Pprof != "" {
@@ -347,9 +355,13 @@ func init() {
 	fs := serveCmd.Flags()
 
 	fs.BoolVarP(&config.Get().Meepo.Daemon, "daemon", "d", true, "run as daemon")
+	fs.StringVarP(&config.Get().Meepo.Profile, "profile", "p", "minor", "run as profile [main, minor, dev]")
+	fs.StringVar(&config.Get().Meepo.Pprof, "pprof", "", "profile listen address")
+
 	fs.StringVar(&config.Get().Meepo.Acl, "acl", "", "access control list")
 
-	fs.StringVar(&config.Get().Meepo.Pprof, "pprof", "", "profile listen address")
+	fs.String("tracker-addr", C.TRACKER_ADDR, "tracker address")
+	fs.String("tracker-host", C.TRACKER_HOST, "tracker host")
 
 	webrtcCfg := &config.Get().Meepo.Webrtc
 	fs.Uint32Var(&webrtcCfg.RecvBufferSize, "sock-buf", C.WEBRTC_RECEIVE_BUFFER_SIZE, "receive buffer in bytes/per webrtc connection")
@@ -386,9 +398,13 @@ func init() {
 		commandKey string
 	}{
 		{"meepo.daemon", "daemon"},
+		{"meepo.profile", "profile"},
+		{"meepo.pprof", "pprof"},
+
 		{"meepo.acl", "acl"},
 
-		{"meepo.pprof", "pprof"},
+		{"tracker.addr", "tracker-addr"},
+		{"tracker.host", "tracker-host"},
 
 		{"meepo.identity.no_file", "no-identity-file"},
 		{"meepo.identity.file", "identity-file"},

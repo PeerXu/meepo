@@ -10,6 +10,7 @@ type Transporter interface {
 
 type Transport interface {
 	Addr() Addr
+	Session() string
 	Close(context.Context) error
 	WaitReady() error
 	State() TransportState

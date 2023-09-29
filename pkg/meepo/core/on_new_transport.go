@@ -80,6 +80,7 @@ func (mp *Meepo) onNewTransport(in *crypto_core.Packet) (answer webrtc.SessionDe
 	opts := []NewTransportOption{
 		well_known_option.WithLogger(mp.GetLogger()),
 		well_known_option.WithAddr(srcAddr),
+		transport_core.WithTransportSession(req.TransportSession),
 		transport_webrtc.WithOffer(req.Offer),
 		transport_webrtc.WithSession(req.Session),
 		transport_webrtc.WithNewPeerConnectionFunc(mp.newPeerConnection),

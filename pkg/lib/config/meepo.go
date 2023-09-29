@@ -2,7 +2,7 @@ package config
 
 type Meepo struct {
 	Daemon    bool        `yaml:"daemon"`
-	Mode      string      `yaml:"mode"`
+	Profile   string      `yaml:"profile"`
 	Pprof     string      `yaml:"pprof"`
 	Poof      Poof        `yaml:"poof"`
 	Identity  Identity    `yaml:"identity,omitempty"`

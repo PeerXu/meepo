@@ -2,11 +2,11 @@ package meepo_core
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
 	"github.com/PeerXu/meepo/pkg/lib/addr"
+	"github.com/PeerXu/meepo/pkg/lib/rand"
 	"github.com/PeerXu/meepo/pkg/lib/routing_table"
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
@@ -44,8 +44,9 @@ func ContainAddr(xs []Addr, t Addr) bool {
 
 func ViewTransport(t Transport) sdk_interface.TransportView {
 	return sdk_interface.TransportView{
-		Addr:  t.Addr().String(),
-		State: t.State().String(),
+		Addr:    t.Addr().String(),
+		Session: t.Session(),
+		State:   t.State().String(),
 	}
 }
 
@@ -105,7 +106,7 @@ func (mp *Meepo) newTeleportationID() string {
 	defer mp.teleportationsMtx.Unlock()
 
 	for {
-		id := mp.randHexString(8)
+		id := mp.randString(8)
 		_, found := mp.teleportations[id]
 		if !found {
 			return id
@@ -114,7 +115,7 @@ func (mp *Meepo) newTeleportationID() string {
 }
 
 func (mp *Meepo) newLabel(ns string) string {
-	return fmt.Sprintf("%s#%s", ns, mp.randHexString(16))
+	return fmt.Sprintf("%s#%s", ns, mp.randString(16))
 }
 
 func (mp *Meepo) newMuxLabel() string {
@@ -125,14 +126,8 @@ func (mp *Meepo) newKcpLabel() string {
 	return mp.newLabel("kcp")
 }
 
-func (mp *Meepo) randHexString(sz int) string {
-	if sz%2 != 0 {
-		panic("random hex string size must be even")
-	}
-
-	buf := make([]byte, sz/2)
-	mp.rand.Read(buf)
-	return hex.EncodeToString(buf)
+func (mp *Meepo) randString(sz int) string {
+	return rand.DefaultStringGenerator.Generate(sz)
 }
 
 func (mp *Meepo) viewToMap(x any) map[string]any {

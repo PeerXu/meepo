@@ -18,7 +18,7 @@ func NewValue[T any]() GenericValue[T] {
 }
 
 func (v *genericValue[T]) CompareAndSwap(old, new T) (swapped bool) {
-	return v.Value.CompareAndSwap(old, new)
+	return v.Value.CompareAndSwap(any(old), any(new))
 }
 
 func (v *genericValue[T]) Load() (val T) {

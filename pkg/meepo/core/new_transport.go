@@ -10,6 +10,7 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	"github.com/PeerXu/meepo/pkg/lib/option"
+	"github.com/PeerXu/meepo/pkg/lib/rand"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 	tracker_interface "github.com/PeerXu/meepo/pkg/meepo/tracker/interface"
@@ -24,11 +25,15 @@ func (mp *Meepo) NewTransport(ctx context.Context, target Addr, opts ...NewTrans
 	var err error
 	var t Transport
 
+	sess := rand.DefaultStringGenerator.Generate(8)
+	opts = append(opts, transport_core.WithTransportSession(sess))
+
 	o := option.ApplyWithDefault(mp.defaultNewTransportOptions(), opts...)
 	gtkFn, _ := GetGetTrackersFunc(o)
 	logger := mp.GetLogger().WithFields(logging.Fields{
-		"#method": "NewTransport",
-		"target":  target,
+		"#method":          "NewTransport",
+		"target":           target,
+		"transportSession": sess,
 	})
 
 	mp.transportsMtx.Lock()
@@ -140,6 +145,8 @@ func (mp *Meepo) newNewTransportRequest(target Addr, sess transport_webrtc.Sessi
 		Session: int32(sess),
 		Offer:   offer,
 
+		TransportSession: opt.TransportSession,
+
 		EnableMux:    opt.EnableMux,
 		MuxLabel:     opt.MuxLabel,
 		MuxVer:       opt.MuxVer,
@@ -162,8 +169,9 @@ func (mp *Meepo) newNewTransportRequest(target Addr, sess transport_webrtc.Sessi
 }
 
 func (mp *Meepo) setupGatherOption(o option.Option, gatherOpt *gatherOption) {
-	gatherOpt.EnableMux, _ = well_known_option.GetEnableMux(o)
+	gatherOpt.TransportSession, _ = transport_core.GetTransportSession(o)
 
+	gatherOpt.EnableMux, _ = well_known_option.GetEnableMux(o)
 	if gatherOpt.EnableMux {
 		gatherOpt.MuxLabel = mp.newMuxLabel()
 		gatherOpt.MuxVer, _ = well_known_option.GetMuxVer(o)

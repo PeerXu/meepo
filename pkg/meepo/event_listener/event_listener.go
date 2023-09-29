@@ -33,7 +33,7 @@ func NewEventListener(opts ...NewEventListenerOption) (EventListener, error) {
 }
 
 type eventListener struct {
-	tree  Tree
+	tree  *Tree
 	set   Set
 	queue chan meepo_eventloop_interface.Event
 }

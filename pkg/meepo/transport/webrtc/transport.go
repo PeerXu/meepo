@@ -32,6 +32,7 @@ type WebrtcTransport struct {
 	transport_core.ChannelHooks
 
 	addr meepo_interface.Addr
+	sess string
 
 	newPeerConnectionFunc NewPeerConnectionFunc
 	gatherFunc            GatherFunc
@@ -123,12 +124,12 @@ func NewWebrtcSourceTransport(opts ...meepo_interface.NewTransportOption) (meepo
 		return nil, err
 	}
 
-	sess := t.newSession()
-	t.registerPeerConnection(sess, pc) // nolint:errcheck
+	pcSess := t.newSession()
+	t.registerPeerConnection(pcSess, pc) // nolint:errcheck
 
-	pc.OnConnectionStateChange(t.onSourceConnectionStateChange(sess))
-	pc.OnDataChannel(t.onDataChannel(sess))
-	go t.sourceGather(sess, gatherOnNewFunc)
+	pc.OnConnectionStateChange(t.onSourceConnectionStateChange(pcSess))
+	pc.OnDataChannel(t.onDataChannel(pcSess))
+	go t.sourceGather(pcSess, gatherOnNewFunc)
 
 	if h := t.AfterNewTransportHook; h != nil {
 		h(t)
@@ -188,6 +189,11 @@ func newCommonWebrtcTransport(o option.Option) (*WebrtcTransport, error) {
 	}
 
 	addr, err := well_known_option.GetAddr(o)
+	if err != nil {
+		return nil, err
+	}
+
+	sess, err := transport_core.GetTransportSession(o)
 	if err != nil {
 		return nil, err
 	}
@@ -254,6 +260,7 @@ func newCommonWebrtcTransport(o option.Option) (*WebrtcTransport, error) {
 
 	t := &WebrtcTransport{
 		addr:                   addr,
+		sess:                   sess,
 		role:                   role,
 		newPeerConnectionFunc:  newPeerConnectionFunc,
 		gatherFunc:             gatherFunc,
@@ -319,6 +326,9 @@ func newCommonWebrtcTransport(o option.Option) (*WebrtcTransport, error) {
 
 	t.closed.Store(false)
 	t.connectingOnce.Store(false)
+	t.prevState.Store(meepo_interface.TRANSPORT_STATE_UNKNOWN)
+	defer t.triggerStateChange()
+
 	go t.tryCloseFailedTransport()
 
 	return t, nil

@@ -7,21 +7,17 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/PeerXu/meepo/pkg/lib/logging"
-	"github.com/PeerXu/meepo/pkg/lib/rand"
 	rpc_interface "github.com/PeerXu/meepo/pkg/lib/rpc/interface"
 )
 
 func (c *SimpleHttpCaller) CallStream(ctx context.Context, method string, opts ...rpc_interface.CallStreamOption) (rpc_interface.Stream, error) {
-	session := rand.DefaultStringGenerator.Generate(8)
-
 	logger := c.GetLogger().WithFields(logging.Fields{
 		"#method": "CallStream",
 		"method":  method,
-		"session": session,
 	})
 
-	urlStr := c.JoinPath("/v1/actions/simpleDoStream")
-	urlStr = fmt.Sprintf("%s?method=%s&session=%s", urlStr, method, session)
+	urlStr := c.JoinWsPath("/v1/actions/simpleDoStream")
+	urlStr = fmt.Sprintf("%s?method=%s", urlStr, method)
 
 	conn, _, err := websocket.DefaultDialer.Dial(urlStr, nil)
 	if err != nil {

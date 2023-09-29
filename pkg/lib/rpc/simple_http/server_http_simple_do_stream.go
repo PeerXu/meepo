@@ -1,8 +1,6 @@
 package rpc_simple_http
 
 import (
-	"context"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 
@@ -12,12 +10,10 @@ import (
 
 func (s *SimpleHttpServer) HttpSimpleDoStream(c *gin.Context) {
 	method := c.Query("method")
-	session := c.Query("session")
 
 	logger := s.GetLogger().WithFields(logging.Fields{
 		"#method": "HttpSimpleDoStream",
 		"method":  method,
-		"session": session,
 	})
 
 	conn, err := s.upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -35,8 +31,7 @@ func (s *SimpleHttpServer) HttpSimpleDoStream(c *gin.Context) {
 
 	logger.Debugf("simple do stream")
 
-	ctx := context.WithValue(s.context(), CONTEXT_SESSION, session)
-	if err = s.handler.DoStream(ctx, method, stm); err != nil {
+	if err = s.handler.DoStream(s.context(), method, stm); err != nil {
 		logger.WithError(err).Errorf("failed to do stream")
 		return
 	}

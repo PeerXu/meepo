@@ -89,7 +89,7 @@ func (mp *Meepo) poofOnce() {
 
 func (mp *Meepo) newNaviRequest(tracker Addr, candidate Addr) *NaviRequest {
 	return &NaviRequest{
-		Session:   mp.randHexString(8),
+		Session:   mp.randString(8),
 		Tracker:   tracker,
 		Candidate: candidate,
 		CreatedAt: time.Now(),

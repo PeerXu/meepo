@@ -7,6 +7,7 @@ const (
 	METHOD_WHOAMI                  = "whoami"
 	METHOD_PING                    = "ping"
 	METHOD_DIAGNOSTIC              = "diagnostic"
+	METHOD_WATCH_EVENTS            = "watchEvents"
 	METHOD_NEW_TELEPORTATION       = "newTeleportation"
 	METHOD_CLOSE_TELEPORTATION     = "closeTeleportation"
 	METHOD_GET_TELEPORTATION       = "getTeleportation"

@@ -6,6 +6,7 @@ func (t *PipeTransport) GetLogger() logging.Logger {
 	return t.logger.WithFields(logging.Fields{
 		"#instance": "PipeTransport",
 		"addr":      t.Addr(),
+		"session":   t.Session(),
 	})
 }
 

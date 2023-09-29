@@ -3,6 +3,7 @@ package meepo_interface
 type TransportState string
 
 const (
+	TRANSPORT_STATE_UNKNOWN      TransportState = "unknown"
 	TRANSPORT_STATE_NEW          TransportState = "new"
 	TRANSPORT_STATE_CONNECTING   TransportState = "connecting"
 	TRANSPORT_STATE_CONNECTED    TransportState = "connected"

@@ -17,6 +17,7 @@ type SDK interface {
 	CloseTransport(target addr.Addr) error
 	GetTransport(target addr.Addr) (TransportView, error)
 	ListTransports() ([]TransportView, error)
+	WatchTransports() (<-chan TransportView, <-chan error, func(), error)
 
 	CloseChannel(target addr.Addr, id uint16) error
 	GetChannel(target addr.Addr, id uint16) (ChannelView, error)
@@ -27,5 +28,5 @@ type SDK interface {
 	CloseTeleportation(id string) error
 	GetTeleportation(id string) (TeleportationView, error)
 	ListTeleportations() ([]TeleportationView, error)
-	Teleport(target addr.Addr, sourceAddr, sinkAddr net.Addr, mode string, opts ...TeleportOption) (TeleportationView, error)
+	Teleport(target addr.Addr, sourceAddr, sinkAddr net.Addr, opts ...TeleportOption) (TeleportationView, error)
 }

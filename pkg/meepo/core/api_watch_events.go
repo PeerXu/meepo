@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"github.com/PeerXu/meepo/pkg/lib/logging"
-	"github.com/PeerXu/meepo/pkg/lib/rand"
 	rpc_interface "github.com/PeerXu/meepo/pkg/lib/rpc/interface"
 	msync "github.com/PeerXu/meepo/pkg/lib/sync"
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
@@ -21,16 +20,20 @@ const (
 
 func (mp *Meepo) hdrStreamAPIWatchEvents(ctx context.Context, stm rpc_interface.Stream) error {
 	logger := mp.GetLogger().WithFields(logging.Fields{
-		"#method":       "hdrStreamAPIWatchEvents",
-		"streamSession": rand.DefaultStringGenerator.Generate(8),
+		"#method": "hdrStreamAPIWatchEvents",
 	})
 
 	evts := make(chan meepo_interface.Event)
 	defer close(evts)
 
-	go mp.hdrStreamAPIWatchEvents_eventsLoop(ctx, logger, evts, stm)
-	if err := mp.hdrStreamAPIWatchEvents_commandsLoop(ctx, logger, evts, stm); err != nil {
-		return err
+	barrierEventsLoop := make(chan struct{})
+	barrierCommandsLoop := make(chan struct{})
+	go mp.hdrStreamAPIWatchEvents_eventsLoop(ctx, logger, evts, stm, barrierEventsLoop)
+	go mp.hdrStreamAPIWatchEvents_commandsLoop(ctx, logger, evts, stm, barrierCommandsLoop)
+
+	select {
+	case <-barrierEventsLoop:
+	case <-barrierCommandsLoop:
 	}
 
 	logger.Infof("watch events")
@@ -38,11 +41,12 @@ func (mp *Meepo) hdrStreamAPIWatchEvents(ctx context.Context, stm rpc_interface.
 	return nil
 }
 
-func (mp *Meepo) hdrStreamAPIWatchEvents_eventsLoop(ctx context.Context, logger logging.Logger, evts chan meepo_interface.Event, stm rpc_interface.Stream) {
+func (mp *Meepo) hdrStreamAPIWatchEvents_eventsLoop(ctx context.Context, logger logging.Logger, evts chan meepo_interface.Event, stm rpc_interface.Stream, barrier chan struct{}) {
+	defer close(barrier)
+
 	logger = logger.WithFields(logging.Fields{
 		"#method": "hdrStreamAPIWatchEvents_eventsLoop",
 	})
-
 	defer logger.Debugf("events loop done")
 
 	logger.Debugf("events loop")
@@ -67,13 +71,14 @@ func (mp *Meepo) hdrStreamAPIWatchEvents_eventsLoop(ctx context.Context, logger 
 	}
 }
 
-func (mp *Meepo) hdrStreamAPIWatchEvents_commandsLoop(ctx context.Context, logger logging.Logger, evts chan meepo_interface.Event, stm rpc_interface.Stream) error {
+func (mp *Meepo) hdrStreamAPIWatchEvents_commandsLoop(ctx context.Context, logger logging.Logger, evts chan meepo_interface.Event, stm rpc_interface.Stream, barrier chan struct{}) {
+	defer close(barrier)
+
 	sessMap := msync.NewMap[string, context.CancelFunc]()
 
 	logger = logger.WithFields(logging.Fields{
 		"#method": "hdrStreamAPIWatchEvents_commandsLoop",
 	})
-
 	defer logger.Debugf("commands loop done")
 
 	logger.Debugf("commands loop")
@@ -81,17 +86,17 @@ func (mp *Meepo) hdrStreamAPIWatchEvents_commandsLoop(ctx context.Context, logge
 		msg, err := stm.RecvMessage()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				return nil
+				return
 			}
 
 			logger.WithError(err).Errorf("failed to receive command message")
-			return err
+			return
 		}
 
 		var c sdk_interface.WatchEventsStream_Command
 		if err = msg.Unmarshal(&c); err != nil {
 			logger.WithError(err).Errorf("failed to unmarshal command message")
-			return err
+			return
 		}
 		logger = logger.WithField("command", c.Command)
 
@@ -100,7 +105,7 @@ func (mp *Meepo) hdrStreamAPIWatchEvents_commandsLoop(ctx context.Context, logge
 			var c sdk_interface.WatchEventsStream_WatchCommand
 			if err = msg.Unmarshal(&c); err != nil {
 				logger.WithError(err).Errorf("failed to unmarshal watch command")
-				return err
+				return
 			}
 
 			logger := logger.WithFields(logging.Fields{
@@ -118,7 +123,7 @@ func (mp *Meepo) hdrStreamAPIWatchEvents_commandsLoop(ctx context.Context, logge
 			defer cancel()
 			if _, err = mp.WatchEvents(nctx, c.Policies, meepo_interface.WithSession(c.Session), meepo_interface.WithEventChannel(evts)); err != nil {
 				logger.WithError(err).Errorf("failed to watch events")
-				return err
+				return
 			}
 
 			sessMap.Store(c.Session, cancel)
@@ -128,7 +133,7 @@ func (mp *Meepo) hdrStreamAPIWatchEvents_commandsLoop(ctx context.Context, logge
 			var c sdk_interface.WatchEventsStream_UnwatchCommand
 			if err = msg.Unmarshal(&c); err != nil {
 				logger.WithError(err).Errorf("failed to unmarshal unwatch command")
-				return err
+				return
 			}
 
 			logger := logger.WithFields(logging.Fields{

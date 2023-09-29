@@ -23,6 +23,7 @@ const (
 	OPTION_READY_TIMEOUT               = "readyTimeout"
 	OPTION_IS_SOURCE                   = "isSource"
 	OPTION_IS_SINK                     = "isSink"
+	OPTION_TRANSPORT_SESSION           = "transportSession"
 )
 
 type OnTransportReadyFunc = func(Transport)
@@ -57,8 +58,9 @@ var (
 	WithBeforeCloseChannelHook, GetBeforeCloseChannelHook = option.New[BeforeCloseChannelHook](OPTION_BEFORE_CLOSE_CHANNEL_HOOK)
 	WithAfterCloseChannelHook, GetAfterCloseChannelHook   = option.New[AfterCloseChannelHook](OPTION_AFTER_CLOSE_CHANNEL_HOOK)
 
-	WithTransport, GetTransport       = option.New[Transport](OPTION_TRANSPORT)
-	WithReadyTimeout, GetReadyTimeout = option.New[time.Duration](OPTION_READY_TIMEOUT)
+	WithTransport, GetTransport               = option.New[Transport](OPTION_TRANSPORT)
+	WithReadyTimeout, GetReadyTimeout         = option.New[time.Duration](OPTION_READY_TIMEOUT)
+	WithTransportSession, GetTransportSession = option.New[string](OPTION_TRANSPORT_SESSION)
 )
 
 type HookOption = option.ApplyOption

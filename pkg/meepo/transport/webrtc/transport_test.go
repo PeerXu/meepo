@@ -16,9 +16,11 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	marshaler_json "github.com/PeerXu/meepo/pkg/lib/marshaler/json"
+	mrand "github.com/PeerXu/meepo/pkg/lib/rand"
 	"github.com/PeerXu/meepo/pkg/lib/stun"
 	meepo_testing "github.com/PeerXu/meepo/pkg/lib/testing"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
+	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
 
 func TestRawTransport(t *testing.T) {
@@ -62,6 +64,8 @@ func TestRawTransport(t *testing.T) {
 		return webrtc.SessionDescription{}, fmt.Errorf("gather fail")
 	}
 
+	transportSession := mrand.DefaultStringGenerator.Generate(8)
+
 	addrSrcBuf, _, _ := ed25519.GenerateKey(nil)
 	addrSrc := addr.Must(addr.FromBytesWithoutMagicCode(addrSrcBuf))
 	addrSinkBuf, _, _ := ed25519.GenerateKey(nil)
@@ -74,6 +78,7 @@ func TestRawTransport(t *testing.T) {
 	tSrc, err := NewWebrtcSourceTransport(
 		well_known_option.WithLogger(logger),
 		well_known_option.WithAddr(addrSrc),
+		transport_core.WithTransportSession(transportSession),
 		WithGatherOnNewFunc(gather),
 		WithGatherFunc(gatherFail),
 		WithNewPeerConnectionFunc(npcFn),
@@ -90,6 +95,7 @@ func TestRawTransport(t *testing.T) {
 	tSink, err := NewWebrtcSinkTransport(
 		well_known_option.WithLogger(logger),
 		well_known_option.WithAddr(addrSink),
+		transport_core.WithTransportSession(transportSession),
 		WithOffer(*offer),
 		WithSession(int32(sess)),
 		WithGatherDoneOnNewFunc(gatherDone),
@@ -183,6 +189,8 @@ func TestMuxTransport(t *testing.T) {
 		return webrtc.SessionDescription{}, fmt.Errorf("gather fail")
 	}
 
+	transportSession := mrand.DefaultStringGenerator.Generate(8)
+
 	muxLabel := fmt.Sprintf("mux#%016x", rand.Int63())
 	addrSrcBuf, _, _ := ed25519.GenerateKey(nil)
 	addrSrc := addr.Must(addr.FromBytesWithoutMagicCode(addrSrcBuf))
@@ -196,6 +204,7 @@ func TestMuxTransport(t *testing.T) {
 	tSrc, err := NewWebrtcSourceTransport(
 		well_known_option.WithLogger(logger),
 		well_known_option.WithAddr(addrSrc),
+		transport_core.WithTransportSession(transportSession),
 		WithGatherOnNewFunc(gather),
 		WithGatherFunc(gatherFail),
 		WithNewPeerConnectionFunc(npcFn),
@@ -214,6 +223,7 @@ func TestMuxTransport(t *testing.T) {
 	tSink, err := NewWebrtcSinkTransport(
 		well_known_option.WithLogger(logger),
 		well_known_option.WithAddr(addrSink),
+		transport_core.WithTransportSession(transportSession),
 		WithOffer(*offer),
 		WithSession(int32(sess)),
 		WithGatherDoneOnNewFunc(gatherDone),

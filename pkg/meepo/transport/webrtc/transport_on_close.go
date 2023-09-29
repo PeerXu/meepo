@@ -31,10 +31,9 @@ func (t *WebrtcTransport) onClose(ctx context.Context, _req any) (res any, err e
 
 	logger := t.GetLogger().WithField("#method", "onClose")
 
-	if t.isClosed() {
+	if !t.tryClose() {
 		return
 	}
-	t.closed.Store(true)
 
 	if h := t.BeforeCloseTransportHook; h != nil {
 		if er := h(t); er != nil {

@@ -10,7 +10,7 @@ import (
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
 
-func (s *RPCSDK) Teleport(target addr.Addr, sourceAddr, sinkAddr net.Addr, mode string, opts ...sdk_interface.TeleportOption) (sdk_interface.TeleportationView, error) {
+func (s *RPCSDK) Teleport(target addr.Addr, sourceAddr, sinkAddr net.Addr, opts ...sdk_interface.TeleportOption) (sdk_interface.TeleportationView, error) {
 	o := option.Apply(opts...)
 
 	var req sdk_interface.TeleportRequest
@@ -39,7 +39,7 @@ func (s *RPCSDK) Teleport(target addr.Addr, sourceAddr, sinkAddr net.Addr, mode 
 		}
 	}
 
-	req.Mode = mode
+	req.Mode, _ = well_known_option.GetMode(o)
 	req.SourceNetwork = sourceAddr.Network()
 	req.SourceAddress = sourceAddr.String()
 	req.SinkNetwork = sinkAddr.Network()

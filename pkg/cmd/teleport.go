@@ -42,7 +42,7 @@ func meepoTeleport(cmd *cobra.Command, args []string) error {
 	sinkAddress := args[1]
 	sourceNetwork := teleportOptions.SourceNetwork
 	sourceAddress := teleportOptions.SourceAddress
-	mode := newTeleportationOptions.Mode
+	mode := teleportOptions.Mode
 
 	sdk, err := simple_sdk.GetSDK()
 	if err != nil {
@@ -55,6 +55,7 @@ func meepoTeleport(cmd *cobra.Command, args []string) error {
 	}
 
 	opts := []sdk_interface.TeleportOption{
+		well_known_option.WithMode(mode),
 		well_known_option.WithManual(teleportOptions.Manual),
 	}
 	if teleportOptions.Manual {
@@ -85,7 +86,7 @@ func meepoTeleport(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	tpv, err := sdk.Teleport(target, dialer.NewAddr(sourceNetwork, sourceAddress), dialer.NewAddr("tcp", sinkAddress), mode, opts...)
+	tpv, err := sdk.Teleport(target, dialer.NewAddr(sourceNetwork, sourceAddress), dialer.NewAddr("tcp", sinkAddress), opts...)
 	if err != nil {
 		return err
 	}
@@ -98,7 +99,7 @@ func meepoTeleport(cmd *cobra.Command, args []string) error {
 func init() {
 	fs := teleportCmd.Flags()
 
-	fs.BoolVarP(&teleportOptions.Manual, "manual", "m", false, "specify new transport arguments manually")
+	fs.BoolVar(&teleportOptions.Manual, "manual", false, "specify new transport arguments manually")
 
 	smuxCfg := &config.Get().Meepo.Smux
 	fs.BoolVar(&smuxCfg.Disable, "disableMux", false, "disable Mux mode")
@@ -120,7 +121,7 @@ func init() {
 
 	fs.StringVar(&teleportOptions.SourceNetwork, "source-network", "tcp", "Source network")
 	fs.StringVarP(&teleportOptions.SourceAddress, "listen", "l", "127.0.0.1:0", "Listen address")
-	fs.StringVar(&teleportOptions.Mode, "mode", "mux", "Teleportation mode [raw, mux, kcp]")
+	fs.StringVarP(&teleportOptions.Mode, "mode", "m", "mux", "Teleportation mode [raw, mux, kcp]")
 
 	bindFlags(fs, []BindFlagsStruct{
 		{"meepo.smux.disable", "disableMux"},
