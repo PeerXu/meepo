@@ -5,11 +5,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	C "github.com/PeerXu/meepo/pkg/lib/constant"
-	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
 	simple_sdk "github.com/PeerXu/meepo/pkg/lib/cmd/contrib/simple/sdk"
 	"github.com/PeerXu/meepo/pkg/lib/config"
+	C "github.com/PeerXu/meepo/pkg/lib/constant"
+	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
 
@@ -89,39 +89,39 @@ func init() {
 	fs.BoolVarP(&newTransportOptions.Manual, "manual", "m", false, "specify arguments manually")
 
 	smuxCfg := &config.Get().Meepo.Smux
-	fs.BoolVar(&smuxCfg.Disable, "disableMux", false, "disable Mux mode")
-	fs.IntVar(&smuxCfg.Version, "muxVer", C.SMUX_VERSION, "specify smux version [1, 2]")
-	fs.IntVar(&smuxCfg.BufferSize, "muxBuf", C.SMUX_BUFFER_SIZE, "the overall de-mux buffer in bytes")
-	fs.IntVar(&smuxCfg.StreamBufferSize, "muxStreamBuf", C.SMUX_STREAM_BUFFER_SIZE, "per stream receive buffer in bytes, smux v2+")
-	fs.BoolVar(&smuxCfg.Nocomp, "muxNocomp", C.SMUX_NOCOMP, "disable compression")
+	fs.BoolVar(&smuxCfg.Disable, "disable-mux", false, "disable Mux mode")
+	fs.IntVar(&smuxCfg.Version, "mux-ver", C.SMUX_VERSION, "specify smux version [1, 2]")
+	fs.IntVar(&smuxCfg.BufferSize, "mux-buf", C.SMUX_BUFFER_SIZE, "the overall de-mux buffer in bytes")
+	fs.IntVar(&smuxCfg.StreamBufferSize, "mux-stream-buf", C.SMUX_STREAM_BUFFER_SIZE, "per stream receive buffer in bytes, smux v2+")
+	fs.BoolVar(&smuxCfg.Nocomp, "mux-nocomp", C.SMUX_NOCOMP, "disable compression")
 
 	kcpCfg := &config.Get().Meepo.Kcp
-	fs.BoolVar(&kcpCfg.Disable, "disableKcp", false, "disable Kcp mode")
-	fs.StringVar(&kcpCfg.Preset, "kcpPreset", C.KCP_PRESET, "presets: fast3, fast2, fast, normal")
-	fs.StringVar(&kcpCfg.Crypt, "kcpCrypt", C.KCP_CRYPT, "crypt algorithms [aes, aes-128, aes-192, salsa20, blowfish, twofish, cast5, 3des, tea, xtea, xor, sm4, none]")
-	fs.StringVar(&kcpCfg.Key, "kcpKey", C.KCP_KEY, "pre-shared secret between client and server")
-	fs.IntVar(&kcpCfg.Mtu, "kcpMtu", C.KCP_MTU, "set maximum transmission unit for packets")
-	fs.IntVar(&kcpCfg.Sndwnd, "kcpSndwnd", C.KCP_SNDWND, "set send window size(num of packets)")
-	fs.IntVar(&kcpCfg.Rcvwnd, "kcpRcvwnd", C.KCP_RCVWND, "set receive window size(num of packets)")
-	fs.IntVar(&kcpCfg.DataShard, "kcpDataShard", C.KCP_DATA_SHARD, "set reed-solomon erasure coding - datashard")
-	fs.IntVar(&kcpCfg.ParityShard, "kcpParityShard", C.KCP_PARITY_SHARD, "set reed-solomon erasure coding - parityshard")
+	fs.BoolVar(&kcpCfg.Disable, "disable-kcp", false, "disable Kcp mode")
+	fs.StringVar(&kcpCfg.Preset, "kcp-preset", C.KCP_PRESET, "presets: fast3, fast2, fast, normal")
+	fs.StringVar(&kcpCfg.Crypt, "kcp-crypt", C.KCP_CRYPT, "crypt algorithms [aes, aes-128, aes-192, salsa20, blowfish, twofish, cast5, 3des, tea, xtea, xor, sm4, none]")
+	fs.StringVar(&kcpCfg.Key, "kcp-key", C.KCP_KEY, "pre-shared secret between client and server")
+	fs.IntVar(&kcpCfg.Mtu, "kcp-mtu", C.KCP_MTU, "set maximum transmission unit for packets")
+	fs.IntVar(&kcpCfg.Sndwnd, "kcp-sndwnd", C.KCP_SNDWND, "set send window size(num of packets)")
+	fs.IntVar(&kcpCfg.Rcvwnd, "kcp-rcvwnd", C.KCP_RCVWND, "set receive window size(num of packets)")
+	fs.IntVar(&kcpCfg.DataShard, "kcp-data-shard", C.KCP_DATA_SHARD, "set reed-solomon erasure coding - datashard")
+	fs.IntVar(&kcpCfg.ParityShard, "kcp-parity-shard", C.KCP_PARITY_SHARD, "set reed-solomon erasure coding - parityshard")
 
 	bindFlags(fs, []BindFlagsStruct{
-		{"meepo.smux.disable", "disableMux"},
-		{"meepo.smux.version", "muxVer"},
-		{"meepo.smux.bufferSize", "muxBuf"},
-		{"meepo.smux.streamBufferSize", "muxStreamBuf"},
-		{"meepo.smux.keepalive", "muxKeepalive"},
-		{"meepo.smux.nocomp", "mucNocomp"},
-		{"meepo.kcp.disable", "disableKcp"},
-		{"meepo.kcp.preset", "kcpPreset"},
-		{"meepo.kcp.crypt", "kcpCrypt"},
-		{"meepo.kcp.key", "kcpKey"},
-		{"meepo.kcp.mtu", "kcpMtu"},
-		{"meepo.kcp.sndwnd", "kcpSndwnd"},
-		{"meepo.kcp.rcvwnd", "kcpRcvwnd"},
-		{"meepo.kcp.dataShard", "kcpDataShard"},
-		{"meepo.kcp.parityShard", "kcpParityShard"},
+		{"meepo.smux.disable", "disable-mux"},
+		{"meepo.smux.version", "mux-ver"},
+		{"meepo.smux.bufferSize", "mux-buf"},
+		{"meepo.smux.streamBufferSize", "mux-stream-buf"},
+		{"meepo.smux.keepalive", "mux-keepalive"},
+		{"meepo.smux.nocomp", "muc-nocomp"},
+		{"meepo.kcp.disable", "disable-kcp"},
+		{"meepo.kcp.preset", "kcp-preset"},
+		{"meepo.kcp.crypt", "kcp-crypt"},
+		{"meepo.kcp.key", "kcp-key"},
+		{"meepo.kcp.mtu", "kcp-mtu"},
+		{"meepo.kcp.sndwnd", "kcp-sndwnd"},
+		{"meepo.kcp.rcvwnd", "kcp-rcvwnd"},
+		{"meepo.kcp.dataShard", "kcp-data-shard"},
+		{"meepo.kcp.parityShard", "kcp-parity-shard"},
 	})
 
 	transportCmd.AddCommand(newTransportCmd)

@@ -332,7 +332,12 @@ func (t *WebrtcTransport) onKcpDataChannelOpen(sess Session, dc *webrtc.DataChan
 	if !t.muxNocomp {
 		conn = NewCompStream(conn)
 	}
-	t.kcpSess, _ = newSessFn(conn, t.getSmuxConfig())
+	t.kcpSess, err = newSessFn(conn, t.getSmuxConfig())
+	if err != nil {
+		logger.WithError(err).Debugf("failed to upgrade smux conn")
+		dc.Close()
+		return
+	}
 
 	go t.kcpSessionAcceptLoop()
 	t.channelDone(1)

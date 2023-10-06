@@ -356,6 +356,7 @@ func init() {
 
 	fs.BoolVarP(&config.Get().Meepo.Daemon, "daemon", "d", true, "run as daemon")
 	fs.StringVarP(&config.Get().Meepo.Profile, "profile", "p", "minor", "run as profile [main, minor, dev]")
+	fs.StringVar(&config.Get().Meepo.Socks5.Host, "socks5-listen", C.SOCKS5_HOST, "listen SOCKS5 on address")
 	fs.StringVar(&config.Get().Meepo.Pprof, "pprof", "", "profile listen address")
 
 	fs.StringVar(&config.Get().Meepo.Acl, "acl", "", "access control list")
@@ -399,6 +400,7 @@ func init() {
 	}{
 		{"meepo.daemon", "daemon"},
 		{"meepo.profile", "profile"},
+		{"meepo.socks5.host", "socks5-listen"},
 		{"meepo.pprof", "pprof"},
 
 		{"meepo.acl", "acl"},

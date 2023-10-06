@@ -58,14 +58,18 @@ func (c *WebrtcSinkChannel) Close(context.Context) (err error) {
 
 	switch c.mode {
 	case CHANNEL_MODE_RAW:
-		if err = c.dc.Close(); err != nil {
-			logger.WithError(err).Debugf("failed to close webrtc.DataChannel")
-			return err
+		if dc := c.dc; dc != nil {
+			if err = dc.Close(); err != nil {
+				logger.WithError(err).Debugf("failed to close webrtc.DataChannel")
+				return err
+			}
 		}
 	case CHANNEL_MODE_MUX, CHANNEL_MODE_KCP:
-		if err = c.upstream.Close(); err != nil {
-			logger.WithError(err).Debugf("failed to close ReadWriteCloser")
-			return err
+		if upstream := c.upstream; upstream != nil {
+			if err = upstream.Close(); err != nil {
+				logger.WithError(err).Debugf("failed to close ReadWriteCloser")
+				return err
+			}
 		}
 	}
 
