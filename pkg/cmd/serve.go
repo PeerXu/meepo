@@ -209,6 +209,12 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 			well_known_option.WithMuxStreamBuf(smuxCfg.StreamBufferSize),
 			well_known_option.WithMuxNocomp(smuxCfg.Nocomp),
 		)
+		summonLogger.WithFields(logging.Fields{
+			"smux.version":          smuxCfg.Version,
+			"smux.bufferSize":       smuxCfg.BufferSize,
+			"smux.streamBufferSize": smuxCfg.StreamBufferSize,
+			"smux.nocomp":           smuxCfg.Nocomp,
+		}).Tracef("enable mux")
 	}
 	if !kcpCfg.Disable {
 		nmOpts = append(nmOpts,
@@ -221,6 +227,16 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 			well_known_option.WithKcpDataShard(kcpCfg.DataShard),
 			well_known_option.WithKcpParityShard(kcpCfg.ParityShard),
 		)
+		summonLogger.WithFields(logging.Fields{
+			"kcp.preset":      kcpCfg.Preset,
+			"kcp.crypt":       kcpCfg.Crypt,
+			"kcp.key":         "******",
+			"kcp.mtu":         kcpCfg.Mtu,
+			"kcp.sndwnd":      kcpCfg.Sndwnd,
+			"kcp.rcvwnd":      kcpCfg.Rcvwnd,
+			"kcp.dataShard":   kcpCfg.DataShard,
+			"kcp.parityShard": kcpCfg.ParityShard,
+		}).Tracef("enable kcp")
 	}
 	if !poofCfg.Disable {
 		nmOpts = append(nmOpts,
