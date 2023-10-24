@@ -5,6 +5,9 @@ import (
 
 	"github.com/PeerXu/meepo/pkg/lib/dialer"
 	"github.com/PeerXu/meepo/pkg/lib/listenerer"
+	listenerer_http "github.com/PeerXu/meepo/pkg/lib/listenerer/http"
+	listenerer_net "github.com/PeerXu/meepo/pkg/lib/listenerer/net"
+	listenerer_socks5 "github.com/PeerXu/meepo/pkg/lib/listenerer/socks5"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/option"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
@@ -47,7 +50,12 @@ func (mp *Meepo) NewTeleportation(ctx context.Context, target Addr, sourceNetwor
 		return nil, err
 	}
 
-	if sourceNetwork != "socks5" {
+	switch sourceNetwork {
+	case listenerer_socks5.NAME:
+	case listenerer_http.NAME:
+	case listenerer_net.NAME:
+		fallthrough
+	default:
 		err = t.Call(ctx, METHOD_PERMIT, &PermitRequest{
 			Network: sinkNetwork,
 			Address: sinkAddress,

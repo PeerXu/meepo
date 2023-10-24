@@ -25,6 +25,7 @@ require (
 	github.com/things-go/go-socks5 v0.0.3
 	github.com/xtaci/kcp-go/v5 v5.6.2
 	github.com/xtaci/smux v1.5.24
+	go.uber.org/goleak v1.2.1
 	golang.org/x/crypto v0.12.0
 	golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2
 	golang.org/x/net v0.14.0

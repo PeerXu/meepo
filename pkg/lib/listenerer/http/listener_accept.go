@@ -1,4 +1,4 @@
-package listenerer_socks5
+package listenerer_http
 
 import (
 	listenerer_core "github.com/PeerXu/meepo/pkg/lib/listenerer/core"
@@ -6,7 +6,7 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
-func (l *Socks5Listener) Accept() (listenerer_interface.Conn, error) {
+func (l *HttpListener) Accept() (listenerer_interface.Conn, error) {
 	logger := l.GetLogger().WithFields(logging.Fields{
 		"#method": "Accept",
 	})
@@ -14,7 +14,7 @@ func (l *Socks5Listener) Accept() (listenerer_interface.Conn, error) {
 	conn, ok := <-l.conns
 	if !ok {
 		err := listenerer_core.ErrListenerClosed
-		logger.WithError(err).Debugf("accept from closed network connection")
+		logger.WithError(err).Debugf("accept from closed listener")
 		return nil, err
 	}
 

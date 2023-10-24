@@ -17,3 +17,9 @@ func TestParseResponseSession(t *testing.T) {
 		assert.Equal(t, c.expect, parseResponseSession(c.s), "i=%v, s=%v", i, c.s)
 	}
 }
+
+func TestFailed(t *testing.T) {
+	go func() {
+		select {}
+	}()
+}

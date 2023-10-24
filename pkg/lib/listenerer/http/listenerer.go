@@ -1,10 +1,9 @@
-package listenerer_socks5
+package listenerer_http
 
 import (
 	"context"
 	"net"
-
-	"github.com/things-go/go-socks5"
+	"net/http"
 
 	"github.com/PeerXu/meepo/pkg/lib/dialer"
 	listenerer_core "github.com/PeerXu/meepo/pkg/lib/listenerer/core"
@@ -13,9 +12,9 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 )
 
-type Socks5Listenerer struct{}
+type HttpListenerer struct{}
 
-func (l *Socks5Listenerer) Listen(ctx context.Context, network, address string, opts ...listenerer_interface.ListenOption) (listenerer_interface.Listener, error) {
+func (l *HttpListenerer) Listen(ctx context.Context, network, address string, opts ...listenerer_interface.ListenOption) (listenerer_interface.Listener, error) {
 	o := option.Apply(opts...)
 
 	logger, err := well_known_option.GetLogger(o)
@@ -28,21 +27,17 @@ func (l *Socks5Listenerer) Listen(ctx context.Context, network, address string, 
 		return nil, err
 	}
 
-	sl := &Socks5Listener{
+	hl := &HttpListener{
 		addr:   dialer.NewAddr(network, address),
 		lis:    lis,
 		logger: logger,
-		conns:  make(chan *Socks5Conn),
+		conns:  make(chan *HttpConn),
 	}
-	sl.server = socks5.NewServer(
-		socks5.WithConnectHandle(sl.onConnect),
-		socks5.WithLogger(logger),
-	)
-	go sl.Serve(lis) // nolint:errcheck
+	go http.Serve(hl.lis, hl) // nolint:errcheck
 
-	return sl, nil
+	return hl, nil
 }
 
 func init() {
-	listenerer_core.RegisterListenerer(NAME, &Socks5Listenerer{})
+	listenerer_core.RegisterListenerer(NAME, &HttpListenerer{})
 }

@@ -2,7 +2,10 @@ package meepo_core
 
 import (
 	mio "github.com/PeerXu/meepo/pkg/lib/io"
+	listenerer_http "github.com/PeerXu/meepo/pkg/lib/listenerer/http"
 	listenerer_interface "github.com/PeerXu/meepo/pkg/lib/listenerer/interface"
+	listenerer_net "github.com/PeerXu/meepo/pkg/lib/listenerer/net"
+	listenerer_socks5 "github.com/PeerXu/meepo/pkg/lib/listenerer/socks5"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 )
@@ -25,11 +28,18 @@ func (mp *Meepo) onTeleportationAccept(tp Teleportation, conn listenerer_interfa
 		return
 	}
 
+	if err = t.WaitReady(); err != nil {
+		logger.WithError(err).Debugf("failed to wait transport ready")
+		return
+	}
+
 	var sinkNetwork, sinkAddress string
 	switch tp.SourceAddr().Network() {
-	case "socks5":
+	case listenerer_http.NAME, listenerer_socks5.NAME:
 		sinkNetwork = conn.RemoteAddr().Network()
 		sinkAddress = conn.RemoteAddr().String()
+	case listenerer_net.NAME:
+		fallthrough
 	default:
 		sinkNetwork = tp.SinkAddr().Network()
 		sinkAddress = tp.SinkAddr().String()

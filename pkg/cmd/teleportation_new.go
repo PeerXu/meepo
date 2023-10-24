@@ -5,9 +5,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/PeerXu/meepo/pkg/lib/dialer"
 	"github.com/PeerXu/meepo/pkg/lib/addr"
 	simple_sdk "github.com/PeerXu/meepo/pkg/lib/cmd/contrib/simple/sdk"
+	"github.com/PeerXu/meepo/pkg/lib/dialer"
+	listenerer_http "github.com/PeerXu/meepo/pkg/lib/listenerer/http"
+	listenerer_socks5 "github.com/PeerXu/meepo/pkg/lib/listenerer/socks5"
 )
 
 var (
@@ -50,7 +52,7 @@ func meepoNewTeleportation(cmd *cobra.Command, args []string) error {
 	}
 
 	switch sourceNetwork {
-	case "socks5":
+	case listenerer_http.NAME, listenerer_socks5.NAME:
 		sinkAddress = "*"
 	}
 

@@ -1,8 +1,8 @@
-package listenerer_socks5
+package listenerer_http
 
 import "github.com/PeerXu/meepo/pkg/lib/logging"
 
-func (l *Socks5Listener) Close() error {
+func (l *HttpListener) Close() error {
 	logger := l.GetLogger().WithFields(logging.Fields{
 		"#method": "Close",
 	})

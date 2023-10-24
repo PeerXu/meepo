@@ -21,5 +21,5 @@ func (fn listenFunc) Listen(ctx context.Context, network, address string, opts .
 var defaultListenFunc listenFunc = net.Listen
 
 func init() {
-	listenerer_core.RegisterListenerer("tcp", defaultListenFunc)
+	listenerer_core.RegisterListenerer(NAME, defaultListenFunc)
 }

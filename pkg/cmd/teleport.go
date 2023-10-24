@@ -10,6 +10,8 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/config"
 	C "github.com/PeerXu/meepo/pkg/lib/constant"
 	"github.com/PeerXu/meepo/pkg/lib/dialer"
+	listenerer_http "github.com/PeerXu/meepo/pkg/lib/listenerer/http"
+	listenerer_socks5 "github.com/PeerXu/meepo/pkg/lib/listenerer/socks5"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
@@ -50,7 +52,7 @@ func meepoTeleport(cmd *cobra.Command, args []string) error {
 	}
 
 	switch sourceNetwork {
-	case "socks5":
+	case listenerer_http.NAME, listenerer_socks5.NAME:
 		sinkAddress = "*"
 	}
 
