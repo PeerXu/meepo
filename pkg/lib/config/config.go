@@ -11,11 +11,11 @@ type Config struct {
 
 func (c *Config) Init() {
 	if len(c.Meepo.Trackerds) == 0 && c.Meepo.Trackerd != nil {
-		c.Meepo.Trackerds = append(c.Meepo.Trackerds, c.Meepo.Trackerd)
+		c.Meepo.Trackerds = append(c.Meepo.Trackerds, &(*c.Meepo.Trackerd))
 	}
 
 	if len(c.Meepo.Trackers) == 0 && c.Meepo.Tracker != nil {
-		c.Meepo.Trackers = append(c.Meepo.Trackers, c.Meepo.Tracker)
+		c.Meepo.Trackers = append(c.Meepo.Trackers, &(*c.Meepo.Tracker))
 	}
 
 	if c.Meepo.Profile != C.PROFILE_MAIN &&

@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pion/webrtc/v3"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 
@@ -83,12 +84,21 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if trackerAddrFlag := fs.Lookup("tracker-addr"); trackerAddrFlag.Changed {
-		cfg.Meepo.Tracker.Addr = trackerAddrFlag.Value.String()
+	replaceTrackersFlag := false
+	if flag := fs.Lookup("tracker-addr"); flag.Changed {
+		cfg.Meepo.Tracker.Addr = flag.Value.String()
+		replaceTrackersFlag = true
+	}
+	if flag := fs.Lookup("tracker-host"); flag.Changed {
+		cfg.Meepo.Tracker.Host = flag.Value.String()
+		replaceTrackersFlag = true
+	}
+	if replaceTrackersFlag {
+		cfg.Meepo.Trackers = []*config.Tracker{&(*cfg.Meepo.Tracker)}
 	}
 
-	if trackerHostFlag := fs.Lookup("tracker-host"); trackerHostFlag.Changed {
-		cfg.Meepo.Tracker.Host = trackerHostFlag.Value.String()
+	if flag := fs.Lookup("ice-servers"); flag.Changed {
+		cfg.Meepo.Webrtc.IceServers = flag.Value.(pflag.SliceValue).GetSlice()
 	}
 
 	if cfg.Meepo.Pprof != "" {
@@ -283,7 +293,17 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	defer apiSrv.Terminate(ctx) // nolint:errcheck
 	apiServerLogger.Infof("api server started")
 
-	if cfg.Meepo.Socks5.Host != "" {
+	disableSocks5Listen := false
+	if cfg.Meepo.Socks5.Host == "" {
+		disableSocks5Listen = true
+	} else if fs.Lookup("disable-socks5-listen").Changed {
+		disableSocks5Listen, err = fs.GetBool("no-socks5-listen")
+		if err != nil {
+			return err
+		}
+	}
+
+	if !disableSocks5Listen {
 		socks5Logger := logger
 		lis, err := net.Listen("tcp", cfg.Meepo.Socks5.Host)
 		if err != nil {
@@ -372,13 +392,15 @@ func init() {
 
 	fs.BoolVarP(&config.Get().Meepo.Daemon, "daemon", "d", true, "run as daemon")
 	fs.StringVarP(&config.Get().Meepo.Profile, "profile", "p", "minor", "run as profile [main, minor, dev]")
+	fs.Bool("disable-socks5-listen", false, "disable socks5 listen")
 	fs.StringVar(&config.Get().Meepo.Socks5.Host, "socks5-listen", C.SOCKS5_HOST, "listen SOCKS5 on address")
 	fs.StringVar(&config.Get().Meepo.Pprof, "pprof", "", "profile listen address")
 
-	fs.StringVar(&config.Get().Meepo.Acl, "acl", "", "access control list")
+	fs.StringVar(&config.Get().Meepo.Acl, "acl", "", "access control list, example: #allow=*,*,192.168.1.0/24:22;#block=*")
 
 	fs.String("tracker-addr", C.TRACKER_ADDR, "tracker address")
 	fs.String("tracker-host", C.TRACKER_HOST, "tracker host")
+	fs.StringSlice("ice-servers", nil, "webrtc ice servers")
 
 	webrtcCfg := &config.Get().Meepo.Webrtc
 	fs.Uint32Var(&webrtcCfg.RecvBufferSize, "sock-buf", C.WEBRTC_RECEIVE_BUFFER_SIZE, "receive buffer in bytes/per webrtc connection")
@@ -420,9 +442,6 @@ func init() {
 		{"meepo.pprof", "pprof"},
 
 		{"meepo.acl", "acl"},
-
-		{"tracker.addr", "tracker-addr"},
-		{"tracker.host", "tracker-host"},
 
 		{"meepo.identity.no_file", "no-identity-file"},
 		{"meepo.identity.file", "identity-file"},

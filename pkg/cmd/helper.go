@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/imdario/mergo"
+	"dario.cat/mergo"
 	"github.com/pion/webrtc/v3"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -44,8 +44,6 @@ func initConfig() {
 
 		err = mergo.MergeWithOverwrite(&dst, src)
 		cobra.CheckErr(err)
-
-		buf, err = yaml.Marshal(dst)
 	} else {
 		buf, err = yaml.Marshal(config.Default())
 	}
