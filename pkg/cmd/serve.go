@@ -85,6 +85,14 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	}
 
 	replaceTrackersFlag := false
+	if flag := fs.Lookup("disable-tracker"); flag.Changed {
+		disableTracker, _ := fs.GetBool("disable-tracker")
+		if disableTracker {
+			cfg.Meepo.Tracker.Name = "skip"
+			replaceTrackersFlag = true
+		}
+	}
+
 	if flag := fs.Lookup("tracker-addr"); flag.Changed {
 		cfg.Meepo.Tracker.Addr = flag.Value.String()
 		replaceTrackersFlag = true
@@ -95,6 +103,31 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	}
 	if replaceTrackersFlag {
 		cfg.Meepo.Trackers = []*config.Tracker{&(*cfg.Meepo.Tracker)}
+	}
+
+	replaceTrackerdsFlag := false
+	if flag := fs.Lookup("enable-trackerd"); flag.Changed {
+		enableTrackerd, _ := fs.GetBool("enable-trackerd")
+		if enableTrackerd {
+			replaceTrackerdsFlag = true
+			if cfg.Meepo.Trackerd == nil {
+				cfg.Meepo.Trackerd = &config.Trackerd{}
+			}
+			cfg.Meepo.Trackerd.Host = C.TRACKERD_HOST
+		}
+	}
+	if flag := fs.Lookup("trackerd-host"); flag.Changed {
+		replaceTrackerdsFlag = true
+		if cfg.Meepo.Trackerd == nil {
+			cfg.Meepo.Trackerd = &config.Trackerd{}
+		}
+		cfg.Meepo.Trackerd.Host = flag.Value.String()
+	}
+
+	if replaceTrackerdsFlag {
+		cfg.Meepo.Trackerd.Name = "rpc"
+		cfg.Meepo.Trackerd.ServerName = "http"
+		cfg.Meepo.Trackerds = []*config.Trackerd{&(*cfg.Meepo.Trackerd)}
 	}
 
 	if flag := fs.Lookup("ice-servers"); flag.Changed {
@@ -398,8 +431,13 @@ func init() {
 
 	fs.StringVar(&config.Get().Meepo.Acl, "acl", "", "access control list, example: #allow=*,*,192.168.1.0/24:22;#block=*")
 
+	fs.Bool("disable-tracker", false, "disable tracker")
 	fs.String("tracker-addr", C.TRACKER_ADDR, "tracker address")
 	fs.String("tracker-host", C.TRACKER_HOST, "tracker host")
+
+	fs.Bool("enable-trackerd", false, "enable trackerd")
+	fs.String("trackerd-host", C.TRACKERD_HOST, "trackerd host")
+
 	fs.StringSlice("ice-servers", nil, "webrtc ice servers")
 
 	webrtcCfg := &config.Get().Meepo.Webrtc

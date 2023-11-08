@@ -11,6 +11,8 @@ var (
 	TRACKER_ADDR = "62vv3lwalqmdb2657f7ax73fem7gkgzmin3w7qyy0sjjfae0f3p"
 	TRACKER_HOST = "tkd-0.meepo.dev:12346"
 
+	TRACKERD_HOST = "127.0.0.1:12346"
+
 	API_HOST = "127.0.0.1:12345"
 
 	SOCKS5_HOST = "127.0.0.1:12341"
