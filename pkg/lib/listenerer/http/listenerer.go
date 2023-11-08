@@ -15,7 +15,7 @@ import (
 type HttpListenerer struct{}
 
 func (l *HttpListenerer) Listen(ctx context.Context, network, address string, opts ...listenerer_interface.ListenOption) (listenerer_interface.Listener, error) {
-	o := option.Apply(opts...)
+	o := option.ApplyWithDefault(DefaultListenOption(), opts...)
 
 	logger, err := well_known_option.GetLogger(o)
 	if err != nil {
@@ -27,11 +27,14 @@ func (l *HttpListenerer) Listen(ctx context.Context, network, address string, op
 		return nil, err
 	}
 
+	connWaitEnabledTimeout, _ := well_known_option.GetConnWaitEnabledTimeoout(o)
+
 	hl := &HttpListener{
-		addr:   dialer.NewAddr(network, address),
-		lis:    lis,
-		logger: logger,
-		conns:  make(chan *HttpConn),
+		addr:                   dialer.NewAddr(network, address),
+		lis:                    lis,
+		logger:                 logger,
+		conns:                  make(chan *HttpConn),
+		connWaitEnabledTimeout: connWaitEnabledTimeout,
 	}
 	go http.Serve(hl.lis, hl) // nolint:errcheck
 

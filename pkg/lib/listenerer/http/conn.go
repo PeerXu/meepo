@@ -7,9 +7,11 @@ import (
 )
 
 type HttpConn struct {
-	reader    io.Reader
-	writer    io.Writer
-	request   *http.Request
-	close     chan struct{}
-	closeOnce sync.Once
+	reader     io.Reader
+	writer     io.Writer
+	request    *http.Request
+	close      chan struct{}
+	closeOnce  sync.Once
+	enable     chan struct{}
+	enableOnce sync.Once
 }

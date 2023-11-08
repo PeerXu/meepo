@@ -16,12 +16,14 @@ import (
 type Socks5Listenerer struct{}
 
 func (l *Socks5Listenerer) Listen(ctx context.Context, network, address string, opts ...listenerer_interface.ListenOption) (listenerer_interface.Listener, error) {
-	o := option.Apply(opts...)
+	o := option.ApplyWithDefault(DefaultListenOption(), opts...)
 
 	logger, err := well_known_option.GetLogger(o)
 	if err != nil {
 		return nil, err
 	}
+
+	connWaitEnabledTimeout, _ := well_known_option.GetConnWaitEnabledTimeoout(o)
 
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
@@ -29,10 +31,11 @@ func (l *Socks5Listenerer) Listen(ctx context.Context, network, address string, 
 	}
 
 	sl := &Socks5Listener{
-		addr:   dialer.NewAddr(network, address),
-		lis:    lis,
-		logger: logger,
-		conns:  make(chan *Socks5Conn),
+		addr:                   dialer.NewAddr(network, address),
+		lis:                    lis,
+		logger:                 logger,
+		conns:                  make(chan *Socks5Conn),
+		connWaitEnabledTimeout: connWaitEnabledTimeout,
 	}
 	sl.server = socks5.NewServer(
 		socks5.WithConnectHandle(sl.onConnect),

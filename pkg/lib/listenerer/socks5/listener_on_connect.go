@@ -34,8 +34,12 @@ func (l *Socks5Listener) onConnect(ctx context.Context, writer io.Writer, reques
 
 	l.conns <- conn
 
-	err = socks5.SendReply(writer, statute.RepSuccess, request.LocalAddr)
-	if err != nil {
+	if err = conn.WaitEnabled(l.connWaitEnabledTimeout); err != nil {
+		logger.WithError(err).Debugf("failed to wait conn enabled")
+		return err
+	}
+
+	if err = socks5.SendReply(writer, statute.RepSuccess, request.LocalAddr); err != nil {
 		logger.WithError(err).Debugf("failed to send success reply to socks5 client")
 		return err
 	}

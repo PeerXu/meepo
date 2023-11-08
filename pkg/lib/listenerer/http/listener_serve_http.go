@@ -39,6 +39,11 @@ func (l *HttpListener) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	l.conns <- conn
 
+	if err = conn.WaitEnabled(l.connWaitEnabledTimeout); err != nil {
+		logger.WithError(err).Debugf("failed to wait conn enabled")
+		return
+	}
+
 	_, err = conn.Write([]byte(fmt.Sprintf("%s 200 Connection established\r\n\r\n", r.Proto)))
 	if err != nil {
 		logger.WithError(err).Debugf("failed to reply to http client")

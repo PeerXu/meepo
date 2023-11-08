@@ -63,6 +63,10 @@ func (mp *Meepo) onTeleportationAccept(tp Teleportation, conn listenerer_interfa
 		return
 	}
 
+	if enabler, ok := conn.(listenerer_interface.Enabler); ok {
+		enabler.Enable()
+	}
+
 	done1 := make(chan struct{})
 	go func() {
 		defer close(done1)

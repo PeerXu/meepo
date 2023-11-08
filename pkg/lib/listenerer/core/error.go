@@ -7,7 +7,9 @@ import (
 )
 
 var (
-	ErrListenerClosed = fmt.Errorf("listener closed")
+	ErrListenerClosed         = fmt.Errorf("listener closed")
+	ErrConnClosed             = fmt.Errorf("conn closed")
+	ErrConnWaitEnabledTimeout = fmt.Errorf("conn wait enabled timeout")
 
 	ErrUnsupportedNetwork, ErrUnsupportedNetworkFn = errors.NewErrorAndErrorFunc[string]("unsupported network")
 )

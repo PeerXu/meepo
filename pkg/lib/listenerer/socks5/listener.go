@@ -3,6 +3,7 @@ package listenerer_socks5
 import (
 	"net"
 	"sync"
+	"time"
 
 	"github.com/things-go/go-socks5"
 
@@ -10,10 +11,11 @@ import (
 )
 
 type Socks5Listener struct {
-	addr      net.Addr
-	logger    logging.Logger
-	lis       net.Listener
-	server    *socks5.Server
-	conns     chan *Socks5Conn
-	closeOnce sync.Once
+	addr                   net.Addr
+	logger                 logging.Logger
+	lis                    net.Listener
+	server                 *socks5.Server
+	conns                  chan *Socks5Conn
+	closeOnce              sync.Once
+	connWaitEnabledTimeout time.Duration
 }

@@ -4,15 +4,17 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
 type HttpListener struct {
-	addr      net.Addr
-	logger    logging.Logger
-	lis       net.Listener
-	server    *http.Server
-	conns     chan *HttpConn
-	closeOnce sync.Once
+	addr                   net.Addr
+	logger                 logging.Logger
+	lis                    net.Listener
+	server                 *http.Server
+	conns                  chan *HttpConn
+	closeOnce              sync.Once
+	connWaitEnabledTimeout time.Duration
 }

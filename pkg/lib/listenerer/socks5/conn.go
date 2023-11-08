@@ -8,8 +8,10 @@ import (
 )
 
 type Socks5Conn struct {
-	writer    io.Writer
-	request   *socks5.Request
-	close     chan struct{}
-	closeOnce sync.Once
+	writer     io.Writer
+	request    *socks5.Request
+	close      chan struct{}
+	closeOnce  sync.Once
+	enable     chan struct{}
+	enableOnce sync.Once
 }
