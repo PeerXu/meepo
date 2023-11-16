@@ -38,20 +38,12 @@ import (
 	tracker_core "github.com/PeerXu/meepo/pkg/meepo/tracker/core"
 )
 
-type myAddr struct {
-	network string
-	address string
-}
-
-func (x *myAddr) Network() string { return x.network }
-func (x *myAddr) String() string  { return x.address }
-
 type conn struct{ meepo_interface.Channel }
 
 func (c *conn) Read(b []byte) (n int, err error)   { return c.Conn().Read(b) }
 func (c *conn) Write(b []byte) (n int, err error)  { return c.Conn().Write(b) }
 func (c *conn) Close() error                       { return c.Conn().Close() }
-func (c *conn) LocalAddr() net.Addr                { return &myAddr{"meepo", "meepo"} }
+func (c *conn) LocalAddr() net.Addr                { return &net.UnixAddr{Net: "meepo", Name: "meepo"} }
 func (c *conn) RemoteAddr() net.Addr               { return c.SinkAddr() }
 func (c *conn) SetDeadline(t time.Time) error      { return nil }
 func (c *conn) SetReadDeadline(t time.Time) error  { return nil }

@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	listenerer_interface "github.com/PeerXu/meepo/pkg/lib/listenerer/interface"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 )
 
@@ -14,7 +15,8 @@ type HttpListener struct {
 	logger                 logging.Logger
 	lis                    net.Listener
 	server                 *http.Server
-	conns                  chan *HttpConn
+	conns                  chan listenerer_interface.Conn
 	closeOnce              sync.Once
 	connWaitEnabledTimeout time.Duration
+	transport              *http.Transport
 }

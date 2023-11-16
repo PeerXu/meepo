@@ -33,9 +33,20 @@ func (l *HttpListenerer) Listen(ctx context.Context, network, address string, op
 		addr:                   dialer.NewAddr(network, address),
 		lis:                    lis,
 		logger:                 logger,
-		conns:                  make(chan *HttpConn),
+		conns:                  make(chan listenerer_interface.Conn),
 		connWaitEnabledTimeout: connWaitEnabledTimeout,
 	}
+	hl.transport = &http.Transport{
+		DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
+			p1, p2 := NewHttpGetConn(network, address).Pipe()
+			hl.conns <- p1
+			if err := p1.WaitEnabled(hl.connWaitEnabledTimeout); err != nil {
+				return nil, err
+			}
+			return p2, nil
+		},
+	}
+
 	go http.Serve(hl.lis, hl) // nolint:errcheck
 
 	return hl, nil

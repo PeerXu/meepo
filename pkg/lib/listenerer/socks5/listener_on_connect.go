@@ -29,6 +29,7 @@ func (l *Socks5Listener) onConnect(ctx context.Context, writer io.Writer, reques
 		writer:  writer,
 		request: request,
 		close:   make(chan struct{}),
+		enable:  make(chan struct{}),
 	}
 	defer close(conn.close)
 
