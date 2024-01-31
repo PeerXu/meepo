@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/PeerXu/meepo/pkg/lib/stun"
+	mpo_webrtc "github.com/PeerXu/meepo/pkg/lib/webrtc"
 )
 
 var (
@@ -20,8 +22,9 @@ var (
 	}
 
 	testWebrtcOptions struct {
-		Offerer  bool
-		Answerer bool
+		Offerer   bool
+		Answerer  bool
+		IceServer string
 	}
 )
 
@@ -30,9 +33,24 @@ func meepoTestWebrtc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("either offerer or answerer should be set to true")
 	}
 
+	iceServers := stun.STUNS
+	if testWebrtcOptions.IceServer != "" {
+		iceServers = []string{testWebrtcOptions.IceServer}
+	}
+	apiIceServers, err := mpo_webrtc.ParseICEServers(iceServers)
+	if err != nil {
+		return err
+	}
+
+	buf, err := json.MarshalIndent(apiIceServers, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(buf))
+
 	var se webrtc.SettingEngine
 	api := webrtc.NewAPI(webrtc.WithSettingEngine(se))
-	pc, err := api.NewPeerConnection(webrtc.Configuration{ICEServers: []webrtc.ICEServer{{URLs: stun.STUNS}}})
+	pc, err := api.NewPeerConnection(webrtc.Configuration{ICEServers: apiIceServers})
 	if err != nil {
 		return err
 	}
@@ -148,6 +166,7 @@ func init() {
 
 	fs.BoolVar(&testWebrtcOptions.Offerer, "offerer", false, "as offerer")
 	fs.BoolVar(&testWebrtcOptions.Answerer, "answerer", false, "as answerer")
+	fs.StringVar(&testWebrtcOptions.IceServer, "ice-server", "", "ice server")
 
 	testCmd.AddCommand(testWebrtcCmd)
 }

@@ -38,6 +38,10 @@ func (c *Config) Init() {
 			c.Meepo.Acl = C.ACL_ALLOW_ALL
 		}
 	}
+
+	if len(c.Meepo.Webrtc.IceServers) == 0 {
+		c.Meepo.Webrtc.IceServers = stun.STUNS
+	}
 }
 
 var cfg Config

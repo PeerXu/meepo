@@ -74,8 +74,8 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	case C.PROFILE_MAIN:
 	case C.PROFILE_MINOR:
 		if aclFlag.Changed || cfg.Meepo.Acl != C.ACL_BLOCK_ALL {
-			summonLogger.Warningf("failed to apply acl in minor profile, please use main profile to apply acl")
-			return nil
+			summonLogger.WithField("acl", cfg.Meepo.Acl).Warningf("failed to apply acl in minor profile, force set to block all request")
+			cfg.Meepo.Acl = C.ACL_BLOCK_ALL
 		}
 	case C.PROFILE_DEV:
 		if aclFlag.Changed || cfg.Meepo.Acl != C.ACL_ALLOW_ALL {
@@ -330,7 +330,7 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	if cfg.Meepo.Socks5.Host == "" {
 		disableSocks5Listen = true
 	} else if fs.Lookup("disable-socks5-listen").Changed {
-		disableSocks5Listen, err = fs.GetBool("no-socks5-listen")
+		disableSocks5Listen, err = fs.GetBool("disable-socks5-listen")
 		if err != nil {
 			return err
 		}
