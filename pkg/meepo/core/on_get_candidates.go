@@ -13,34 +13,33 @@ type (
 	GetCandidatesResponse = tracker_interface.GetCandidatesResponse
 )
 
-func (mp *Meepo) hdrOnGetCandidates(ctx context.Context, _req any) (any, error) {
-	req := _req.(*GetCandidatesRequest)
+func (mp *Meepo) onGetCandidates(ctx context.Context, req GetCandidatesRequest) (res GetCandidatesResponse, err error) {
 	target, err := addr.FromString(req.Target)
 	if err != nil {
-		return nil, err
+		return
 	}
 	var excludes []Addr
 	for _, excludeStr := range req.Excludes {
-		exclude, err := addr.FromString(excludeStr)
+		var exclude addr.Addr
+		exclude, err = addr.FromString(excludeStr)
 		if err != nil {
-			return nil, err
+			return
 		}
 		excludes = append(excludes, exclude)
 	}
-	candidates, err := mp.onGetCandidates(target, req.Requests, excludes)
+	candidates, err := mp.getCandidates(target, req.Requests, excludes)
 	if err != nil {
-		return nil, err
+		return
 	}
-	var res GetCandidatesResponse
 	for _, candidate := range candidates {
 		res.Candidates = append(res.Candidates, candidate.String())
 	}
-	return &res, nil
+	return
 }
 
-func (mp *Meepo) onGetCandidates(target Addr, count int, excludes []Addr) (candidates []Addr, err error) {
+func (mp *Meepo) getCandidates(target Addr, count int, excludes []Addr) (candidates []Addr, err error) {
 	logger := mp.GetLogger().WithFields(logging.Fields{
-		"#method": "onGetCandidates",
+		"#method": "getCandidates",
 		"target":  target.String(),
 		"count":   count,
 	})

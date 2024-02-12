@@ -2,6 +2,7 @@ package tracker_transport
 
 import (
 	"github.com/PeerXu/meepo/pkg/lib/addr"
+	lib_protocol "github.com/PeerXu/meepo/pkg/lib/protocol"
 	tracker_core "github.com/PeerXu/meepo/pkg/meepo/tracker/core"
 	tracker_interface "github.com/PeerXu/meepo/pkg/meepo/tracker/interface"
 )
@@ -13,6 +14,7 @@ func (tk *TransportTracker) GetCandidates(target addr.Addr, requests int, exclud
 		excludesStrSlice = append(excludesStrSlice, x.String())
 	}
 	req := &tracker_interface.GetCandidatesRequest{
+		Protocol: lib_protocol.VERSION.String(),
 		Target:   target.String(),
 		Requests: requests,
 		Excludes: excludesStrSlice,

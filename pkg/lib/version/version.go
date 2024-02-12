@@ -3,6 +3,8 @@ package version
 import (
 	"fmt"
 	"runtime"
+
+	lib_protocol "github.com/PeerXu/meepo/pkg/lib/protocol"
 )
 
 var (
@@ -10,6 +12,7 @@ var (
 	GoVersion string
 	GitHash   string
 	Built     string
+	Protocol  string
 )
 
 type V struct {
@@ -18,6 +21,7 @@ type V struct {
 	GitHash   string
 	Built     string
 	Platform  string
+	Protocl   string
 }
 
 func Get() *V {
@@ -27,5 +31,6 @@ func Get() *V {
 		GitHash:   GitHash,
 		Built:     Built,
 		Platform:  fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
+		Protocl:   lib_protocol.VERSION.String(),
 	}
 }

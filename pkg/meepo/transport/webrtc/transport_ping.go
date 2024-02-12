@@ -45,9 +45,7 @@ func (t *WebrtcTransport) ping(ctx context.Context) (ttl time.Duration, err erro
 	return
 }
 
-func (t *WebrtcTransport) onPing(ctx context.Context, _req any) (res any, err error) {
-	req := _req.(*PingRequest)
-
+func (t *WebrtcTransport) onPing(ctx context.Context, req PingRequest) (res PingResponse, err error) {
 	logger := t.GetLogger().WithFields(logging.Fields{
 		"#method": "onPing",
 		"session": req.Session,
@@ -55,5 +53,5 @@ func (t *WebrtcTransport) onPing(ctx context.Context, _req any) (res any, err er
 
 	logger.Tracef("on ping")
 
-	return &PingResponse{Session: req.Session}, nil
+	return PingResponse{Session: req.Session}, nil
 }

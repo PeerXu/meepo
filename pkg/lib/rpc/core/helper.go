@@ -14,16 +14,16 @@ var (
 	NO_CONTENT EMPTY
 )
 
-func WrapHandleFuncGenerics[T any](fn func(context.Context, any) (any, error)) rpc_interface.HandleFunc {
+func WrapHandleFuncGenerics[IT, OT any](fn func(context.Context, IT) (OT, error)) rpc_interface.HandleFunc {
 	return func(ctx context.Context, in rpc_interface.HandleRequest) (out rpc_interface.HandleResponse, err error) {
-		var res any
-		var req T
+		var req IT
+		var res OT
 
 		if err = marshaler.Unmarshal(ctx, in, &req); err != nil {
 			return nil, err
 		}
 
-		if res, err = fn(ctx, &req); err != nil {
+		if res, err = fn(ctx, req); err != nil {
 			return nil, err
 		}
 

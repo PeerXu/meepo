@@ -6,7 +6,6 @@ import (
 
 	"github.com/PeerXu/meepo/pkg/lib/acl"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
-	"github.com/PeerXu/meepo/pkg/lib/option"
 	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
@@ -16,21 +15,20 @@ type PermitRequest struct {
 	Address string
 }
 
-func (mp *Meepo) hdrOnPermit(ctx context.Context, _req any) (any, error) {
-	req := _req.(*PermitRequest)
+func (mp *Meepo) onPermit(ctx context.Context, req PermitRequest) (res rpc_core.EMPTY, err error) {
 	t := transport_core.ContextGetTransport(ctx)
 
-	err := mp.onPermit(t.Addr().String(), req.Network, req.Address)
+	err = mp.permit(t.Addr().String(), req.Network, req.Address)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return rpc_core.NO_CONTENT, nil
+	return
 }
 
-func (mp *Meepo) onPermit(target, network, address string) error {
+func (mp *Meepo) permit(target, network, address string) error {
 	logger := mp.GetLogger().WithFields(logging.Fields{
-		"#method": "onPermit",
+		"#method": "permit",
 	})
 	host, port, err := net.SplitHostPort(address)
 	if err != nil {
@@ -46,17 +44,6 @@ func (mp *Meepo) onPermit(target, network, address string) error {
 	}
 
 	logger.Tracef("permitted")
-
-	return nil
-}
-
-func (mp *Meepo) beforeNewChannelHook(t Transport, network, address string, opts ...transport_core.HookOption) error {
-	o := option.Apply(opts...)
-
-	isSink, _ := transport_core.GetIsSink(o)
-	if isSink {
-		return mp.onPermit(t.Addr().String(), network, address)
-	}
 
 	return nil
 }

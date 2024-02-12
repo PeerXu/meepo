@@ -2,6 +2,7 @@ package tracker_rpc
 
 import (
 	"github.com/PeerXu/meepo/pkg/lib/addr"
+	lib_protocol "github.com/PeerXu/meepo/pkg/lib/protocol"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	tracker_core "github.com/PeerXu/meepo/pkg/meepo/tracker/core"
 	tracker_interface "github.com/PeerXu/meepo/pkg/meepo/tracker/interface"
@@ -15,6 +16,7 @@ func (tk *RPCTracker) GetCandidates(target addr.Addr, requests int, excludes []a
 	}
 
 	req := &tracker_interface.GetCandidatesRequest{
+		Protocol: lib_protocol.VERSION.String(),
 		Target:   target.String(),
 		Requests: requests,
 		Excludes: excludesStrSlice,

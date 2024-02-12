@@ -45,9 +45,7 @@ func (t *WebrtcTransport) newRemoteChannel(ctx context.Context, mode string, lab
 	return nil
 }
 
-func (t *WebrtcTransport) onNewChannel(ctx context.Context, _req any) (res any, err error) {
-	req := _req.(*NewChannelRequest)
-
+func (t *WebrtcTransport) onNewChannel(ctx context.Context, req NewChannelRequest) (res any, err error) {
 	logger := t.GetLogger().WithFields(logging.Fields{
 		"#method":   "onNewChannel",
 		"label":     req.Label,
@@ -108,7 +106,7 @@ func (t *WebrtcTransport) onNewChannel(ctx context.Context, _req any) (res any, 
 	if !found {
 
 		t.tempDataChannels[req.Label] = &tempDataChannel{
-			request:     req,
+			request:     &req,
 			sinkChannel: sinkChannel,
 		}
 
@@ -117,7 +115,7 @@ func (t *WebrtcTransport) onNewChannel(ctx context.Context, _req any) (res any, 
 		return
 	}
 
-	tdc.request = req
+	tdc.request = &req
 	tdc.sinkChannel = sinkChannel
 
 	if tdc.upstream == nil {

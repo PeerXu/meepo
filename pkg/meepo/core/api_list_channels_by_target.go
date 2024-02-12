@@ -7,8 +7,7 @@ import (
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
 
-func (mp *Meepo) hdrAPIListChannelsByTarget(ctx context.Context, _req any) (any, error) {
-	req := _req.(*sdk_interface.ListChannelsByTarget)
+func (mp *Meepo) apiListChannelsByTarget(ctx context.Context, req sdk_interface.ListChannelsByTarget) (res []sdk_interface.ChannelView, err error) {
 	target, err := addr.FromString(req.Target)
 	if err != nil {
 		return nil, err

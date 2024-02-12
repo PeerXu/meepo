@@ -9,9 +9,7 @@ import (
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
 
-func (mp *Meepo) hdrAPICloseChannel(ctx context.Context, _req any) (any, error) {
-	req := _req.(*sdk_interface.CloseChannelRequest)
-
+func (mp *Meepo) apiCloseChannel(ctx context.Context, req sdk_interface.CloseChannelRequest) (res rpc_core.EMPTY, err error) {
 	logger := mp.GetLogger().WithFields(logging.Fields{
 		"#method":   "hdrAPICloseChannel",
 		"target":    req.Target,
@@ -21,18 +19,18 @@ func (mp *Meepo) hdrAPICloseChannel(ctx context.Context, _req any) (any, error) 
 	target, err := addr.FromString(req.Target)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to parse target")
-		return nil, err
+		return
 	}
 
 	c, err := mp.GetChannel(ctx, target, req.ChannelID)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to get channel")
-		return nil, err
+		return
 	}
 
 	if err = c.Close(ctx); err != nil {
 		logger.WithError(err).Errorf("failed to close channel")
-		return nil, err
+		return
 	}
 
 	logger.Infof("channel closed")

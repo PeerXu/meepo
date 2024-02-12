@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	transport_core "github.com/PeerXu/meepo/pkg/meepo/transport/core"
 )
@@ -26,9 +27,7 @@ func (t *WebrtcTransport) closeRemoteTransport(ctx context.Context) (err error) 
 }
 
 // dont close peer connection now
-func (t *WebrtcTransport) onClose(ctx context.Context, _req any) (res any, err error) {
-	res = &CloseResponse{}
-
+func (t *WebrtcTransport) onClose(ctx context.Context, _ rpc_core.EMPTY) (res rpc_core.EMPTY, err error) {
 	logger := t.GetLogger().WithField("#method", "onClose")
 
 	if !t.tryClose() {

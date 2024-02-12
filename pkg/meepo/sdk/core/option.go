@@ -21,6 +21,8 @@ const (
 	METHOD_GET_CHANNEL             = "getChannel"
 	METHOD_LIST_CHANNELS           = "listChannels"
 	METHOD_LIST_CHANNELS_BY_TARGET = "listChannelsByTarget"
+
+	STREAM_METHOD_WATCH_EVENTS = "watchEvents"
 )
 
 type NewSDKOption = option.ApplyOption

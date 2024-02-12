@@ -18,8 +18,8 @@ import (
 	transport_webrtc "github.com/PeerXu/meepo/pkg/meepo/transport/webrtc"
 )
 
-func (mp *Meepo) hdrOnNewTransport(ctx context.Context, req any) (any, error) {
-	return mp.onNewTransport(req.(*crypto_core.Packet))
+func (mp *Meepo) hdrOnNewTransport(ctx context.Context, req crypto_core.Packet) (res webrtc.SessionDescription, err error) {
+	return mp.onNewTransport(&req)
 }
 
 func (mp *Meepo) onNewTransport(in *crypto_core.Packet) (answer webrtc.SessionDescription, err error) {

@@ -3,15 +3,13 @@ package meepo_core
 import (
 	"context"
 
+	"github.com/PeerXu/meepo/pkg/lib/addr"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
-	"github.com/PeerXu/meepo/pkg/lib/addr"
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
 
-func (mp *Meepo) hdrAPINewTransport(ctx context.Context, _req any) (any, error) {
-	req := _req.(*sdk_interface.NewTransportRequest)
-
+func (mp *Meepo) apiNewTransport(ctx context.Context, req sdk_interface.NewTransportRequest) (res sdk_interface.TransportView, err error) {
 	logger := mp.GetLogger().WithFields(logging.Fields{
 		"#method": "hdrAPINewTransport",
 		"target":  req.Target,
@@ -20,7 +18,7 @@ func (mp *Meepo) hdrAPINewTransport(ctx context.Context, _req any) (any, error) 
 	target, err := addr.FromString(req.Target)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to parse target")
-		return nil, err
+		return
 	}
 
 	var opts []NewTransportOption
@@ -57,7 +55,7 @@ func (mp *Meepo) hdrAPINewTransport(ctx context.Context, _req any) (any, error) 
 	t, err := mp.NewTransport(ctx, target, opts...)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to new transport")
-		return nil, err
+		return
 	}
 
 	logger.Infof("new transport")

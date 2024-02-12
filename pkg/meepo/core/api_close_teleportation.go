@@ -8,9 +8,7 @@ import (
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
 
-func (mp *Meepo) hdrAPICloseTeleportation(ctx context.Context, _req any) (any, error) {
-	req := _req.(*sdk_interface.CloseTeleportationRequest)
-
+func (mp *Meepo) apiCloseTeleportation(ctx context.Context, req sdk_interface.CloseTeleportationRequest) (res rpc_core.EMPTY, err error) {
 	logger := mp.GetLogger().WithFields(logging.Fields{
 		"#method":         "hdrAPICloseTeleportation",
 		"teleportationID": req.TeleportationID,
@@ -19,12 +17,12 @@ func (mp *Meepo) hdrAPICloseTeleportation(ctx context.Context, _req any) (any, e
 	tp, err := mp.GetTeleportation(ctx, req.TeleportationID)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to get teleportation")
-		return nil, err
+		return
 	}
 
 	if err = tp.Close(ctx); err != nil {
 		logger.WithError(err).Errorf("failed to close teleportation")
-		return nil, err
+		return
 	}
 
 	logger.Infof("teleportation closed")

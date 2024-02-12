@@ -1,7 +1,11 @@
 package meepo_core
 
-import "context"
+import (
+	"context"
 
-func (mp *Meepo) hdrAPIWhoami(ctx context.Context, _ any) (any, error) {
+	rpc_core "github.com/PeerXu/meepo/pkg/lib/rpc/core"
+)
+
+func (mp *Meepo) apiWhoami(ctx context.Context, _ rpc_core.EMPTY) (string, error) {
 	return mp.Addr().String(), nil
 }

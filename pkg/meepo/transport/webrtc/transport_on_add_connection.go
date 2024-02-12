@@ -40,17 +40,15 @@ func (t *WebrtcTransport) addRemotePeerConnection(ctx context.Context, sess Sess
 	return res.Answer, nil
 }
 
-func (t *WebrtcTransport) onAddPeerConnection(ctx context.Context, _req any) (_res any, err error) {
-	req := _req.(*AddPeerConnectionRequest)
+func (t *WebrtcTransport) onAddPeerConnection(ctx context.Context, req AddPeerConnectionRequest) (res AddPeerConnectionResponse, err error) {
 	sess := Session(req.Session)
-	res := &AddPeerConnectionResponse{Session: req.Session}
 
 	res.Answer, err = t.addSinkPeerConnection(sess, req.Offer)
 	if err != nil {
 		return
 	}
 
-	return res, nil
+	return AddPeerConnectionResponse{Session: req.Session}, nil
 }
 
 func (t *WebrtcTransport) OnAddPeerConnection(sess Session, offer webrtc.SessionDescription) (answer webrtc.SessionDescription, err error) {

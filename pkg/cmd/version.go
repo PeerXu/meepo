@@ -25,6 +25,7 @@ func printClientVersion(v *version.V) {
 	fmt.Printf("  GitHash:\t\t%v\n", v.GitHash)
 	fmt.Printf("  Bulit:\t\t%v\n", v.Built)
 	fmt.Printf("  Platform:\t\t%v\n", v.Platform)
+	fmt.Printf("  Protocol:\t\t%v\n", v.Protocl)
 }
 
 func printServerVersion(v *version.V) {
@@ -34,6 +35,7 @@ func printServerVersion(v *version.V) {
 	fmt.Printf("  GitHash:\t\t%v\n", v.GitHash)
 	fmt.Printf("  Bulit:\t\t%v\n", v.Built)
 	fmt.Printf("  Platform:\t\t%v\n", v.Platform)
+	fmt.Printf("  Protocol:\t\t%v\n", v.Protocl)
 }
 
 func meepoVersion(cmd *cobra.Command, args []string) error {

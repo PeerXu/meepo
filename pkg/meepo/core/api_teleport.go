@@ -3,15 +3,13 @@ package meepo_core
 import (
 	"context"
 
+	"github.com/PeerXu/meepo/pkg/lib/addr"
 	"github.com/PeerXu/meepo/pkg/lib/logging"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
-	"github.com/PeerXu/meepo/pkg/lib/addr"
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
 
-func (mp *Meepo) hdrAPITeleport(ctx context.Context, _req any) (any, error) {
-	req := _req.(*sdk_interface.TeleportRequest)
-
+func (mp *Meepo) apiTeleport(ctx context.Context, req sdk_interface.TeleportRequest) (res sdk_interface.TeleportationView, err error) {
 	logger := mp.GetLogger().WithFields(logging.Fields{
 		"#method":       "hdrAPITeleport",
 		"target":        req.Target,
@@ -25,7 +23,7 @@ func (mp *Meepo) hdrAPITeleport(ctx context.Context, _req any) (any, error) {
 	target, err := addr.FromString(req.Target)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to parse target")
-		return nil, err
+		return
 	}
 
 	opts := []TeleportOption{
@@ -63,7 +61,7 @@ func (mp *Meepo) hdrAPITeleport(ctx context.Context, _req any) (any, error) {
 	tp, err := mp.Teleport(ctx, target, req.SourceNetwork, req.SourceAddress, req.SinkNetwork, req.SinkAddress, opts...)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to teleport")
-		return nil, err
+		return
 	}
 
 	logger.Infof("teleport")

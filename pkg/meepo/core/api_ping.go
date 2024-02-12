@@ -8,11 +8,9 @@ import (
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
 
-func (mp *Meepo) hdrAPIPing(ctx context.Context, _req any) (any, error) {
-	req := _req.(*sdk_interface.PingRequest)
-
+func (mp *Meepo) apiPing(ctx context.Context, req sdk_interface.PingRequest) (res sdk_interface.PingResponse, err error) {
 	logger := mp.GetLogger().WithFields(logging.Fields{
-		"#method": "hdrAPIPing",
+		"#method": "apiPing",
 		"target":  req.Target,
 		"nonce":   req.Nonce,
 	})
@@ -20,26 +18,25 @@ func (mp *Meepo) hdrAPIPing(ctx context.Context, _req any) (any, error) {
 	target, err := addr.FromString(req.Target)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to parse target addr")
-		return nil, err
+		return
 	}
 
 	t, err := mp.GetTransport(ctx, target)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to get transport")
-		return nil, err
+		return
 	}
 
-	var res PingResponse
 	if err = t.Call(ctx, METHOD_PING, &PingRequest{Nonce: req.Nonce}, &res); err != nil {
 		logger.WithError(err).Errorf("failed to ping")
-		return nil, err
+		return
 	}
 
 	if res.Nonce != req.Nonce {
 		err = ErrInvalidNonceFn(res.Nonce)
 		logger.WithError(err).Errorf("invalid nonce")
-		return nil, err
+		return
 	}
 
-	return &res, nil
+	return
 }

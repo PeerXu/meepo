@@ -9,9 +9,7 @@ import (
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
 
-func (mp *Meepo) hdrAPICloseTransport(ctx context.Context, _req any) (any, error) {
-	req := _req.(*sdk_interface.CloseTransportRequest)
-
+func (mp *Meepo) apiCloseTransport(ctx context.Context, req sdk_interface.CloseTransportRequest) (res rpc_core.EMPTY, err error) {
 	logger := mp.GetLogger().WithFields(logging.Fields{
 		"#method": "hdrAPICloseTransport",
 		"target":  req.Target,
@@ -20,18 +18,18 @@ func (mp *Meepo) hdrAPICloseTransport(ctx context.Context, _req any) (any, error
 	target, err := addr.FromString(req.Target)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to parse target")
-		return nil, err
+		return
 	}
 
 	t, err := mp.GetTransport(ctx, target)
 	if err != nil {
 		logger.WithError(err).Errorf("failed to get transport")
-		return nil, err
+		return
 	}
 
 	if err = t.Close(ctx); err != nil {
 		logger.WithError(err).Errorf("failed to close transport")
-		return nil, err
+		return
 	}
 
 	logger.Infof("transport closed")
