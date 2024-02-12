@@ -10,6 +10,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang/snappy v0.0.4
 	github.com/gorilla/websocket v1.5.0
+	github.com/jinzhu/copier v0.4.0
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mikesmitty/edkey v0.0.0-20170222072505-3356ea4e686a
 	github.com/mitchellh/go-homedir v1.1.0

@@ -18,7 +18,9 @@ func (mp *Meepo) AsTrackerdHandler() rpc_interface.Handler {
 	h, _ := rpc.NewHandler("default")
 
 	wrapHandleFunc(tracker_core.METHOD_NEW_TRANSPORT, h, mp.hdrOnNewTransport)
-	wrapHandleFunc(tracker_core.METHOD_GET_CANDIDATES, h, mp.onGetCandidates)
+	wrapHandleFunc(tracker_core.METHOD_GET_CANDIDATES, h,
+		RequireProtocolVersion[GetCandidatesRequest, GetCandidatesResponse]("v0.1.0", "")(mp.onGetCandidates),
+	)
 	wrapHandleFunc(tracker_core.METHOD_ADD_PEER_CONNECTION, h, mp.hdrOnAddPeerConnection)
 
 	return h

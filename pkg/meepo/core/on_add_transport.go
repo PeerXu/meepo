@@ -13,7 +13,9 @@ func wrapTransportHandleFunc[IT, OT any](name string, t Transport, fn func(conte
 
 func (mp *Meepo) onAddWebrtcTransportNL(t Transport) {
 	wrapTransportHandleFunc(tracker_core.METHOD_NEW_TRANSPORT, t, mp.hdrOnNewTransport)
-	wrapTransportHandleFunc(tracker_core.METHOD_GET_CANDIDATES, t, mp.onGetCandidates)
+	wrapTransportHandleFunc(tracker_core.METHOD_GET_CANDIDATES, t,
+		RequireProtocolVersion[GetCandidatesRequest, GetCandidatesResponse]("v0.1.0", "")(mp.onGetCandidates),
+	)
 	wrapTransportHandleFunc(tracker_core.METHOD_ADD_PEER_CONNECTION, t, mp.hdrOnAddPeerConnection)
 
 	wrapTransportHandleFunc(METHOD_PING, t, mp.onPing)

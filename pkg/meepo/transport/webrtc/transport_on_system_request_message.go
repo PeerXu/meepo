@@ -13,13 +13,13 @@ func (t *WebrtcTransport) onSystemRequestMessage(in Message) {
 	var h meepo_interface.HandleFunc
 	switch in.Method {
 	case SYS_METHOD_PING:
-		h = transport_core.WrapHandleFuncGenerics1(t.onPing)
+		h = transport_core.WrapHandleFuncGenerics(t.onPing)
 	case SYS_METHOD_NEW_CHANNEL:
-		h = transport_core.WrapHandleFuncGenerics1(t.onNewChannel)
+		h = transport_core.WrapHandleFuncGenerics(t.onNewChannel)
 	case SYS_METHOD_ADD_PEER_CONNECTION:
-		h = transport_core.WrapHandleFuncGenerics1(t.onAddPeerConnection)
+		h = transport_core.WrapHandleFuncGenerics(t.onAddPeerConnection)
 	case SYS_METHOD_CLOSE:
-		h = transport_core.WrapHandleFuncGenerics1(t.onClose)
+		h = transport_core.WrapHandleFuncGenerics(t.onClose)
 	default:
 		var ok bool
 		method := "sys/" + in.Method

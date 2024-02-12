@@ -21,7 +21,8 @@ var (
 	ACL_BLOCK_ALL = `- block: "*"`
 	ACL_ALLOW_ALL = `- allow: "*"`
 
-	LOG_LEVEL = "info"
+	LOG_LEVEL  = "info"
+	LOG_STDOUT = "-"
 
 	SMUX_VERSION            int  = 2
 	SMUX_BUFFER_SIZE        int  = 4194304

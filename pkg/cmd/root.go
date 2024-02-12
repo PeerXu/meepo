@@ -30,6 +30,9 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&config.Get().Meepo.Log.Level, "log-level", "error", "Log level")
 	viper.BindPFlag("meepo.log.level", rootCmd.PersistentFlags().Lookup("log-level"))
 
+	rootCmd.PersistentFlags().StringVar(&config.Get().Meepo.Log.File, "log-file", "-", "Log output file")
+	viper.BindPFlag("meepo.log.file", rootCmd.PersistentFlags().Lookup("log-file"))
+
 	rootCmd.PersistentFlags().StringVarP(&config.Get().Meepo.API.Host, "host", "H", constant.API_HOST, "Meepo API server address")
 	viper.BindPFlag("meepo.api.host", rootCmd.PersistentFlags().Lookup("host"))
 }

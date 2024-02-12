@@ -7,7 +7,7 @@ import (
 	meepo_interface "github.com/PeerXu/meepo/pkg/meepo/interface"
 )
 
-func WrapHandleFuncGenerics1[IT, OT any](fn func(context.Context, IT) (OT, error)) meepo_interface.HandleFunc {
+func WrapHandleFuncGenerics[IT, OT any](fn func(context.Context, IT) (OT, error)) meepo_interface.HandleFunc {
 	return func(ctx context.Context, in meepo_interface.HandleRequest) (out meepo_interface.HandleResponse, err error) {
 		var req IT
 		var res OT

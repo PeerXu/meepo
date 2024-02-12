@@ -76,6 +76,7 @@ func Default() *Config {
 			Acl: C.ACL_REPLACEME,
 			Log: Log{
 				Level: C.LOG_LEVEL,
+				File:  C.LOG_STDOUT,
 			},
 			Webrtc: Webrtc{
 				IceServers:     stun.STUNS,

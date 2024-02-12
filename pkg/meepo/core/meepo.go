@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/pion/webrtc/v3"
 
 	"github.com/PeerXu/meepo/pkg/lib/acl"
@@ -15,6 +16,7 @@ import (
 	"github.com/PeerXu/meepo/pkg/lib/marshaler"
 	marshaler_interface "github.com/PeerXu/meepo/pkg/lib/marshaler/interface"
 	"github.com/PeerXu/meepo/pkg/lib/option"
+	lib_protocol "github.com/PeerXu/meepo/pkg/lib/protocol"
 	"github.com/PeerXu/meepo/pkg/lib/routing_table"
 	"github.com/PeerXu/meepo/pkg/lib/well_known_option"
 	meepo_event_listener "github.com/PeerXu/meepo/pkg/meepo/event_listener"
@@ -35,7 +37,8 @@ type (
 )
 
 type Meepo struct {
-	addr meepo_interface.Addr
+	addr            meepo_interface.Addr
+	protocolVersion *semver.Version
 
 	teleportationsMtx lock.Locker
 	teleportations    map[string]Teleportation
@@ -205,6 +208,7 @@ func NewMeepo(opts ...NewMeepoOption) (meepo_interface.Meepo, error) {
 
 	mp := &Meepo{
 		addr:                    addr,
+		protocolVersion:         lib_protocol.VERSION,
 		webrtcAPI:               webrtcAPI,
 		webrtcConfiguration:     webrtcConfiguration,
 		teleportationsMtx:       lock.NewLock(well_known_option.WithName("teleportationsMtx")),

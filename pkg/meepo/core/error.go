@@ -11,11 +11,16 @@ var (
 )
 
 var (
-	ErrUnsupportedMethod, ErrUnsupportedMethodFn         = errors.NewErrorAndErrorFunc[string]("unsupported method")
-	ErrTeleportationNotFound, ErrTeleportationNotFoundFn = errors.NewErrorAndErrorFunc[string]("teleportation not found")
-	ErrTransportNotFound, ErrTransportNotFoundFn         = errors.NewErrorAndErrorFunc[string]("transport not found")
-	ErrTransportFound, ErrTransportFoundFn               = errors.NewErrorAndErrorFunc[string]("transport found")
-	ErrTransportExist, ErrTransportExistFn               = errors.NewErrorAndErrorFunc[string]("transport exist")
-	ErrTrackerNotFound, ErrTrackerNotFoundFn             = errors.NewErrorAndErrorFunc[string]("tracker not found")
-	ErrInvalidNonce, ErrInvalidNonceFn                   = errors.NewErrorAndErrorFunc[uint32]("invalid nonce")
+	ErrUnsupportedMethod, ErrUnsupportedMethodFn                          = errors.NewErrorAndErrorFunc[string]("unsupported method")
+	ErrTeleportationNotFound, ErrTeleportationNotFoundFn                  = errors.NewErrorAndErrorFunc[string]("teleportation not found")
+	ErrTransportNotFound, ErrTransportNotFoundFn                          = errors.NewErrorAndErrorFunc[string]("transport not found")
+	ErrTransportFound, ErrTransportFoundFn                                = errors.NewErrorAndErrorFunc[string]("transport found")
+	ErrTransportExist, ErrTransportExistFn                                = errors.NewErrorAndErrorFunc[string]("transport exist")
+	ErrTrackerNotFound, ErrTrackerNotFoundFn                              = errors.NewErrorAndErrorFunc[string]("tracker not found")
+	ErrInvalidNonce, ErrInvalidNonceFn                                    = errors.NewErrorAndErrorFunc[uint32]("invalid nonce")
+	ErrRequireProtocolVersionBetween, ErrRequireProtocolVersionBetweenFn_ = errors.NewErrorAndErrorFunc[string]("require protocol version between")
 )
+
+func ErrRequireProtocolVersionBetweenFn(from, to string) error {
+	return ErrRequireProtocolVersionBetweenFn_(fmt.Sprintf("[%s->%s]", from, to))
+}

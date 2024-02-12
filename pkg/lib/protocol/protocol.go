@@ -11,6 +11,8 @@ const (
 )
 
 var (
+	ParseProtocolVersion = semver.NewVersion
+
 	VERSION         = lo.Must(semver.NewVersion(VERSION_STRING))
 	UNKNOWN_VERSION = lo.Must(semver.NewVersion(UNKNOWN_VERSION_STRING))
 )
