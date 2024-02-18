@@ -131,6 +131,10 @@ func (mp *Meepo) randString(sz int) string {
 }
 
 func (mp *Meepo) viewToMap(x any) map[string]any {
+	return viewToMap(x)
+}
+
+func viewToMap(x any) map[string]any {
 	buf, _ := json.Marshal(x)
 	y := make(map[string]any)
 	json.Unmarshal(buf, &y) // nolint:errcheck

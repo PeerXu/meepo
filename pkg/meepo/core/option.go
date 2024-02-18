@@ -18,6 +18,7 @@ const (
 	OPTION_POOF_INTERVAL              = "poofInterval"
 	OPTION_POOF_REQUEST_CANDIDATES    = "poofRequestCandidates"
 	OPTION_ENABLE_POOF                = "enablePoof"
+	OPTION_MEEPO_DEBUG_INTERFACE      = "meepoDebugInterface"
 	OPTION_GET_TRACKERS_FUNC          = "getTrackersFunc"
 	OPTION_NAVI_REQUEST_QUEUE_TIMEOUT = "naviRequestQueueTimeout"
 
@@ -53,6 +54,7 @@ var (
 	WithPoofInterval, GetPoofInterval                       = option.New[time.Duration](OPTION_POOF_INTERVAL)
 	WithPoofRequestCandidates, GetPoofRequestCandidates     = option.New[int](OPTION_POOF_REQUEST_CANDIDATES)
 	WithEnablePoof, GetEnablePoof                           = option.New[bool](OPTION_ENABLE_POOF)
+	WithMeepoDebugInterface, GetMeepoDebugInterface         = option.New[string](OPTION_MEEPO_DEBUG_INTERFACE)
 	WithGetTrackersFunc, GetGetTrackersFunc                 = option.New[getTrackersFunc](OPTION_GET_TRACKERS_FUNC)
 	WithNaviRequestQueueTimeout, GetNaviRequestQueueTimeout = option.New[time.Duration](OPTION_NAVI_REQUEST_QUEUE_TIMEOUT)
 )
@@ -62,6 +64,7 @@ func defaultNewMeepoOptions() option.Option {
 
 	return option.NewOption(map[string]any{
 		OPTION_ENABLE_POOF:                         true,
+		OPTION_MEEPO_DEBUG_INTERFACE:               "",
 		OPTION_DHT_ALPHA:                           8,
 		OPTION_POOF_INTERVAL:                       C.POOF_INTERVAL,
 		OPTION_POOF_REQUEST_CANDIDATES:             C.POOF_REQUEST_CANDIDATES,

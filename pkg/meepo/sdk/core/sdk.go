@@ -1,25 +1,10 @@
 package sdk_core
 
 import (
-	"sync"
-
+	lib_registerer "github.com/PeerXu/meepo/pkg/lib/registerer"
 	sdk_interface "github.com/PeerXu/meepo/pkg/meepo/sdk/interface"
 )
 
 type SDK = sdk_interface.SDK
 
-type NewSDKFunc func(...NewSDKOption) (SDK, error)
-
-var newSDKFuncs sync.Map
-
-func NewSDK(name string, opts ...NewSDKOption) (SDK, error) {
-	v, ok := newSDKFuncs.Load(name)
-	if !ok {
-		return nil, ErrUnsupportedSDKFn(name)
-	}
-	return v.(NewSDKFunc)(opts...)
-}
-
-func RegisterNewSDKFunc(name string, fn NewSDKFunc) {
-	newSDKFuncs.Store(name, fn)
-}
+var RegisterNewSDKFunc, NewSDK = lib_registerer.Pair[SDK]()

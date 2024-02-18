@@ -102,7 +102,7 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 		replaceTrackersFlag = true
 	}
 	if replaceTrackersFlag {
-		cfg.Meepo.Trackers = []*config.Tracker{&(*cfg.Meepo.Tracker)}
+		cfg.Meepo.Trackers = []*config.Tracker{cfg.Meepo.Tracker}
 	}
 
 	replaceTrackerdsFlag := false
@@ -127,7 +127,7 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 	if replaceTrackerdsFlag {
 		cfg.Meepo.Trackerd.Name = "rpc"
 		cfg.Meepo.Trackerd.ServerName = "http"
-		cfg.Meepo.Trackerds = []*config.Trackerd{&(*cfg.Meepo.Trackerd)}
+		cfg.Meepo.Trackerds = []*config.Trackerd{cfg.Meepo.Trackerd}
 	}
 
 	if flag := fs.Lookup("ice-servers"); flag.Changed {
@@ -244,6 +244,9 @@ func meepoSummon(cmd *cobra.Command, args []string) error {
 		well_known_option.WithEnableMux(!smuxCfg.Disable),
 		well_known_option.WithEnableKcp(!kcpCfg.Disable),
 		meepo_core.WithEnablePoof(!poofCfg.Disable),
+	}
+	if mdi := fs.Lookup("experimental-meepo-debug-interface"); mdi.Changed {
+		nmOpts = append(nmOpts, meepo_core.WithMeepoDebugInterface(mdi.Value.String()))
 	}
 	if !smuxCfg.Disable {
 		nmOpts = append(nmOpts,
@@ -428,6 +431,7 @@ func init() {
 	fs.Bool("disable-socks5-listen", false, "disable socks5 listen")
 	fs.StringVar(&config.Get().Meepo.Socks5.Host, "socks5-listen", C.SOCKS5_HOST, "listen SOCKS5 on address")
 	fs.StringVar(&config.Get().Meepo.Pprof, "pprof", "", "profile listen address")
+	fs.String("experimental-meepo-debug-interface", "", "EXPERIMENTAL: meepo debug interface, example: http://127.0.0.1:12349/v1/actions")
 
 	fs.StringVar(&config.Get().Meepo.Acl, "acl", "", "access control list, example: #allow=*,*,192.168.1.0/24:22;#block=*")
 

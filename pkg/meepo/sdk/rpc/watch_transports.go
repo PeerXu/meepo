@@ -10,7 +10,7 @@ import (
 )
 
 func (s *RPCSDK) WatchTransports() (<-chan sdk_interface.TransportView, <-chan error, func(), error) {
-	stm, err := s.caller.CallStream(s.context(), sdk_core.METHOD_WATCH_EVENTS)
+	stm, err := s.caller.CallStream(s.context(), sdk_core.STREAM_METHOD_WATCH_EVENTS)
 	if err != nil {
 		return nil, nil, nil, err
 	}

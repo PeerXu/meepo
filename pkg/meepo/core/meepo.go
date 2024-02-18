@@ -199,6 +199,12 @@ func NewMeepo(opts ...NewMeepoOption) (meepo_interface.Meepo, error) {
 	}
 	eventloop.AddHandler(eventListener)
 
+	enableMeepoDebugInterface := false
+	meepoDebugInterface, _ := GetMeepoDebugInterface(o)
+	if meepoDebugInterface != "" {
+		enableMeepoDebugInterface = true
+	}
+
 	se, err := newWebrtcSettingEngine(o)
 	if err != nil {
 		return nil, err
@@ -260,6 +266,10 @@ func NewMeepo(opts ...NewMeepoOption) (meepo_interface.Meepo, error) {
 	if enablePoof {
 		go mp.poofLoop()
 	}
+	if enableMeepoDebugInterface {
+		go mp.enableMeepoDebugInterface(meepoDebugInterface)
+	}
+
 	go mp.naviLoop()
 
 	return mp, nil
