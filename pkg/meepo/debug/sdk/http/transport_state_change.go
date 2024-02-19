@@ -8,7 +8,7 @@ import (
 	"net/url"
 )
 
-func (c *Client) TransportStateChange(ctx context.Context, happenedAt, host, target, state string) error {
+func (c *Client) TransportStateChange(ctx context.Context, happenedAt, host, target, session, state string) error {
 	urlStr, err := url.JoinPath(c.baseUrl, "transport_state_change")
 	if err != nil {
 		return err
@@ -18,6 +18,7 @@ func (c *Client) TransportStateChange(ctx context.Context, happenedAt, host, tar
 		"happenedAt": happenedAt,
 		"host":       host,
 		"target":     target,
+		"session":    session,
 		"state":      state,
 	}
 	buf, err := json.Marshal(body)

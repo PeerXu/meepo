@@ -33,16 +33,19 @@ func (mp *Meepo) enableMeepoDebugInterface(baseUrl string) {
 		happenedAt := evt.HappenedAt
 		target := cast.ToString(evt.Data["addr"])
 		state := cast.ToString(evt.Data["state"])
+		session := cast.ToString(evt.Data["session"])
 		logger := logger.WithFields(logging.Fields{
 			"happenedAt": happenedAt,
 			"target":     target,
 			"state":      state,
+			"session":    session,
 		})
 		if err = mdi.TransportStateChange(
 			mp.context(),
 			happenedAt,
 			mp.Addr().String(),
 			target,
+			session,
 			state); err != nil {
 			logger.Errorf("failed to send transport state change to meepo debug interface")
 		} else {

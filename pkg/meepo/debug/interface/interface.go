@@ -5,5 +5,5 @@ import (
 )
 
 type MeepoDebugInterface interface {
-	TransportStateChange(ctx context.Context, happenedAt, host, target, state string) error
+	TransportStateChange(ctx context.Context, happenedAt, host, target, session, state string) error
 }
